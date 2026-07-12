@@ -1,13 +1,12 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './store/authStore'
 import { UIProvider } from './store/uiStore'
-import { Layout } from './components/layout/Layout'
+import { AppLayout as Layout } from './components/layout/AppLayout'
 import { Login } from './pages/Login'
 import { Dashboard } from './pages/Dashboard'
 import { Vehicles } from './pages/Vehicles'
 import { VehicleDetail } from './pages/VehicleDetail'
 import { Drivers } from './pages/Drivers'
-import { DriverDetail } from './pages/DriverDetail'
 import { Trips } from './pages/Trips'
 import { TripCreate } from './pages/TripCreate'
 import { TripDetail } from './pages/TripDetail'
@@ -54,11 +53,7 @@ function AppRoutes() {
             <Drivers />
           </ProtectedRoute>
         } />
-        <Route path="/drivers/:id" element={
-          <ProtectedRoute roles={['fleet_manager', 'dispatcher', 'safety_officer']}>
-            <DriverDetail />
-          </ProtectedRoute>
-        } />
+        <Route path="/drivers/:id" element={<Drivers />} />
         
         <Route path="/trips" element={<Trips />} />
         <Route path="/trips/new" element={

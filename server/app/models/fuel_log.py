@@ -17,6 +17,10 @@ class FuelLog(db.Model):
     fuel_station = db.Column(db.String(200))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
+    vehicle = db.relationship('Vehicle', back_populates='fuel_logs')
+    driver = db.relationship('Driver', back_populates='fuel_logs')
+    trip = db.relationship('Trip', back_populates='fuel_logs')
+    
     def to_dict(self):
         return {
             'id': str(self.id),

@@ -17,7 +17,8 @@ class Driver(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
-    trips = db.relationship('Trip', backref='driver', lazy='dynamic')
+    trips = db.relationship('Trip', back_populates='driver', lazy='dynamic')
+    fuel_logs = db.relationship('FuelLog', back_populates='driver', lazy='dynamic')
     
     @property
     def is_license_expired(self):

@@ -19,7 +19,7 @@ class MaintenanceLog(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
-    vehicle = db.relationship('Vehicle', backref=db.backref('maintenance_records', lazy='dynamic'))
+    vehicle = db.relationship('Vehicle', back_populates='maintenance_logs')
     
     def to_dict(self, include_relations=False):
         data = {

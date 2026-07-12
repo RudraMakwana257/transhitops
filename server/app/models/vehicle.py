@@ -19,9 +19,13 @@ class Vehicle(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
-    trips = db.relationship('Trip', backref='vehicle', lazy='dynamic')
-    maintenance_logs = db.relationship('MaintenanceLog', backref='vehicle', lazy='dynamic')
-    fuel_logs = db.relationship('FuelLog', backref='vehicle', lazy='dynamic')
+    trips = db.relationship('Trip', back_populates='vehicle', lazy='dynamic')
+    maintenance_logs = db.relationship('MaintenanceLog', back_populates='vehicle', lazy='dynamic')
+    fuel_logs = db.relationship('FuelLog', back_populates='vehicle', lazy='dynamic')
+    
+    @property
+    def health(self):
+        return self.health_record
     
     def to_dict(self, include_relations=False):
         data = {

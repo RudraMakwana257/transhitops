@@ -1,11 +1,17 @@
-import anthropic
 import os
-from datetime import date
+from datetime import date, timedelta
 from app import db
 from app.models.vehicle import Vehicle
 from app.models.driver import Driver
 from app.models.trip import Trip
 from app.models.maintenance_log import MaintenanceLog
+
+try:
+    from groq import Groq
+    GROQ_AVAILABLE = True
+except ImportError:
+    GROQ_AVAILABLE = False
+    Groq = None
 
 def get_fleet_context():
     today = date.today()
@@ -142,11 +148,19 @@ INSTRUCTIONS:
 """
 
 def get_ai_response(user_message, history=None):
-    api_key = os.getenv('ANTHROPIC_API_KEY')
+    api_key = os.getenv('GROQ_API_KEY')
     if not api_key:
-        return "AI service not configured. Please set ANTHROPIC_API_KEY."
+        return "AI service not configured. Please set GROQ_API_KEY in environment variables."
     
-    client = anthropic.Anthropic(api_key=api_key)
+    if not GROQ_AVAILABLE:
+        return "Groq library not installed. Run: pip install groq"
+    
+    # Workaround for groq 0.5.0 + httpx compatibility issue
+    import httpx
+    client = Groq(
+        api_key=api_key,
+        http_client=httpx.Client()
+    )
     
     fleet_context = get_fleet_context()
     system_prompt = build_system_prompt(fleet_context)
@@ -160,14 +174,15 @@ def get_ai_response(user_message, history=None):
     messages.append({"role": "user", "content": user_message})
     
     try:
-        response = client.messages.create(
-            model="claude-3-5-sonnet-20241022",
+        response = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
             max_tokens=1024,
-            system=system_prompt,
-            messages=messages
+            temperature=0.3,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                *messages
+            ]
         )
-        return response.content[0].text
-    except anthropic.APIError as e:
-        return "AI service temporarily unavailable. Please try again."
+        return response.choices[0].message.content
     except Exception as e:
-        return "An error occurred. Please try again."
+        return f"AI service temporarily unavailable. Please try again. ({str(e)[:100]})"

@@ -30,10 +30,9 @@ export interface Vehicle {
   odometer_km: number
   purchase_date: string | null
   status: VehicleStatus
-  region: string | null
+  region: string
   health_score?: number
   health_grade?: HealthGrade
-  is_active: boolean
   created_at: string
   updated_at: string
 }
@@ -47,9 +46,9 @@ export interface Driver {
   phone: string
   safety_score: number
   status: DriverStatus
+  is_active: boolean
   is_license_expired: boolean
   days_until_expiry: number
-  is_active: boolean
   created_at: string
 }
 
@@ -57,9 +56,9 @@ export interface Trip {
   id: string
   trip_number: string
   vehicle_id: string
-  vehicle?: Vehicle
+  vehicle: Vehicle
   driver_id: string
-  driver?: Driver
+  driver: Driver
   source: string
   destination: string
   cargo_weight_kg: number
@@ -80,13 +79,13 @@ export interface Trip {
 export interface MaintenanceLog {
   id: string
   vehicle_id: string
-  vehicle?: Vehicle
+  vehicle: Vehicle
   type: string
-  description: string | null
+  description: string
   status: MaintenanceStatus
   cost: number
-  technician: string | null
-  scheduled_date: string | null
+  technician: string
+  scheduled_date: string
   completed_date: string | null
   odometer_at_service: number | null
   created_at: string
@@ -95,9 +94,8 @@ export interface MaintenanceLog {
 export interface FuelLog {
   id: string
   vehicle_id: string
-  vehicle?: Vehicle
+  vehicle: Vehicle
   driver_id: string | null
-  driver?: Driver
   trip_id: string | null
   date: string
   liters: number
@@ -111,25 +109,12 @@ export interface FuelLog {
 export interface Expense {
   id: string
   vehicle_id: string | null
-  vehicle?: Vehicle
   trip_id: string | null
   type: ExpenseType
   amount: number
   description: string | null
   date: string
   created_at: string
-}
-
-export interface VehicleHealth {
-  id: string
-  vehicle_id: string
-  health_score: number
-  fuel_efficiency_score: number | null
-  maintenance_score: number | null
-  utilization_score: number | null
-  age_score: number | null
-  cost_score: number | null
-  last_calculated: string
 }
 
 export interface DashboardKPIs {

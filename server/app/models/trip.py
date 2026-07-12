@@ -27,9 +27,9 @@ class Trip(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
-    vehicle = db.relationship('Vehicle', backref=db.backref('trip_records', lazy='dynamic'))
-    driver = db.relationship('Driver', backref=db.backref('trip_records', lazy='dynamic'))
-    fuel_logs = db.relationship('FuelLog', backref='trip', lazy='dynamic')
+    vehicle = db.relationship('Vehicle', back_populates='trips')
+    driver = db.relationship('Driver', back_populates='trips')
+    fuel_logs = db.relationship('FuelLog', back_populates='trip', lazy='dynamic')
     
     def to_dict(self, include_relations=False):
         data = {
