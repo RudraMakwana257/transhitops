@@ -3,6 +3,8 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { User, UserRole } from '../types'
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api'
+
 interface AuthState {
   user: User | null
   token: string | null
@@ -22,7 +24,7 @@ export const useAuthStore = create<AuthState>()(
       isAuthenticated: false,
       
       login: async (email: string, password: string) => {
-        const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/login`, {
+        const res = await fetch(`${API_BASE}/auth/login`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
@@ -39,7 +41,7 @@ export const useAuthStore = create<AuthState>()(
       },
       
       logout: () => {
-        fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/logout`, {
+        fetch(`${API_BASE}/auth/logout`, {
           method: 'POST',
           credentials: 'include'
         })

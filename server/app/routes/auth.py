@@ -32,7 +32,7 @@ def login():
     
     response = jsonify({
         "success": True,
-        "data": {"user": user.to_dict()},
+        "data": {"user": user.to_dict(), "access_token": access_token},
         "message": "Login successful"
     })
     
