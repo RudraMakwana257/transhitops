@@ -1,6 +1,5 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import { AuthProvider, useAuth } from './store/authStore'
-import { UIProvider } from './store/uiStore'
+import { Routes, Route, Navigate } from 'react-router-dom'
+import { useAuth } from './store/authStore'
 import { AppLayout as Layout } from './components/layout/AppLayout'
 import { Login } from './pages/Login'
 import { Dashboard } from './pages/Dashboard'
@@ -90,15 +89,7 @@ function AppRoutes() {
 }
 
 function App() {
-  return (
-    <AuthProvider>
-      <UIProvider>
-        <BrowserRouter>
-          <AppRoutes />
-        </BrowserRouter>
-      </UIProvider>
-    </AuthProvider>
-  )
+  return <AppRoutes />
 }
 
 export default App
