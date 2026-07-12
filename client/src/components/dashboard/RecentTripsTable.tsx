@@ -1,7 +1,7 @@
 import { DataTable } from '../ui/DataTable'
 import { StatusBadge } from '../ui/Badge'
 import { format } from 'date-fns'
-import { TripStatus, Trip } from '../../types'
+import type { TripStatus } from '../../types'
 
 interface RecentTrip {
   id: string

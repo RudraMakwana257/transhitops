@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '../api/client'
-import { Driver, DriverStatus, LicenseCategory } from '../types'
+import type { Driver, DriverStatus, LicenseCategory } from '../types'
 import { DataTable } from '../components/ui/DataTable'
 import { StatusBadge } from '../components/ui/Badge'
 import { Button } from '../components/ui/Button'

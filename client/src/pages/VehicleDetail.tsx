@@ -1,16 +1,15 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { api } from '../api/client'
-import { Vehicle, Trip, MaintenanceLog, FuelLog } from '../types'
+import type { Vehicle, Trip, MaintenanceLog, FuelLog } from '../types'
 import { DataTable } from '../components/ui/DataTable'
 import { StatusBadge } from '../components/ui/Badge'
 import { Button } from '../components/ui/Button'
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card'
 import { PageWrapper } from '../components/layout/PageWrapper'
-import { Truck, MapPin, Wrench, Droplets, Plus, Settings, ArrowLeft, AlertCircle, CheckCircle, Clock } from 'lucide-react'
+import { Truck, MapPin, Wrench, Droplets, Plus, Settings, ArrowLeft, AlertCircle, CheckCircle, Clock, DollarSign } from 'lucide-react'
 import { format } from 'date-fns'
 import { useAuth } from '../hooks/useAuth'
-import { api } from '../api/client'
 
 export function VehicleDetail({ match }: { match: { params: { id: string } } }) {
   const { hasRole } = useAuth()
@@ -177,15 +176,14 @@ export function VehicleDetail({ match }: { match: { params: { id: string } } }) 
                     <div><dt className="text-sm text-[var(--text-secondary)]">Region</dt><dd className="font-medium">{vehicle.region || '—'}</dd></div>
                     <div><dt className="text-sm text-[var(--text-secondary)]">Purchase Date</dt><dd className="font-medium">{vehicle.purchase_date ? format(new Date(vehicle.purchase_date), 'MMM d, yyyy') : '—'}</dd></div>
                     <div><dt className="text-sm text-[var(--text-secondary)]">Acquisition Cost</dt><dd className="font-medium">₹{vehicle.acquisition_cost.toLocaleString()}</dd></div>
-                  </dl>
+                  </div></dl>
                 </CardContent>
               </Card>
-              </Card>
-              
+               
               <Card>
                 <CardHeader><CardTitle>Health Breakdown</CardTitle></CardHeader>
                 <CardContent>
-                  {vehicle.health && (
+                  {vehicle.health ? (
                     <div className="space-y-3">
                       {[
                         { key: 'fuel_efficiency_score', label: 'Fuel Efficiency' },
@@ -205,10 +203,11 @@ export function VehicleDetail({ match }: { match: { params: { id: string } } }) 
                         </div>
                       ))}
                     </div>
-                  ) : <p className="text-[var(--text-muted)]">Health data not available</p>}
+                  ) : (<p className="text-[var(--text-muted)]">Health data not available</p>)}
                 </CardContent>
               </Card>
             </div>
+          </div>
           )}
           
           {activeTab === 'trips' && (
@@ -287,8 +286,6 @@ export function VehicleDetail({ match }: { match: { params: { id: string } } }) 
               </CardContent>
             </Card>
           )}
-        </div>
       </PageWrapper>
     )
   }
-}

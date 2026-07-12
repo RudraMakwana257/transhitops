@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '../api/client'
-import { Trip, TripStatus } from '../types'
+import type { Trip, TripStatus } from '../types'
 import { DataTable } from '../components/ui/DataTable'
 import { StatusBadge } from '../components/ui/Badge'
 import { Button } from '../components/ui/Button'

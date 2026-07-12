@@ -1,3 +1,4 @@
+import React from 'react'
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
@@ -33,3 +34,7 @@ export const useUIStore = create<UIState>()(
     { name: 'ui-storage' }
   )
 )
+
+export function UIProvider({ children }: { children: React.ReactNode }) {
+  return React.createElement(React.Fragment, null, children)
+}

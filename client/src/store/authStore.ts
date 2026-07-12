@@ -1,6 +1,7 @@
+import React from 'react'
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { User, UserRole } from '../types'
+import type { User, UserRole } from '../types'
 
 interface AuthState {
   user: User | null
@@ -13,6 +14,7 @@ interface AuthState {
 }
 
 export const useAuthStore = create<AuthState>()(
+
   persist(
     (set, get) => ({
       user: null,
@@ -56,3 +58,9 @@ export const useAuthStore = create<AuthState>()(
     { name: 'auth-storage', partialize: (state) => ({ user: state.user, token: state.token, isAuthenticated: state.isAuthenticated }) }
   )
 )
+
+export const useAuth = useAuthStore
+
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  return React.createElement(React.Fragment, null, children)
+}

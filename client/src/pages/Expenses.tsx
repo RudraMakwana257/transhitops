@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api } from '../api/client'
-import { Expense, ExpenseType } from '../types'
+import type { Expense, ExpenseType } from '../types'
 import { DataTable } from '../components/ui/DataTable'
 import { StatusBadge } from '../components/ui/Badge'
 import { Button } from '../components/ui/Button'

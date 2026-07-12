@@ -1,14 +1,14 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { api } from '../api/client'
-import { Trip, TripStatus, Vehicle, Driver, MaintenanceLog, FuelLog } from '../types'
+import type { Trip, TripStatus, Vehicle, Driver, MaintenanceLog, FuelLog } from '../types'
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card'
 import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Input'
 import { StatusBadge } from '../components/ui/Badge'
 import { Modal } from '../components/ui/Modal'
 import { PageWrapper } from '../components/layout/PageWrapper'
-import { MapPin, Truck, User, Calendar, Clock, FuelPump, Wrench, DollarSign, CheckCircle, XCircle, Play, Pause, AlertTriangle, Loader2, ChevronLeft } from 'lucide-react'
+import { MapPin, Truck, User, Calendar, Clock, Fuel, Wrench, DollarSign, CheckCircle, XCircle, Play, Pause, AlertTriangle, Loader2, ChevronLeft } from 'lucide-react'
 import { format, differenceInDays } from 'date-fns'
 import { useAuth } from '../hooks/useAuth'
 import { formatCurrency, formatDistance, formatPercentage } from '../utils/formatters'
@@ -400,9 +400,4 @@ function Textarea({ value, onChange, label, placeholder, rows, ...props }: any) 
       <textarea value={value} onChange={onChange} placeholder={placeholder} rows={rows} className="form-input min-h-[80px] resize-y" {...props} />
     </div>
   )
-}
-
-function useState<T>(initial: T): [T, (val: T | ((prev: T) => T)) => void] {
-  const [state, setState] = React.useState(initial)
-  return [state, setState]
 }
