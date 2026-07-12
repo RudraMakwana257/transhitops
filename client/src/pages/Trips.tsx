@@ -58,13 +58,13 @@ export function Trips() {
       </div>
     )},
     { key: 'driver', header: 'Driver', render: (t: Trip) => t.driver?.name },
-    { key: 'cargo_weight_kg', header: 'Cargo (kg)', accessor: 'cargo_weight_kg', sortable: true, align: 'right' as const, render: (v: number) => v.toLocaleString() },
+    { key: 'cargo_weight_kg', header: 'Cargo (kg)', accessor: 'cargo_weight_kg', sortable: true, align: 'right' as const, render: (t: Trip) => t.cargo_weight_kg.toLocaleString() },
     { 
       key: 'status', 
       header: 'Status', 
       render: (t: Trip) => <StatusBadge status={t.status} type="trip" /> 
     },
-    { key: 'date', header: 'Date', accessor: 'created_at', sortable: true, render: (d: string) => format(new Date(d), 'MMM d, yyyy HH:mm') },
+    { key: 'date', header: 'Date', accessor: 'created_at', sortable: true, render: (t: Trip) => format(new Date(t.created_at), 'MMM d, yyyy HH:mm') },
   ]
   
   return (
@@ -72,7 +72,7 @@ export function Trips() {
       title="Trip Center" 
       description="Create, dispatch, and manage trips"
       headerActions={
-        canManage && <Button asChild><Link to="/trips/new"><Plus className="w-4 h-4 mr-2" />Create Trip</Link></Button>
+        canManage && <Link to="/trips/new" className="btn-primary inline-flex items-center gap-2"><Plus className="w-4 h-4" />Create Trip</Link>
       }
       filters={
         <div className="flex flex-wrap gap-4">
@@ -109,7 +109,7 @@ export function Trips() {
           })),
         }}
         emptyMessage="No trips found"
-        emptyAction={canManage && <Button asChild><Link to="/trips/new"><Plus className="w-4 h-4 mr-2" />Create Trip</Link></Button>}
+        emptyAction={canManage && <Link to="/trips/new" className="btn-primary inline-flex items-center gap-2"><Plus className="w-4 h-4" />Create Trip</Link>}
       />
     </PageWrapper>
   )

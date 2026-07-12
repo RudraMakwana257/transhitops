@@ -103,9 +103,9 @@ export function Maintenance() {
   const columns = [
     { key: 'vehicle', header: 'Vehicle', render: (l: MaintenanceLog) => l.vehicle ? `${l.vehicle.name} (${l.vehicle.reg_number})` : '—' },
     { key: 'type', header: 'Type', accessor: 'type' },
-    { key: 'scheduled_date', header: 'Scheduled', accessor: 'scheduled_date', render: (d: string) => format(new Date(d), 'MMM d, yyyy') },
+    { key: 'scheduled_date', header: 'Scheduled', accessor: 'scheduled_date', render: (l: MaintenanceLog) => format(new Date(l.scheduled_date), 'MMM d, yyyy') },
     { key: 'technician', header: 'Technician', accessor: 'technician' },
-    { key: 'cost', header: 'Cost', accessor: 'cost', align: 'right' as const, render: (c: number) => `₹${c.toLocaleString()}` },
+    { key: 'cost', header: 'Cost', accessor: 'cost', align: 'right' as const, render: (l: MaintenanceLog) => `₹${l.cost.toLocaleString()}` },
     { 
       key: 'status', 
       header: 'Status', 

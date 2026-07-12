@@ -91,13 +91,13 @@ export function Fuel() {
   }
   
   const columns = [
-    { key: 'date', header: 'Date', accessor: 'date', sortable: true, render: (d: string) => format(new Date(d), 'MMM d, yyyy') },
+    { key: 'date', header: 'Date', accessor: 'date', sortable: true, render: (l: FuelLog) => format(new Date(l.date), 'MMM d, yyyy') },
     { key: 'vehicle', header: 'Vehicle', render: (l: FuelLog) => l.vehicle ? `${l.vehicle.name} (${l.vehicle.reg_number})` : '—' },
     { key: 'driver', header: 'Driver', render: (l: FuelLog) => l.driver?.name || '—' },
-    { key: 'liters', header: 'Liters', accessor: 'liters', sortable: true, align: 'right' as const, render: (v: number) => `${v} L` },
-    { key: 'price_per_liter', header: 'Price/L', accessor: 'price_per_liter', align: 'right' as const, render: (v: number) => `₹${v}` },
-    { key: 'total_cost', header: 'Total', accessor: 'total_cost', align: 'right' as const, render: (v: number) => `₹${v.toLocaleString()}` },
-    { key: 'odometer_reading', header: 'Odometer', accessor: 'odometer_reading', align: 'right' as const, render: (v: number | null) => v ? `${v.toLocaleString()} km` : '—' },
+    { key: 'liters', header: 'Liters', accessor: 'liters', sortable: true, align: 'right' as const, render: (l: FuelLog) => `${l.liters} L` },
+    { key: 'price_per_liter', header: 'Price/L', accessor: 'price_per_liter', align: 'right' as const, render: (l: FuelLog) => `₹${l.price_per_liter}` },
+    { key: 'total_cost', header: 'Total', accessor: 'total_cost', align: 'right' as const, render: (l: FuelLog) => `₹${l.total_cost.toLocaleString()}` },
+    { key: 'odometer_reading', header: 'Odometer', accessor: 'odometer_reading', align: 'right' as const, render: (l: FuelLog) => l.odometer_reading ? `${l.odometer_reading.toLocaleString()} km` : '—' },
     { key: 'fuel_station', header: 'Station', accessor: 'fuel_station' },
   ]
   
@@ -132,13 +132,13 @@ export function Fuel() {
       
       <DataTable
         columns={[
-          { key: 'date', header: 'Date', accessor: 'date', sortable: true, render: (d: string) => format(new Date(d), 'MMM d, yyyy') },
+          { key: 'date', header: 'Date', accessor: 'date', sortable: true, render: (l: FuelLog) => format(new Date(l.date), 'MMM d, yyyy') },
           { key: 'vehicle', header: 'Vehicle', render: (l: FuelLog) => l.vehicle ? `${l.vehicle.name} (${l.vehicle.reg_number})` : '—' },
           { key: 'driver', header: 'Driver', render: (l: FuelLog) => l.driver?.name || '—' },
-          { key: 'liters', header: 'Liters', accessor: 'liters', sortable: true, align: 'right' as const, render: (v: number) => `${v} L` },
-          { key: 'price_per_liter', header: 'Price/L', accessor: 'price_per_liter', align: 'right' as const, render: (v: number) => `₹${v}` },
-          { key: 'total_cost', header: 'Total', accessor: 'total_cost', align: 'right' as const, render: (v: number) => `₹${v.toLocaleString()}` },
-          { key: 'odometer_reading', header: 'Odometer', accessor: 'odometer_reading', align: 'right' as const, render: (v: number | null) => v ? `${v.toLocaleString()} km` : '—' },
+          { key: 'liters', header: 'Liters', accessor: 'liters', sortable: true, align: 'right' as const, render: (l: FuelLog) => `${l.liters} L` },
+          { key: 'price_per_liter', header: 'Price/L', accessor: 'price_per_liter', align: 'right' as const, render: (l: FuelLog) => `₹${l.price_per_liter}` },
+          { key: 'total_cost', header: 'Total', accessor: 'total_cost', align: 'right' as const, render: (l: FuelLog) => `₹${l.total_cost.toLocaleString()}` },
+          { key: 'odometer_reading', header: 'Odometer', accessor: 'odometer_reading', align: 'right' as const, render: (l: FuelLog) => l.odometer_reading ? `${l.odometer_reading.toLocaleString()} km` : '—' },
           { key: 'fuel_station', header: 'Station', accessor: 'fuel_station' },
         ]}
         data={logs}
