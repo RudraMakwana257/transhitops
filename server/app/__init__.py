@@ -16,7 +16,7 @@ def create_app():
     db.init_app(app)
     jwt.init_app(app)
     migrate.init_app(app, db)
-    CORS(app, origins=['http://localhost:5173'], supports_credentials=True)
+    CORS(app, origins=['http://localhost:5173', 'http://localhost:5174', 'http://127.0.0.1:5173', 'http://127.0.0.1:5174', 'http://192.168.1.12:5173', 'http://192.168.1.13:5173'], supports_credentials=True)
     
     from app.routes import auth, vehicles, drivers, trips, maintenance, fuel, expenses, dashboard, analytics, ai_chat
     app.register_blueprint(auth.bp)
