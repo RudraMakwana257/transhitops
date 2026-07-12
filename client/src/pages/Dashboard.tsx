@@ -10,7 +10,8 @@ import { RecentTripsTable } from '../components/dashboard/RecentTripsTable'
 import { UpcomingMaintenance } from '../components/dashboard/UpcomingMaintenance'
 import { FuelTrendChart } from '../components/dashboard/FuelTrendChart'
 import { Button } from '../components/ui/Button'
-import { Card } from '../components/ui/Card'
+import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card'
+import { PageWrapper } from '../components/layout/PageWrapper'
 
 export function Dashboard() {
   const [kpis, setKpis] = useState<DashboardKPIs | null>(null)
@@ -52,7 +53,7 @@ export function Dashboard() {
   
   if (loading && !kpis) {
     return (
-      <div className="space-y-6">
+      <PageWrapper title="Dashboard" description="Real-time fleet operations overview">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {[1,2,3,4,5,6,7].map(i => <KPICard key={i} title="Loading" value="—" icon={<Truck />} loading />)}
         </div>
@@ -60,7 +61,7 @@ export function Dashboard() {
           <Card className="h-80 animate-pulse" />
           <Card className="h-80 animate-pulse" />
         </div>
-      </div>
+      </PageWrapper>
     )
   }
   
@@ -75,19 +76,15 @@ export function Dashboard() {
   ]
   
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-semibold text-[var(--text-primary)]">Dashboard</h1>
-          <p className="text-sm text-[var(--text-secondary)]">Real-time fleet operations overview</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={fetchDashboard} disabled={loading}>
-            <Loader2 className="w-4 h-4 mr-1" /> Refresh
-          </Button>
-        </div>
-      </div>
-      
+    <PageWrapper 
+      title="Dashboard" 
+      description="Real-time fleet operations overview"
+      headerActions={
+        <Button variant="outline" size="sm" onClick={fetchDashboard} disabled={loading}>
+          <Loader2 className="w-4 h-4 mr-1" /> Refresh
+        </Button>
+      }
+    >
       {error && (
         <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-sm flex items-center gap-2">
           <AlertCircle className="w-4 h-4 flex-shrink-0" />
@@ -103,36 +100,52 @@ export function Dashboard() {
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <FleetStatusChart data={fleetStatus} />
-        <Card className="p-6">
-          <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-4">License Expiry Alerts</h3>
-          <LicenseExpiryAlerts 
-            expiring={alerts.license_expiring} 
-            expired={alerts.license_expired} 
-          />
+        <Card>
+          <CardHeader>
+            <CardTitle>License Expiry Alerts</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <LicenseExpiryAlerts 
+              expiring={alerts.license_expiring} 
+              expired={alerts.license_expired} 
+            />
+          </CardContent>
         </Card>
       </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-[var(--text-primary)]">Recent Trips</h3>
-            <Link to="/trips" className="text-sm text-[var(--brand-primary)] hover:underline flex items-center gap-1">
-              View All <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
-          </div>
-          <RecentTripsTable trips={recentTrips} />
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle>Recent Trips</CardTitle>
+              <Link to="/trips" className="text-sm text-[var(--brand-primary)] hover:underline flex items-center gap-1">
+                View All <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <RecentTripsTable trips={recentTrips} />
+          </CardContent>
         </Card>
         
-        <Card className="p-6">
-          <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-4">Upcoming Maintenance</h3>
-          <UpcomingMaintenance maintenance={alerts.maintenance_due} />
+        <Card>
+          <CardHeader>
+            <CardTitle>Upcoming Maintenance</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <UpcomingMaintenance maintenance={alerts.maintenance_due} />
+          </CardContent>
         </Card>
       </div>
       
-      <Card className="p-6">
-        <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-4">Fuel Cost Trend (30 Days)</h3>
-        <FuelTrendChart data={fuelTrend} />
+      <Card>
+        <CardHeader>
+          <CardTitle>Fuel Cost Trend (30 Days)</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <FuelTrendChart data={fuelTrend} />
+        </CardContent>
       </Card>
-    </div>
+    </PageWrapper>
   )
 }

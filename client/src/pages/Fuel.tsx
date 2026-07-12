@@ -12,6 +12,8 @@ import { Droplets, Plus } from 'lucide-react'
 import { format } from 'date-fns'
 import { useAuth } from '../hooks/useAuth'
 import { toast } from '../store/toastStore'
+import type { UserRole } from '../types'
+import { FilterBar, type FilterField } from '../components/ui/FilterBar'
 
 export function Fuel() {
   const { hasRole } = useAuth()
@@ -21,6 +23,13 @@ export function Fuel() {
   const [loading, setLoading] = useState(true)
   const [pagination, setPagination] = useState({ page: 1, pageSize: 20, total: 0, totalPages: 0 })
   const [showCreate, setShowCreate] = useState(false)
+  const [filters, setFilters] = useState({ 
+    search: '', 
+    vehicle_id: '', 
+    driver_id: '', 
+    date_from: '', 
+    date_to: '' 
+  })
   const [formData, setFormData] = useState({
     vehicle_id: '',
     driver_id: '',
@@ -33,17 +42,22 @@ export function Fuel() {
   })
   const [submitting, setSubmitting] = useState(false)
   
-  const canManage = hasRole(['fleet_manager', 'dispatcher'])
+  const canManage = hasRole(['fleet_manager', 'dispatcher'] as UserRole[])
   
   useEffect(() => {
     fetchLogs()
     fetchLookups()
-  }, [pagination.page])
+  }, [pagination.page, filters.search, filters.vehicle_id, filters.driver_id, filters.date_from, filters.date_to])
   
   const fetchLogs = async () => {
     setLoading(true)
     try {
-      const res = await api.get(`/fuel?page=${pagination.page}&page_size=${pagination.pageSize}`)
+      const params = new URLSearchParams({
+        page: pagination.page.toString(),
+        page_size: pagination.pageSize.toString(),
+        ...filters,
+      })
+      const res = await api.get(`/fuel?${params}`)
       if (res.data.success) {
         setLogs(res.data.data.items)
         setPagination(prev => ({ ...prev, total: res.data.data.total, totalPages: res.data.data.total_pages }))
@@ -102,13 +116,35 @@ export function Fuel() {
     { key: 'odometer_reading', header: 'Odometer', accessor: 'odometer_reading', align: 'right' as const, render: (l: FuelLog) => l.odometer_reading ? `${l.odometer_reading.toLocaleString()} km` : '—' },
     { key: 'fuel_station', header: 'Station', accessor: 'fuel_station' },
   ]
+
+  const fuelFields: FilterField[] = [
+    { key: 'search', type: 'text', placeholder: 'Search vehicle/station...' },
+    { key: 'vehicle_id', type: 'select', options: [], placeholder: 'Filter by vehicle' },
+    { key: 'driver_id', type: 'select', options: [], placeholder: 'Filter by driver' },
+    { key: 'date', type: 'daterange' },
+  ]
   
+  const hasActiveFilters = filters.search || filters.vehicle_id || filters.driver_id || filters.date_from || filters.date_to
+  
+  const clearAllFilters = () => {
+    setFilters({ search: '', vehicle_id: '', driver_id: '', date_from: '', date_to: '' })
+  }
+
   return (
     <PageWrapper 
       title="Fuel Logs" 
       description="Record and track fuel consumption"
       headerActions={
         canManage && <Button onClick={() => setShowCreate(true)}><Plus className="w-4 h-4 mr-2" />Add Fuel Log</Button>
+      }
+      filters={
+        <FilterBar
+          fields={fuelFields}
+          values={filters}
+          onChange={setFilters}
+          onClear={clearAllFilters}
+          hasActiveFilters={hasActiveFilters}
+        />
       }
     >
       {showCreate && (

@@ -74,15 +74,67 @@
   }
 
   .data-table th {
-    @apply bg-[var(--bg-sidebar)] px-4 py-3 text-left text-xs uppercase font-semibold text-[var(--text-muted)];
+    @apply bg-[var(--bg-sidebar)] px-4 py-3 text-left text-xs uppercase font-semibold text-[var(--text-muted)] border-b border-[var(--border-default)];
+    white-space: nowrap;
   }
 
   .data-table td {
-    @apply px-4 py-3 border-b border-[var(--border-default)] text-sm;
+    @apply px-4 py-3 text-sm text-[var(--text-secondary)];
+    border-bottom: 1px solid color-mix(in srgb, var(--border-default) 50%, transparent);
   }
 
-  .data-table tr:hover td {
+  .data-table tbody tr {
+    @apply transition-colors duration-100;
+    min-height: 55px;
+  }
+
+  .data-table tbody tr:hover td {
     @apply bg-[var(--bg-hover)];
+  }
+
+  .data-table tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  .data-table.sticky-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  .data-table-wrapper {
+    @apply overflow-x-auto overflow-y-auto rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)];
+    max-height: 60vh;
+  }
+
+  .data-table-wrapper.scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-default) transparent;
+  }
+
+  .data-table-wrapper.scrollbar-thin::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .data-table-wrapper.scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+    margin: 4px;
+  }
+
+  .data-table-wrapper.scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: var(--border-default);
+    border-radius: 4px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+
+  .data-table-wrapper.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background-color: var(--border-strong);
+  }
+
+  .data-table-wrapper.scrollbar-thin::-webkit-scrollbar-corner {
+    background: transparent;
   }
 
   .form-input {
@@ -137,6 +189,21 @@
   .scrollbar-thin::-webkit-scrollbar-thumb {
     background-color: var(--border-default);
     border-radius: 3px;
+  }
+
+  .animate-slide-down {
+    animation: slideDown 0.2s ease-out;
+  }
+
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 }
 

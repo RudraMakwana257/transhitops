@@ -12,6 +12,8 @@ import { Plus, Download } from 'lucide-react'
 import { format } from 'date-fns'
 import { useAuth } from '../hooks/useAuth'
 import { toast } from '../store/toastStore'
+import type { UserRole } from '../types'
+import { FilterBar, type FilterField } from '../components/ui/FilterBar'
 
 const EXPENSE_TYPES: ExpenseType[] = ['Fuel', 'Repair', 'Tyre', 'Insurance', 'Permit', 'Fine', 'Toll', 'Other']
 
@@ -34,7 +36,7 @@ export function Expenses() {
   const [filters, setFilters] = useState({ type: '', vehicle_id: '', from_date: '', to_date: '' })
   const [sorting, setSorting] = useState({ column: 'date', direction: 'desc' })
   
-  const canManage = hasRole(['fleet_manager', 'dispatcher'])
+  const canManage = hasRole(['fleet_manager', 'dispatcher'] as UserRole[])
   
   useEffect(() => {
     fetchExpenses()
@@ -103,7 +105,22 @@ export function Expenses() {
     { key: 'amount', header: 'Amount', accessor: 'amount', sortable: true, align: 'right' as const, render: (e: Expense) => `₹${e.amount.toLocaleString()}` },
     { key: 'description', header: 'Description', accessor: 'description' },
   ]
+
+  const expenseFields: FilterField[] = [
+    { key: 'search', type: 'text', placeholder: 'Search vehicle/trip...' },
+    { key: 'type', type: 'select', options: [
+      { value: '', label: 'All Types' },
+      ...EXPENSE_TYPES.map(t => ({ value: t, label: t })),
+    ]},
+    { key: 'date', type: 'daterange' },
+  ]
   
+  const hasActiveFilters = filters.type || filters.vehicle_id || filters.from_date || filters.to_date
+  
+  const clearAllFilters = () => {
+    setFilters({ type: '', vehicle_id: '', from_date: '', to_date: '' })
+  }
+
   return (
     <PageWrapper 
       title="Expenses" 
@@ -112,17 +129,13 @@ export function Expenses() {
         canManage && <Button onClick={() => setShowCreate(true)}><Plus className="w-4 h-4 mr-2" />Add Expense</Button>
       }
       filters={
-        <div className="flex flex-wrap gap-4">
-          <select value={filters.type} onChange={(e) => setFilters({...filters, type: e.target.value})} className="form-input w-40">
-            <option value="">All Types</option>
-            {EXPENSE_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-          </select>
-          <Input type="date" value={filters.from_date} onChange={(e) => setFilters({...filters, from_date: e.target.value})} className="w-40" placeholder="From" />
-          <Input type="date" value={filters.to_date} onChange={(e) => setFilters({...filters, to_date: e.target.value})} className="w-40" placeholder="To" />
-          <Button variant="outline" onClick={() => window.open(`/api/reports/export-csv?type=expenses`, '_blank')}>
-            <Download className="w-4 h-4 mr-2" />Export
-          </Button>
-        </div>
+        <FilterBar
+          fields={expenseFields}
+          values={filters}
+          onChange={setFilters}
+          onClear={clearAllFilters}
+          hasActiveFilters={hasActiveFilters}
+        />
       }
     >
       {showCreate && (

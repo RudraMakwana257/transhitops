@@ -13,6 +13,8 @@ import { Wrench, Plus } from 'lucide-react'
 import { format } from 'date-fns'
 import { useAuth } from '../hooks/useAuth'
 import { toast } from '../store/toastStore'
+import type { UserRole } from '../types'
+import { FilterBar, type FilterField } from '../components/ui/FilterBar'
 
 export function Maintenance() {
   const { hasRole } = useAuth()
@@ -21,6 +23,7 @@ export function Maintenance() {
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<MaintenanceStatus>('Open')
   const [pagination, setPagination] = useState({ page: 1, pageSize: 20, total: 0, totalPages: 0 })
+  const [filters, setFilters] = useState({ search: '', vehicle_id: '', technician: '' })
   const [showCreate, setShowCreate] = useState(false)
   const [formData, setFormData] = useState({
     vehicle_id: '',
@@ -33,12 +36,12 @@ export function Maintenance() {
   })
   const [submitting, setSubmitting] = useState(false)
   
-  const canManage = hasRole(['fleet_manager'])
+  const canManage = hasRole(['fleet_manager'] as UserRole[])
   
   useEffect(() => {
     fetchLogs()
     fetchVehicles()
-  }, [activeTab, pagination.page])
+  }, [activeTab, pagination.page, filters.search, filters.vehicle_id, filters.technician])
   
   const fetchLogs = async () => {
     setLoading(true)
@@ -47,6 +50,7 @@ export function Maintenance() {
         page: pagination.page.toString(),
         page_size: pagination.pageSize.toString(),
         status: activeTab,
+        ...filters,
       })
       const res = await api.get(`/maintenance?${params}`)
       if (res.data.success) {
@@ -115,7 +119,19 @@ export function Maintenance() {
       render: (l: MaintenanceLog) => <StatusBadge status={l.status} type="maintenance" /> 
     },
   ]
+
+  const maintenanceFields: FilterField[] = [
+    { key: 'search', type: 'text', placeholder: 'Search vehicle/technician...' },
+    { key: 'vehicle_id', type: 'select', options: [], placeholder: 'Filter by vehicle' },
+    { key: 'technician', type: 'text', placeholder: 'Technician name' },
+  ]
   
+  const hasActiveFilters = filters.search || filters.vehicle_id || filters.technician
+  
+  const clearAllFilters = () => {
+    setFilters({ search: '', vehicle_id: '', technician: '' })
+  }
+
   return (
     <PageWrapper 
       title="Maintenance" 
@@ -124,25 +140,13 @@ export function Maintenance() {
         canManage && <Button onClick={() => setShowCreate(true)}><Plus className="w-4 h-4 mr-2" />New Maintenance</Button>
       }
       filters={
-        <div className="flex gap-4">
-          <div className="flex gap-2 bg-[var(--bg-sidebar)] p-1 rounded-lg" role="tablist">
-            {(['Open', 'In Progress', 'Completed'] as MaintenanceStatus[]).map(status => (
-              <button
-                key={status}
-                onClick={() => setActiveTab(status)}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                  activeTab === status 
-                    ? 'bg-[var(--brand-primary)] text-white' 
-                    : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
-                }`}
-                role="tab"
-                aria-selected={activeTab === status}
-              >
-                {status}
-              </button>
-            ))}
-          </div>
-        </div>
+        <FilterBar
+          fields={maintenanceFields}
+          values={filters}
+          onChange={setFilters}
+          onClear={clearAllFilters}
+          hasActiveFilters={hasActiveFilters}
+        />
       }
     >
       {showCreate && (

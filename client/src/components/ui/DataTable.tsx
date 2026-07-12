@@ -1,7 +1,6 @@
 import { ReactNode, useMemo, useState } from 'react'
 import { ChevronUp, ChevronDown } from 'lucide-react'
 import { clsx } from 'clsx'
-import { Badge } from './Badge'
 
 export interface Column<T> {
   key: string
@@ -10,8 +9,13 @@ export interface Column<T> {
   accessor?: keyof T | string
   sortable?: boolean
   width?: string
+  minWidth?: string
+  maxWidth?: string
   align?: 'left' | 'center' | 'right'
   className?: string
+  headerClassName?: string
+  cellClassName?: string
+  sticky?: boolean
 }
 
 interface DataTableProps<T> {
@@ -40,6 +44,9 @@ interface DataTableProps<T> {
   }
   rowClassName?: (row: T) => string
   striped?: boolean
+  maxHeight?: string
+  showVerticalScroll?: boolean
+  stickyHeader?: boolean
 }
 
 export function DataTable<T extends { id?: string }>({
@@ -54,6 +61,9 @@ export function DataTable<T extends { id?: string }>({
   selection,
   rowClassName,
   striped = true,
+  maxHeight = '60vh',
+  showVerticalScroll = true,
+  stickyHeader = true,
 }: DataTableProps<T>) {
   const [hoveredId, setHoveredId] = useState<string | null>(null)
   const getRowId = (row: T) => row.id || JSON.stringify(row)
@@ -69,14 +79,27 @@ export function DataTable<T extends { id?: string }>({
     })
   }, [data, sorting])
 
+  const tableWrapperClass = clsx(
+    'overflow-x-auto',
+    showVerticalScroll && 'overflow-y-auto',
+    maxHeight && `max-h-[${maxHeight}]`,
+    'rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)]',
+    'data-table-wrapper scrollbar-thin'
+  )
+
+  const tableClass = clsx(
+    'w-full border-collapse data-table',
+    stickyHeader && 'sticky-table'
+  )
+
   if (loading) {
     return (
-      <div className="overflow-x-auto">
-        <table className="w-full" role="grid">
+      <div className={tableWrapperClass}>
+        <table className={tableClass} role="grid">
           <thead>
             <tr>
               {columns.map(col => (
-                <th key={col.key} className="data-table th" style={{ width: col.width }}>
+                <th key={col.key} className="data-table th" style={{ width: col.width, minWidth: col.minWidth, maxWidth: col.maxWidth }}>
                   {col.header}
                 </th>
               ))}
@@ -87,7 +110,7 @@ export function DataTable<T extends { id?: string }>({
               <tr key={i}>
                 {columns.map(col => (
                   <td key={col.key} className="data-table td">
-                    <div className="h-4 bg-[var(--bg-hover)] animate-pulse rounded w-3/4" />
+                    <div className="h-5 bg-[var(--bg-hover)] animate-pulse rounded w-3/4" />
                   </td>
                 ))}
               </tr>
@@ -100,8 +123,8 @@ export function DataTable<T extends { id?: string }>({
 
   if (sortedData.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
-        <div className="w-12 h-12 text-[var(--text-muted)] mb-4" aria-hidden="true">
+      <div className="flex flex-col items-center justify-center py-16 px-4 text-center bg-[var(--bg-card)] border border-[var(--border-default)] rounded-lg">
+        <div className="w-14 h-14 text-[var(--text-muted)] mb-4" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-full h-full">
             <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor"/>
             <path d="M9 9h6M9 15h6M9 12h4" stroke="currentColor" strokeLinecap="round"/>
@@ -114,15 +137,15 @@ export function DataTable<T extends { id?: string }>({
   }
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full" role="grid">
+    <div className={tableWrapperClass}>
+      <table className={tableClass} role="grid">
         <thead>
-          <tr className="sticky top-0 z-10">
+          <tr className={clsx(stickyHeader && 'sticky top-0 z-10 bg-[var(--bg-sidebar)]')}>
             {selection && (
-              <th className="data-table th w-12">
+              <th className="data-table th w-12" style={{ width: '3rem', minWidth: '3rem', maxWidth: '3rem' }}>
                 <input
                   type="checkbox"
-                  className="w-4 h-4 rounded border-[var(--border-default)] text-[var(--brand-primary)] focus:ring-[var(--brand-primary-light)]"
+                  className="w-4 h-4 rounded border-[var(--border-default)] text-[var(--brand-primary)] focus:ring-[var(--brand-primary-light)] cursor-pointer"
                   checked={selection.selectedIds.length === sortedData.length && sortedData.length > 0}
                   indeterminate={selection.selectedIds.length > 0 && selection.selectedIds.length < sortedData.length}
                   onChange={(e) => {
@@ -132,35 +155,44 @@ export function DataTable<T extends { id?: string }>({
                       selection.onSelectionChange([])
                     }
                   }}
+                  aria-label="Select all rows"
                 />
               </th>
             )}
             {columns.map(col => (
               <th
                 key={col.key}
-                className={clsx('data-table th', col.className)}
-                style={{ width: col.width, textAlign: col.align }}
+                className={clsx('data-table th', col.headerClassName)}
+                style={{ 
+                  width: col.width, 
+                  minWidth: col.minWidth,
+                  maxWidth: col.maxWidth,
+                  textAlign: col.align,
+                  position: col.sticky ? 'sticky' : 'relative',
+                  left: col.sticky ? 0 : undefined,
+                  zIndex: col.sticky ? 10 : undefined,
+                }}
                 scope="col"
               >
                 {col.sortable && sorting ? (
                   <button
                     onClick={() => sorting.onSort(col.accessor as string || col.key)}
-                    className="flex items-center gap-1 hover:text-[var(--text-primary)] transition-colors"
+                    className="flex items-center gap-1.5 hover:text-[var(--text-primary)] transition-colors w-full"
                     aria-label={`Sort by ${col.header}`}
                   >
-                    <span>{col.header}</span>
+                    <span className="truncate">{col.header}</span>
                     {sorting.column === (col.accessor as string || col.key) && (
-                      sorting.direction === 'asc' ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />
+                      sorting.direction === 'asc' ? <ChevronUp className="w-4 h-4 flex-shrink-0" /> : <ChevronDown className="w-4 h-4 flex-shrink-0" />
                     )}
                   </button>
                 ) : (
-                  col.header
+                  <span className="truncate block">{col.header}</span>
                 )}
               </th>
             ))}
           </tr>
         </thead>
-        <tbody>
+        <tbody className="divide-y divide-[var(--border-default)]/50">
           {sortedData.map((row, index) => {
             const rowId = getRowId(row)
             const isSelected = selection?.selectedIds.includes(rowId)
@@ -170,11 +202,11 @@ export function DataTable<T extends { id?: string }>({
               <tr
                 key={rowId}
                 className={clsx(
-                  'transition-colors',
+                  'transition-colors duration-100',
                   isSelected && 'bg-[var(--brand-primary-light)]',
                   isHovered && 'bg-[var(--bg-hover)]',
-                  striped && index % 2 === 1 && 'bg-[var(--bg-sidebar)]/50',
-                  onRowClick && 'cursor-pointer',
+                  striped && index % 2 === 1 && 'bg-[var(--bg-sidebar)]/30',
+                  onRowClick && 'cursor-pointer hover:bg-[var(--bg-hover)]',
                   rowClassName?.(row)
                 )}
                 onMouseEnter={() => setHoveredId(rowId)}
@@ -182,10 +214,10 @@ export function DataTable<T extends { id?: string }>({
                 onClick={() => onRowClick?.(row)}
               >
                 {selection && (
-                  <td className="data-table td w-12">
+                  <td className="data-table td w-12" style={{ width: '3rem', minWidth: '3rem', maxWidth: '3rem' }}>
                     <input
                       type="checkbox"
-                      className="w-4 h-4 rounded border-[var(--border-default)] text-[var(--brand-primary)] focus:ring-[var(--brand-primary-light)]"
+                      className="w-4 h-4 rounded border-[var(--border-default)] text-[var(--brand-primary)] focus:ring-[var(--brand-primary-light)] cursor-pointer"
                       checked={isSelected}
                       onChange={(e) => {
                         const newSelection = e.target.checked
@@ -194,14 +226,21 @@ export function DataTable<T extends { id?: string }>({
                         selection.onSelectionChange(newSelection)
                       }}
                       onClick={(e) => e.stopPropagation()}
+                      aria-label="Select row"
                     />
                   </td>
                 )}
                 {columns.map(col => (
                   <td
                     key={col.key}
-                    className={clsx('data-table td', col.className)}
-                    style={{ textAlign: col.align }}
+                    className={clsx('data-table td', col.cellClassName)}
+                    style={{ 
+                      textAlign: col.align,
+                      maxWidth: col.maxWidth,
+                      overflow: col.maxWidth ? 'hidden' : undefined,
+                      textOverflow: col.maxWidth ? 'ellipsis' : undefined,
+                      whiteSpace: col.maxWidth ? 'nowrap' : undefined,
+                    }}
                   >
                     {col.render 
                       ? col.render(row, index)
@@ -218,17 +257,15 @@ export function DataTable<T extends { id?: string }>({
       </table>
       
       {pagination && (
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-4 px-2">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-4 px-2 py-3 border-t border-[var(--border-default)] bg-[var(--bg-sidebar)]/30">
           <div className="text-sm text-[var(--text-secondary)]">
-            Showing {(pagination.page - 1) * pagination.pageSize + 1} to{' '}
-            {Math.min(pagination.page * pagination.pageSize, pagination.total)} of{' '}
-            {pagination.total} results
+            Showing {(pagination.page - 1) * pagination.pageSize + 1} to {Math.min(pagination.page * pagination.pageSize, pagination.total)} of {pagination.total} results
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <select
               value={pagination.pageSize}
               onChange={(e) => pagination.onPageSizeChange?.(Number(e.target.value))}
-              className="form-input w-auto py-1.5 text-sm"
+              className="form-input w-auto py-1.5 px-3 text-sm min-w-[140px]"
               aria-label="Rows per page"
             >
               {[10, 20, 50, 100].map(size => (
@@ -252,7 +289,7 @@ export function DataTable<T extends { id?: string }>({
               >
                 <ChevronUp className="w-4 h-4" />
               </button>
-              <span className="px-3 text-sm text-[var(--text-secondary)]">
+              <span className="px-3 text-sm text-[var(--text-secondary)] min-w-[80px] text-center">
                 Page {pagination.page} of {pagination.totalPages}
               </span>
               <button

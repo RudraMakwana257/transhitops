@@ -197,30 +197,32 @@ export function Analytics() {
               <Card>
                 <CardHeader><CardTitle>Vehicle ROI</CardTitle></CardHeader>
                 <CardContent>
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b border-[var(--border-default)]">
-                        <th className="text-left py-2 px-4 text-xs uppercase font-semibold text-[var(--text-muted)]">Vehicle</th>
-                        <th className="text-right py-2 px-4 text-xs uppercase font-semibold text-[var(--text-muted)]">Acquisition</th>
-                        <th className="text-right py-2 px-4 text-xs uppercase font-semibold text-[var(--text-muted)]">Revenue</th>
-                        <th className="text-right py-2 px-4 text-xs uppercase font-semibold text-[var(--text-muted)]">Costs</th>
-                        <th className="text-right py-2 px-4 text-xs uppercase font-semibold text-[var(--text-muted)]">ROI</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {roi.slice(0, 10).map((r: any) => (
-                        <tr key={r.vehicle_id} className="border-b border-[var(--border-default)]/50 hover:bg-[var(--bg-hover)]">
-                          <td className="py-3 px-4 font-medium">{r.vehicle_name}</td>
-                          <td className="text-right py-3 px-4">₹{r.acquisition_cost?.toLocaleString()}</td>
-                          <td className="text-right py-3 px-4 text-green-600">₹{r.revenue?.toLocaleString()}</td>
-                          <td className="text-right py-3 px-4 text-red-600">₹{((r.fuel_cost || 0) + (r.maintenance_cost || 0)).toLocaleString()}</td>
-                          <td className="text-right py-3 px-4 font-semibold" style={{ color: (r.roi || 0) >= 0 ? 'var(--status-available)' : 'var(--status-critical)' }}>
-                            {(r.roi * 100).toFixed(1)}%
-                          </td>
+                  <div className="overflow-x-auto">
+                    <table className="w-full data-table">
+                      <thead>
+                        <tr>
+                          <th>Vehicle</th>
+                          <th className="text-right">Acquisition</th>
+                          <th className="text-right">Revenue</th>
+                          <th className="text-right">Costs</th>
+                          <th className="text-right">ROI</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {roi.slice(0, 10).map((r: any) => (
+                          <tr key={r.vehicle_id}>
+                            <td className="font-medium">{r.vehicle_name}</td>
+                            <td className="text-right">₹{r.acquisition_cost?.toLocaleString()}</td>
+                            <td className="text-right text-green-600">₹{r.revenue?.toLocaleString()}</td>
+                            <td className="text-right text-red-600">₹{((r.fuel_cost || 0) + (r.maintenance_cost || 0)).toLocaleString()}</td>
+                            <td className="text-right font-semibold" style={{ color: (r.roi || 0) >= 0 ? 'var(--status-available)' : 'var(--status-critical)' }}>
+                              {(r.roi * 100).toFixed(1)}%
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </CardContent>
               </Card>
             )}
@@ -229,30 +231,32 @@ export function Analytics() {
               <Card>
                 <CardHeader><CardTitle>Driver Performance</CardTitle></CardHeader>
                 <CardContent>
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b border-[var(--border-default)]">
-                        <th className="text-left py-2 px-4 text-xs uppercase font-semibold text-[var(--text-muted)]">Driver</th>
-                        <th className="text-center py-2 px-4 text-xs uppercase font-semibold text-[var(--text-muted)]">Trips</th>
-                        <th className="text-center py-2 px-4 text-xs uppercase font-semibold text-[var(--text-muted)]">Distance</th>
-                        <th className="text-center py-2 px-4 text-xs uppercase font-semibold text-[var(--text-muted)]">Efficiency</th>
-                        <th className="text-center py-2 px-4 text-xs uppercase font-semibold text-[var(--text-muted)]">Safety</th>
-                        <th className="text-center py-2 px-4 text-xs uppercase font-semibold text-[var(--text-muted)]">On-Time</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {driverPerf.slice(0, 10).map((d: any) => (
-                        <tr key={d.driver_id} className="border-b border-[var(--border-default)]/50 hover:bg-[var(--bg-hover)]">
-                          <td className="py-2 px-4 font-medium">{d.driver_name}</td>
-                          <td className="text-center py-2 px-4">{d.trips_completed}</td>
-                          <td className="text-center py-2 px-4">{d.total_distance_km?.toLocaleString()} km</td>
-                          <td className="text-center py-2 px-4">{d.avg_fuel_efficiency?.toFixed(1)} km/L</td>
-                          <td className="text-center py-2 px-4">{d.safety_score?.toFixed(1)}</td>
-                          <td className="text-center py-2 px-4 text-green-600">{d.on_time_pct?.toFixed(1)}%</td>
+                  <div className="overflow-x-auto">
+                    <table className="w-full data-table">
+                      <thead>
+                        <tr>
+                          <th>Driver</th>
+                          <th className="text-center">Trips</th>
+                          <th className="text-center">Distance</th>
+                          <th className="text-center">Efficiency</th>
+                          <th className="text-center">Safety</th>
+                          <th className="text-center">On-Time</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table
+                      </thead>
+                      <tbody>
+                        {driverPerf.slice(0, 10).map((d: any) => (
+                          <tr key={d.driver_id}>
+                            <td className="font-medium">{d.driver_name}</td>
+                            <td className="text-center">{d.trips_completed}</td>
+                            <td className="text-center">{d.total_distance_km?.toLocaleString()} km</td>
+                            <td className="text-center">{d.avg_fuel_efficiency?.toFixed(1)} km/L</td>
+                            <td className="text-center">{d.safety_score?.toFixed(1)}</td>
+                            <td className="text-center text-green-600">{d.on_time_pct?.toFixed(1)}%</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </CardContent>
               </Card>
             )}

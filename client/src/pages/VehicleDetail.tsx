@@ -227,7 +227,7 @@ export function VehicleDetail({ match }: { match: { params: { id: string } } }) 
                     { key: 'route', header: 'Route', render: (t: Trip) => `${t.source} → ${t.destination}` },
                     { key: 'driver', header: 'Driver', render: (t: Trip) => t.driver?.name },
                     { key: 'status', header: 'Status', render: (t: Trip) => <StatusBadge status={t.status} type="trip" /> },
-                    { key: 'date', header: 'Date', accessor: 'created_at', sortable: true, render: (d: string) => format(new Date(d), 'MMM d, yyyy') },
+                    { key: 'date', header: 'Date', accessor: 'created_at', sortable: true, render: (t: Trip) => format(new Date(t.created_at), 'MMM d, yyyy') },
                   ]}
                   data={trips}
                   loading={loading}

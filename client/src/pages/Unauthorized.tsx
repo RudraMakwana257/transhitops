@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom'
 import { Lock, Home, ArrowLeft } from 'lucide-react'
-import { Button } from '../components/ui/Button'
 
 export function Unauthorized() {
   return (

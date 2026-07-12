@@ -98,7 +98,13 @@ export function Settings() {
     }
   }
   
-  if (!canManage) return <div className="p-6 text-center text-[var(--text-secondary)]">Access denied</div>
+  if (!canManage) {
+    return (
+      <PageWrapper title="Settings" description="Manage users and system configuration">
+        <div className="p-6 text-center text-[var(--text-secondary)]">Access denied</div>
+      </PageWrapper>
+    )
+  }
   
   const columns = [
     { key: 'name', header: 'Name', accessor: 'name', sortable: true },

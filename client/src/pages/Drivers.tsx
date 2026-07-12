@@ -11,6 +11,8 @@ import { PageWrapper } from '../components/layout/PageWrapper'
 import { Plus, Shield } from 'lucide-react'
 import { format } from 'date-fns'
 import { useAuth } from '../hooks/useAuth'
+import type { UserRole } from '../types'
+import { FilterBar, type FilterField } from '../components/ui/FilterBar'
 
 export function Drivers() {
   const { hasRole } = useAuth()
@@ -20,8 +22,8 @@ export function Drivers() {
   const [filters, setFilters] = useState({ search: '', status: '' })
   const [sorting, setSorting] = useState({ column: 'name', direction: 'asc' })
   
-  const canManage = hasRole(['fleet_manager'])
-  const canEditSafety = hasRole(['fleet_manager', 'safety_officer'])
+  const canManage = hasRole(['fleet_manager'] as UserRole[])
+  const canEditSafety = hasRole(['fleet_manager', 'safety_officer'] as UserRole[])
   
   useEffect(() => {
     fetchDrivers()
@@ -77,6 +79,23 @@ export function Drivers() {
   
   const canView = hasRole(['fleet_manager', 'dispatcher', 'safety_officer'])
   
+  const driverFields: FilterField[] = [
+    { key: 'search', type: 'text', placeholder: 'Search name/license...' },
+    { key: 'status', type: 'select', options: [
+      { value: '', label: 'All Status' },
+      { value: 'Available', label: 'Available' },
+      { value: 'On Trip', label: 'On Trip' },
+      { value: 'Off Duty', label: 'Off Duty' },
+      { value: 'Suspended', label: 'Suspended' },
+    ]},
+  ]
+  
+  const hasActiveFilters = filters.search || filters.status
+  
+  const clearAllFilters = () => {
+    setFilters({ search: '', status: '' })
+  }
+
   if (!canView) return null
   
   return (
@@ -87,16 +106,13 @@ export function Drivers() {
         canManage && <Button asChild><Link to="/drivers/new"><Plus className="w-4 h-4 mr-2" />Add Driver</Link></Button>
       }
       filters={
-        <div className="flex flex-wrap gap-4">
-          <Input placeholder="Search name/license..." value={filters.search} onChange={(e) => setFilters({...filters, search: e.target.value})} className="w-64" />
-          <select value={filters.status} onChange={(e) => setFilters({...filters, status: e.target.value})} className="form-input w-40">
-            <option value="">All Status</option>
-            <option value="Available">Available</option>
-            <option value="On Trip">On Trip</option>
-            <option value="Off Duty">Off Duty</option>
-            <option value="Suspended">Suspended</option>
-          </select>
-        </div>
+        <FilterBar
+          fields={driverFields}
+          values={filters}
+          onChange={setFilters}
+          onClear={clearAllFilters}
+          hasActiveFilters={hasActiveFilters}
+        />
       }
     >
       <DataTable

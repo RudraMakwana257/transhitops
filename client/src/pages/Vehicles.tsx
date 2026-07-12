@@ -5,9 +5,12 @@ import type { Vehicle } from '../types'
 import { DataTable } from '../components/ui/DataTable'
 import { StatusBadge } from '../components/ui/Badge'
 import { Input } from '../components/ui/Input'
+import { Select } from '../components/ui/Select'
 import { PageWrapper } from '../components/layout/PageWrapper'
+import { FilterBar, type FilterField } from '../components/ui/FilterBar'
 import { Plus } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
+import type { UserRole } from '../types'
 
 export function Vehicles() {
   const { hasRole } = useAuth()
@@ -17,7 +20,7 @@ export function Vehicles() {
   const [filters, setFilters] = useState({ search: '', status: '', type: '', region: '' })
   const [sorting, setSorting] = useState<{ column: string; direction: 'asc' | 'desc' }>({ column: 'name', direction: 'asc' })
   
-  const canManage = hasRole(['fleet_manager'])
+  const canManage = hasRole(['fleet_manager'] as UserRole[])
   
   useEffect(() => {
     fetchVehicles()
@@ -63,40 +66,54 @@ export function Vehicles() {
     ) : '—' },
   ]
   
+  const vehicleFields: FilterField[] = [
+    { key: 'search', type: 'text', placeholder: 'Search reg/name...' },
+    { key: 'status', type: 'select', options: [
+      { value: '', label: 'All Status' },
+      { value: 'Available', label: 'Available' },
+      { value: 'On Trip', label: 'On Trip' },
+      { value: 'In Shop', label: 'In Shop' },
+      { value: 'Retired', label: 'Retired' },
+    ]},
+    { key: 'type', type: 'select', options: [
+      { value: '', label: 'All Types' },
+      { value: 'Truck', label: 'Truck' },
+      { value: 'Van', label: 'Van' },
+      { value: 'Pickup', label: 'Pickup' },
+      { value: 'Trailer', label: 'Trailer' },
+      { value: 'Bus', label: 'Bus' },
+      { value: 'Tanker', label: 'Tanker' },
+    ]},
+    { key: 'region', type: 'select', options: [
+      { value: '', label: 'All Regions' },
+      { value: 'Mumbai', label: 'Mumbai' },
+      { value: 'Pune', label: 'Pune' },
+      { value: 'Nashik', label: 'Nashik' },
+      { value: 'Nagpur', label: 'Nagpur' },
+    ]},
+  ]
+  
+  const hasActiveFilters = filters.search || filters.status || filters.type || filters.region
+  
+  const clearAllFilters = () => {
+    setFilters({ search: '', status: '', type: '', region: '' })
+  }
+
   return (
     <PageWrapper 
       title="Fleet" 
       description="Manage your vehicle fleet"
       headerActions={
-        canManage && <Link to="/vehicles/new"><Plus className="w-4 h-4 mr-2" />Add Vehicle</Link>
+        canManage && <Link to="/vehicles/new" className="btn-primary inline-flex items-center gap-2"><Plus className="w-4 h-4" />Add Vehicle</Link>
       }
       filters={
-        <div className="flex flex-wrap gap-4">
-          <Input placeholder="Search reg/name..." value={filters.search} onChange={(e) => setFilters({...filters, search: e.target.value})} className="w-64" />
-          <select value={filters.status} onChange={(e) => setFilters({...filters, status: e.target.value})} className="form-input w-40">
-            <option value="">All Status</option>
-            <option value="Available">Available</option>
-            <option value="On Trip">On Trip</option>
-            <option value="In Shop">In Shop</option>
-            <option value="Retired">Retired</option>
-          </select>
-          <select value={filters.type} onChange={(e) => setFilters({...filters, type: e.target.value})} className="form-input w-40">
-            <option value="">All Types</option>
-            <option value="Truck">Truck</option>
-            <option value="Van">Van</option>
-            <option value="Pickup">Pickup</option>
-            <option value="Trailer">Trailer</option>
-            <option value="Bus">Bus</option>
-            <option value="Tanker">Tanker</option>
-          </select>
-          <select value={filters.region} onChange={(e) => setFilters({...filters, region: e.target.value})} className="form-input w-40">
-            <option value="">All Regions</option>
-            <option value="Mumbai">Mumbai</option>
-            <option value="Pune">Pune</option>
-            <option value="Nashik">Nashik</option>
-            <option value="Nagpur">Nagpur</option>
-          </select>
-        </div>
+        <FilterBar
+          fields={vehicleFields}
+          values={filters}
+          onChange={setFilters}
+          onClear={clearAllFilters}
+          hasActiveFilters={hasActiveFilters}
+        />
       }
     >
       <DataTable

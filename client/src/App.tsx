@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './store/authStore'
+import type { UserRole } from './types'
 import { AppLayout as Layout } from './components/layout/AppLayout'
 import { Login } from './pages/Login'
 import { Dashboard } from './pages/Dashboard'
@@ -18,8 +19,8 @@ import { Unauthorized } from './pages/Unauthorized'
 import { ToastContainer } from './components/ui/Toast'
 import './styles/globals.css'
 
-const ProtectedRoute = ({ children, roles }: { children: React.ReactNode; roles?: string[] }) => {
-  const { user, isAuthenticated, hasRole } = useAuth()
+const ProtectedRoute = ({ children, roles }: { children: React.ReactNode; roles?: UserRole[] }) => {
+  const { isAuthenticated, hasRole } = useAuth()
   
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />
