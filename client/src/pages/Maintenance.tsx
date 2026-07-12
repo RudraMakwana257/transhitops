@@ -6,11 +6,13 @@ import { DataTable } from '../components/ui/DataTable'
 import { StatusBadge } from '../components/ui/Badge'
 import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Input'
+import { Select } from '../components/ui/Select'
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card'
 import { PageWrapper } from '../components/layout/PageWrapper'
-import { Wrench, Plus, AlertTriangle, Clock, CheckCircle } from 'lucide-react'
+import { Wrench, Plus } from 'lucide-react'
 import { format } from 'date-fns'
 import { useAuth } from '../hooks/useAuth'
+import { toast } from '../store/toastStore'
 
 export function Maintenance() {
   const { hasRole } = useAuth()
@@ -80,7 +82,7 @@ export function Maintenance() {
         fetchLogs()
       }
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to create maintenance')
+      toast(err.response?.data?.message || 'Failed to create maintenance', 'error')
     } finally {
       setSubmitting(false)
     }
@@ -94,9 +96,10 @@ export function Maintenance() {
         completed_date: format(new Date(), 'yyyy-MM-dd'),
         technician_notes: ''
       })
+      toast('Maintenance marked as completed', 'success')
       fetchLogs()
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to complete')
+      toast(err.response?.data?.message || 'Failed to complete', 'error')
     }
   }
   
@@ -185,18 +188,5 @@ export function Maintenance() {
         emptyAction={canManage && <Button onClick={() => setShowCreate(true)}><Plus className="w-4 h-4 mr-2" />New Maintenance</Button>}
       />
     </PageWrapper>
-  )
-}
-
-function Select({ label, options, required, ...props }: any) {
-  const inputId = props.id || props.name
-  return (
-    <div className="w-full">
-      {label && <label htmlFor={inputId} className="block text-sm font-medium text-[var(--text-primary)] mb-1.5">{label}{required && <span className="text-red-500 ml-1">*</span>}</label>}
-      <select id={inputId} className="form-input" {...props} required={required}>
-        <option value="">Select...</option>
-        {options.map((opt: any) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-      </select>
-    </div>
   )
 }

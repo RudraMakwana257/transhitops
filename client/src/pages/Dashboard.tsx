@@ -78,7 +78,7 @@ export function Dashboard() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-[var(--text-primary)]">Dashboard</h1>
+          <h1 className="text-xl sm:text-2xl font-semibold text-[var(--text-primary)]">Dashboard</h1>
           <p className="text-sm text-[var(--text-secondary)]">Real-time fleet operations overview</p>
         </div>
         <div className="flex items-center gap-2">

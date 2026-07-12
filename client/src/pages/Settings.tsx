@@ -7,9 +7,10 @@ import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card'
 import { PageWrapper } from '../components/layout/PageWrapper'
 import { DataTable } from '../components/ui/DataTable'
 import { StatusBadge } from '../components/ui/Badge'
-import { Select } from '../components/ui/Input'
-import { Users, Plus, Truck, Settings as SettingsIcon, Shield, AlertCircle, Edit2, Trash2 } from 'lucide-react'
+import { Select } from '../components/ui/Select'
+import { Plus, Shield, AlertCircle } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
+import { toast } from '../store/toastStore'
 import { format } from 'date-fns'
 import { z } from 'zod'
 import { useForm } from 'react-hook-form'
@@ -69,7 +70,7 @@ export function Settings() {
       form.reset({ name: '', email: '', password: '', role: 'dispatcher', is_active: true })
       fetchUsers()
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to save user')
+      toast(err.response?.data?.message || 'Failed to save user', 'error')
     } finally {
       setSubmitting(false)
     }
@@ -93,7 +94,7 @@ export function Settings() {
       await api.delete(`/settings/users/${userId}`)
       fetchUsers()
     } catch (err) {
-      alert('Failed to deactivate user')
+      toast('Failed to deactivate user', 'error')
     }
   }
   

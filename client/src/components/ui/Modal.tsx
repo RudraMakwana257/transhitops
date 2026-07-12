@@ -105,16 +105,23 @@ export function ConfirmModal({
   loading = false
 }: ConfirmModalProps) {
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={title} size="sm">
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={title}
+      size="sm"
+      footer={
+        <div className="flex justify-end gap-2">
+          <Button variant="secondary" onClick={onClose} disabled={loading}>
+            {cancelLabel}
+          </Button>
+          <Button variant={confirmVariant} onClick={onConfirm} loading={loading}>
+            {confirmLabel}
+          </Button>
+        </div>
+      }
+    >
       <p className="text-[var(--text-secondary)]">{message}</p>
-      <div slot="footer" className="flex justify-end gap-2">
-        <Button variant="secondary" onClick={onClose} disabled={loading}>
-          {cancelLabel}
-        </Button>
-        <Button variant={confirmVariant} onClick={onConfirm} loading={loading}>
-          {confirmLabel}
-        </Button>
-      </div>
     </Modal>
   )
 }
@@ -139,7 +146,7 @@ export function SlideOver({ isOpen, onClose, title, children, width = 360 }: Sli
       />
       
       <div className="fixed inset-y-0 right-0 z-50 flex max-w-full animate-slide-in-right">
-        <div className={`w-full max-w-[${width}px] bg-[var(--bg-card)] border-l border-[var(--border-default)] flex flex-col h-full shadow-xl`}>
+        <div className="w-full bg-[var(--bg-card)] border-l border-[var(--border-default)] flex flex-col h-full shadow-xl" style={{ maxWidth: width }}>
           <div className="flex items-center justify-between p-4 border-b border-[var(--border-default)]">
             <h2 className="text-lg font-semibold text-[var(--text-primary)]">{title}</h2>
             <button

@@ -1,14 +1,12 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '../api/client'
-import type { Vehicle, VehicleStatus } from '../types'
+import type { Vehicle } from '../types'
 import { DataTable } from '../components/ui/DataTable'
 import { StatusBadge } from '../components/ui/Badge'
-import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Input'
-import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card'
 import { PageWrapper } from '../components/layout/PageWrapper'
-import { Truck, Plus, Search, Filter, Truck as TruckIcon, ChevronUp, ChevronDown } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 
 export function Vehicles() {
@@ -17,13 +15,13 @@ export function Vehicles() {
   const [loading, setLoading] = useState(true)
   const [pagination, setPagination] = useState({ page: 1, pageSize: 20, total: 0, totalPages: 0 })
   const [filters, setFilters] = useState({ search: '', status: '', type: '', region: '' })
-  const [sorting, setSorting] = useState({ column: 'name', direction: 'asc' })
+  const [sorting, setSorting] = useState<{ column: string; direction: 'asc' | 'desc' }>({ column: 'name', direction: 'asc' })
   
   const canManage = hasRole(['fleet_manager'])
   
   useEffect(() => {
     fetchVehicles()
-  }, [pagination.page, filters, sorting])
+  }  , [pagination.page, filters.search, filters.status, filters.type, filters.region, sorting.column, sorting.direction])
   
   const fetchVehicles = async () => {
     setLoading(true)
@@ -70,7 +68,7 @@ export function Vehicles() {
       title="Fleet" 
       description="Manage your vehicle fleet"
       headerActions={
-        canManage && <Button asChild><Link to="/vehicles/new"><Plus className="w-4 h-4 mr-2" />Add Vehicle</Link></Button>
+        canManage && <Link to="/vehicles/new"><Plus className="w-4 h-4 mr-2" />Add Vehicle</Link>
       }
       filters={
         <div className="flex flex-wrap gap-4">
@@ -121,7 +119,7 @@ export function Vehicles() {
           })),
         }}
         emptyMessage="No vehicles found"
-        emptyAction={canManage && <Button asChild><Link to="/vehicles/new"><Plus className="w-4 h-4 mr-2" />Add Vehicle</Link></Button>}
+        emptyAction={canManage && <Link to="/vehicles/new"><Plus className="w-4 h-4 mr-2" />Add Vehicle</Link>}
       />
     </PageWrapper>
   )

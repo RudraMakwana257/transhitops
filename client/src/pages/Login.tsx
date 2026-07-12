@@ -1,9 +1,9 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, Navigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Truck, Eye, EyeOff, AlertCircle, Loader2, Moon, Sun } from 'lucide-react'
+import { Truck, Eye, EyeOff, AlertCircle, Moon, Sun } from 'lucide-react'
 import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Input'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/ui/Card'
@@ -58,7 +58,7 @@ export function Login() {
                 <Truck className="w-8 h-8 text-white" />
               </div>
             </div>
-            <CardTitle className="text-2xl">Welcome to TransitOps</CardTitle>
+            <CardTitle className="text-xl sm:text-2xl">Welcome to TransitOps</CardTitle>
             <CardDescription>Sign in to access your fleet operations</CardDescription>
           </CardHeader>
           

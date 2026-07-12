@@ -33,7 +33,7 @@ export function KPICard({ title, value, icon, trend, color, loading }: KPICardPr
           {icon}
         </div>
       </div>
-      <div className="text-3xl font-bold text-[var(--text-primary)] mb-1">{value}</div>
+      <div className="text-2xl sm:text-3xl font-bold text-[var(--text-primary)] mb-1">{value}</div>
       {trend && (
         <div className="flex items-center gap-1 text-xs">
           {trend.positive ? (

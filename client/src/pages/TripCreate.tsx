@@ -7,13 +7,14 @@ import { api } from '../api/client'
 import type { Vehicle, Driver } from '../types'
 import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Input'
-import { Select } from '../components/ui/Input'
+import { Select } from '../components/ui/Select'
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '../components/ui/Card'
 import { PageWrapper } from '../components/layout/PageWrapper'
 import { StatusBadge } from '../components/ui/Badge'
-import { Truck, Users, MapPin, Package, AlertCircle, CheckCircle, ChevronLeft, ChevronRight, Loader2, AlertTriangle } from 'lucide-react'
+import { Truck, Users, MapPin, AlertCircle, CheckCircle, ChevronLeft, ChevronRight, AlertTriangle } from 'lucide-react'
 import { format } from 'date-fns'
 import { useAuth } from '../hooks/useAuth'
+import { toast } from '../store/toastStore'
 
 const step1Schema = z.object({
   source: z.string().min(1, 'Source is required'),
@@ -127,7 +128,7 @@ export function TripCreate() {
         navigate(`/trips/${tripId}`)
       }
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to create trip')
+      toast(err.response?.data?.message || 'Failed to create trip', 'error')
     } finally {
       setDispatching(false)
     }

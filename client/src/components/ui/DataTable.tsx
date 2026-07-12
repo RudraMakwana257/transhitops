@@ -1,5 +1,5 @@
 import { ReactNode, useMemo, useState } from 'react'
-import { ChevronUp, ChevronDown, Check, CheckCheck, Minus } from 'lucide-react'
+import { ChevronUp, ChevronDown } from 'lucide-react'
 import { clsx } from 'clsx'
 import { Badge } from './Badge'
 

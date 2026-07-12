@@ -1,14 +1,12 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '../api/client'
-import type { Trip, TripStatus } from '../types'
+import type { Trip } from '../types'
 import { DataTable } from '../components/ui/DataTable'
 import { StatusBadge } from '../components/ui/Badge'
-import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Input'
-import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card'
 import { PageWrapper } from '../components/layout/PageWrapper'
-import { MapPin, Plus, Search, Filter, ChevronUp, ChevronDown, Play, Clock } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import { format } from 'date-fns'
 import { useAuth } from '../hooks/useAuth'
 
@@ -18,13 +16,13 @@ export function Trips() {
   const [loading, setLoading] = useState(true)
   const [pagination, setPagination] = useState({ page: 1, pageSize: 20, total: 0, totalPages: 0 })
   const [filters, setFilters] = useState({ search: '', status: '', vehicle_id: '', driver_id: '', from_date: '', to_date: '' })
-  const [sorting, setSorting] = useState({ column: 'created_at', direction: 'desc' })
+  const [sorting, setSorting] = useState<{ column: string; direction: 'asc' | 'desc' }>({ column: 'created_at', direction: 'desc' })
   
   const canManage = hasRole(['fleet_manager', 'dispatcher'])
   
   useEffect(() => {
     fetchTrips()
-  }, [pagination.page, filters, sorting])
+  }, [pagination.page, filters.search, filters.status, filters.vehicle_id, filters.from_date, filters.to_date, sorting.column, sorting.direction])
   
   const fetchTrips = async () => {
     setLoading(true)

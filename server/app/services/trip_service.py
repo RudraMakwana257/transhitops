@@ -5,7 +5,7 @@ from app.models.trip import Trip
 from app.models.trip_event import TripEvent
 from app.models.fuel_log import FuelLog
 from app.models.audit_log import AuditLog
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from sqlalchemy.exc import IntegrityError
 
 class ValidationError(Exception):

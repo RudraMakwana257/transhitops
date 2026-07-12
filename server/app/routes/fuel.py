@@ -55,13 +55,16 @@ def create_fuel():
     if float(data['liters']) <= 0 or float(data['price_per_liter']) <= 0:
         return jsonify({"success": False, "message": "Liters and price must be greater than zero"}), 400
     
+    liters = float(data['liters'])
+    price = float(data['price_per_liter'])
     fuel = FuelLog(
         vehicle_id=vehicle.id,
         driver_id=data.get('driver_id'),
         trip_id=data.get('trip_id'),
         date=data['date'],
-        liters=data['liters'],
-        price_per_liter=data['price_per_liter'],
+        liters=liters,
+        price_per_liter=price,
+        total_cost=liters * price,
         odometer_reading=data.get('odometer_reading'),
         fuel_station=data.get('fuel_station')
     )
@@ -91,6 +94,9 @@ def update_fuel(id):
     for field in ['vehicle_id', 'driver_id', 'trip_id', 'date', 'liters', 'price_per_liter', 'odometer_reading', 'fuel_station']:
         if field in data:
             setattr(fuel, field, data[field])
+    
+    if 'liters' in data or 'price_per_liter' in data:
+        fuel.total_cost = float(fuel.liters) * float(fuel.price_per_liter)
     
     db.session.commit()
     return jsonify({"success": True, "data": fuel.to_dict(), "message": "Fuel log updated"})

@@ -4,14 +4,15 @@ import { api } from '../api/client'
 import type { Trip, TripStatus, Vehicle, Driver, MaintenanceLog, FuelLog } from '../types'
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card'
 import { Button } from '../components/ui/Button'
-import { Input } from '../components/ui/Input'
+import { Input, Textarea } from '../components/ui/Input'
 import { StatusBadge } from '../components/ui/Badge'
 import { Modal } from '../components/ui/Modal'
 import { PageWrapper } from '../components/layout/PageWrapper'
-import { MapPin, Truck, User, Calendar, Clock, Fuel, Wrench, DollarSign, CheckCircle, XCircle, Play, Pause, AlertTriangle, Loader2, ChevronLeft } from 'lucide-react'
+import { MapPin, Calendar, CheckCircle, XCircle, Play, ChevronLeft } from 'lucide-react'
 import { format, differenceInDays } from 'date-fns'
 import { useAuth } from '../hooks/useAuth'
 import { formatCurrency, formatDistance, formatPercentage } from '../utils/formatters'
+import { toast } from '../store/toastStore'
 
 export function TripDetail() {
   const { id } = useParams<{ id: string }>()
@@ -20,15 +21,9 @@ export function TripDetail() {
   const [trip, setTrip] = useState<Trip | null>(null)
   const [loading, setLoading] = useState(true)
   const [dispatching, setDispatching] = useState(false)
-  const [completing, setCompleting] = useState(false)
   const [cancelling, setCancelling] = useState(false)
   const [showCompleteModal, setShowCompleteModal] = useState(false)
-  const [completeForm, setCompleteForm] = useState({
-    end_odometer: '',
-    fuel_consumed_l: '',
-    revenue: '',
-    notes: '',
-  })
+  const [showCancelModal, setShowCancelModal] = useState(false)
   const [cancelReason, setCancelReason] = useState('')
   
   const canManage = hasRole(['fleet_manager', 'dispatcher'])
@@ -51,45 +46,27 @@ export function TripDetail() {
   }
   
   const handleDispatch = async () => {
-    if (!confirm('Dispatch this trip? Vehicle and driver will be marked as On Trip.')) return
     setDispatching(true)
     try {
       await api.put(`/trips/${id}/dispatch`, { confirm: true })
+      toast('Trip dispatched successfully', 'success')
       fetchTrip()
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to dispatch')
+      toast(err.response?.data?.message || 'Failed to dispatch', 'error')
     } finally {
       setDispatching(false)
     }
   }
   
-  const handleComplete = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setCompleting(true)
-    try {
-      await api.put(`/trips/${id}/complete`, {
-        end_odometer: Number(completeForm.end_odometer),
-        fuel_consumed_l: Number(completeForm.fuel_consumed_l),
-        revenue: Number(completeForm.revenue) || 0,
-        notes: completeForm.notes,
-      })
-      setShowCompleteModal(false)
-      fetchTrip()
-    } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to complete')
-    } finally {
-      setCompleting(false)
-    }
-  }
-  
   const handleCancel = async () => {
-    if (!cancelReason.trim()) { alert('Please provide a reason'); return }
+    if (!cancelReason.trim()) { toast('Please provide a reason', 'warning'); return }
     setCancelling(true)
     try {
       await api.put(`/trips/${id}/cancel`, { reason: cancelReason })
+      toast('Trip cancelled', 'success')
       fetchTrip()
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to cancel')
+      toast(err.response?.data?.message || 'Failed to cancel', 'error')
     } finally {
       setCancelling(false)
     }
@@ -272,9 +249,9 @@ export function TripDetail() {
       <CompleteTripModal 
         isOpen={showCompleteModal} 
         onClose={() => setShowCompleteModal(false)} 
-        onSubmit={handleComplete}
-        loading={completing}
+        onComplete={fetchTrip}
         startOdometer={trip.start_odometer || 0}
+        tripId={trip.id}
       />
       
       <ConfirmModal 
@@ -343,13 +320,34 @@ function TimelineItem({ icon, title, time, description, active, variant }: { ico
   )
 }
 
-function CompleteTripModal({ isOpen, onClose, onSubmit, loading, startOdometer }: { isOpen: boolean; onClose: () => void; onSubmit: (e: React.FormEvent) => void; loading: boolean; startOdometer: number }) {
-  if (!isOpen) return null
+function CompleteTripModal({ isOpen, onClose, onComplete, startOdometer, tripId }: { isOpen: boolean; onClose: () => void; onComplete: () => void; startOdometer: number; tripId: string }) {
   const [form, setForm] = useState({ end_odometer: '', fuel_consumed_l: '', revenue: '', notes: '' })
+  const [submitting, setSubmitting] = useState(false)
+  if (!isOpen) return null
+  
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setSubmitting(true)
+    try {
+      await api.put(`/trips/${tripId}/complete`, {
+        end_odometer: Number(form.end_odometer),
+        fuel_consumed_l: Number(form.fuel_consumed_l),
+        revenue: Number(form.revenue) || 0,
+        notes: form.notes,
+      })
+      setForm({ end_odometer: '', fuel_consumed_l: '', revenue: '', notes: '' })
+      onComplete()
+      onClose()
+    } catch (err: any) {
+      toast(err.response?.data?.message || 'Failed to complete', 'error')
+    } finally {
+      setSubmitting(false)
+    }
+  }
   
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Complete Trip" size="lg">
-      <form onSubmit={onSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid gap-4 md:grid-cols-2">
           <Input {...{ value: form.end_odometer, onChange: (e) => setForm({...form, end_odometer: e.target.value}) }} label="End Odometer (km) *" type="number" min={startOdometer + 1} placeholder={`${startOdometer + 1}`} required />
           <Input {...{ value: form.fuel_consumed_l, onChange: (e) => setForm({...form, fuel_consumed_l: e.target.value}) }} label="Fuel Consumed (L) *" type="number" min="0.01" step="0.01" required />
@@ -357,17 +355,19 @@ function CompleteTripModal({ isOpen, onClose, onSubmit, loading, startOdometer }
         <div className="grid gap-4 md:grid-cols-2">
           <Input {...{ value: form.revenue, onChange: (e) => setForm({...form, revenue: e.target.value}) }} label="Revenue (₹)" type="number" min="0" step="1" />
         </div>
-        <Textarea {...{ value: form.notes, onChange: (e) => setForm({...form, notes: e.target.value}) }} label="Notes" placeholder="Additional notes..." rows={3} />
+        <Input {...{ value: form.notes, onChange: (e) => setForm({...form, notes: e.target.value}) }} label="Notes" placeholder="Additional notes..." />
         <div className="flex justify-end gap-2 pt-4 border-t border-[var(--border-default)]">
           <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
-          <Button type="submit" loading={loading}>Complete Trip</Button>
+          <Button type="submit" loading={submitting}>Complete Trip</Button>
         </div>
       </form>
     </Modal>
   )
 }
 
-function ConfirmModal({ isOpen, onClose, onConfirm, loading, title, message, confirmLabel, confirmVariant, requireReason, reason, onReasonChange, reasonPlaceholder }: any) {
+function ConfirmModal({ isOpen, onClose, onConfirm, loading, title, message, confirmLabel, confirmVariant, requireReason, reason, onReasonChange, reasonPlaceholder }: {
+  isOpen: boolean; onClose: () => void; onConfirm: () => void; loading?: boolean; title: string; message: string; confirmLabel?: string; confirmVariant?: 'danger' | 'primary' | 'secondary'; requireReason?: boolean; reason?: string; onReasonChange?: (v: string) => void; reasonPlaceholder?: string
+}) {
   if (!isOpen) return null
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={title} size="md">
@@ -384,7 +384,7 @@ function ConfirmModal({ isOpen, onClose, onConfirm, loading, title, message, con
         )}
         <div className="flex justify-end gap-2 pt-4 border-t border-[var(--border-default)]">
           <Button variant="secondary" onClick={onClose} disabled={loading}>Cancel</Button>
-          <Button variant={confirmVariant} onClick={onConfirm} loading={loading} disabled={requireReason && !reason.trim()}>
+          <Button variant={confirmVariant} onClick={onConfirm} loading={loading} disabled={requireReason && !reason?.trim()}>
             {confirmLabel}
           </Button>
         </div>
@@ -393,11 +393,4 @@ function ConfirmModal({ isOpen, onClose, onConfirm, loading, title, message, con
   )
 }
 
-function Textarea({ value, onChange, label, placeholder, rows, ...props }: any) {
-  return (
-    <div className="w-full">
-      {label && <label className="block text-sm font-medium text-[var(--text-primary)] mb-1.5">{label}</label>}
-      <textarea value={value} onChange={onChange} placeholder={placeholder} rows={rows} className="form-input min-h-[80px] resize-y" {...props} />
-    </div>
-  )
-}
+

@@ -5,11 +5,13 @@ import { DataTable } from '../components/ui/DataTable'
 import { StatusBadge } from '../components/ui/Badge'
 import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Input'
+import { Select } from '../components/ui/Select'
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card'
 import { PageWrapper } from '../components/layout/PageWrapper'
-import { Receipt, Plus, Download, DollarSign, TrendingUp, BarChart2, CreditCard } from 'lucide-react'
+import { Plus, Download } from 'lucide-react'
 import { format } from 'date-fns'
 import { useAuth } from '../hooks/useAuth'
+import { toast } from '../store/toastStore'
 
 const EXPENSE_TYPES: ExpenseType[] = ['Fuel', 'Repair', 'Tyre', 'Insurance', 'Permit', 'Fine', 'Toll', 'Other']
 
@@ -37,7 +39,7 @@ export function Expenses() {
   useEffect(() => {
     fetchExpenses()
     fetchSummary()
-  }, [pagination.page, filters, sorting])
+  }  , [pagination.page, filters.type, filters.vehicle_id, filters.from_date, filters.to_date, sorting.column, sorting.direction])
   
   const fetchExpenses = async () => {
     setLoading(true)
@@ -87,18 +89,18 @@ export function Expenses() {
       fetchExpenses()
       fetchSummary()
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to add expense')
+      toast(err.response?.data?.message || 'Failed to add expense', 'error')
     } finally {
       setSubmitting(false)
     }
   }
   
   const columns = [
-    { key: 'date', header: 'Date', accessor: 'date', sortable: true, render: (d: string) => format(new Date(d), 'MMM d, yyyy') },
+    { key: 'date', header: 'Date', accessor: 'date', sortable: true, render: (e: Expense) => format(new Date(e.date), 'MMM d, yyyy') },
     { key: 'vehicle', header: 'Vehicle', render: (e: Expense) => e.vehicle ? `${e.vehicle.name} (${e.vehicle.reg_number})` : '—' },
     { key: 'trip', header: 'Trip', render: (e: Expense) => e.trip?.trip_number || '—' },
     { key: 'type', header: 'Type', accessor: 'type', sortable: true },
-    { key: 'amount', header: 'Amount', accessor: 'amount', sortable: true, align: 'right' as const, render: (v: number) => `₹${v.toLocaleString()}` },
+    { key: 'amount', header: 'Amount', accessor: 'amount', sortable: true, align: 'right' as const, render: (e: Expense) => `₹${e.amount.toLocaleString()}` },
     { key: 'description', header: 'Description', accessor: 'description' },
   ]
   
@@ -107,7 +109,7 @@ export function Expenses() {
       title="Expenses" 
       description="Track operational expenses"
       headerActions={
-        <Button onClick={() => setShowCreate(true)}><Plus className="w-4 h-4 mr-2" />Add Expense</Button>
+        canManage && <Button onClick={() => setShowCreate(true)}><Plus className="w-4 h-4 mr-2" />Add Expense</Button>
       }
       filters={
         <div className="flex flex-wrap gap-4">
@@ -144,11 +146,11 @@ export function Expenses() {
       
       <DataTable
         columns={[
-          { key: 'date', header: 'Date', accessor: 'date', sortable: true, render: (d: string) => format(new Date(d), 'MMM d, yyyy') },
+          { key: 'date', header: 'Date', accessor: 'date', sortable: true, render: (e: Expense) => format(new Date(e.date), 'MMM d, yyyy') },
           { key: 'vehicle', header: 'Vehicle', render: (e: Expense) => e.vehicle ? `${e.vehicle.name} (${e.vehicle.reg_number})` : '—' },
           { key: 'trip', header: 'Trip', render: (e: Expense) => e.trip?.trip_number || '—' },
           { key: 'type', header: 'Type', accessor: 'type', sortable: true },
-          { key: 'amount', header: 'Amount', accessor: 'amount', sortable: true, align: 'right' as const, render: (v: number) => `₹${v.toLocaleString()}` },
+          { key: 'amount', header: 'Amount', accessor: 'amount', sortable: true, align: 'right' as const, render: (e: Expense) => `₹${e.amount.toLocaleString()}` },
           { key: 'description', header: 'Description', accessor: 'description' },
         ]}
         data={expenses}
@@ -170,18 +172,5 @@ export function Expenses() {
         emptyMessage="No expenses recorded"
       />
     </PageWrapper>
-  )
-}
-
-function Select({ label, options, required, ...props }: any) {
-  const inputId = props.id || props.name
-  return (
-    <div className="w-full">
-      {label && <label htmlFor={inputId} className="block text-sm font-medium text-[var(--text-primary)] mb-1.5">{label}{required && <span className="text-red-500 ml-1">*</span>}</label>}
-      <select id={inputId} className="form-input" {...props} required={required}>
-        <option value="">Select...</option>
-        {options.map((opt: any) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-      </select>
-    </div>
   )
 }

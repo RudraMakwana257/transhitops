@@ -5,11 +5,13 @@ import { DataTable } from '../components/ui/DataTable'
 import { StatusBadge } from '../components/ui/Badge'
 import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Input'
+import { Select } from '../components/ui/Select'
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card'
 import { PageWrapper } from '../components/layout/PageWrapper'
-import { Droplets, Plus, Search, Filter, Fuel as FuelIcon, Truck } from 'lucide-react'
+import { Droplets, Plus } from 'lucide-react'
 import { format } from 'date-fns'
 import { useAuth } from '../hooks/useAuth'
+import { toast } from '../store/toastStore'
 
 export function Fuel() {
   const { hasRole } = useAuth()
@@ -84,7 +86,7 @@ export function Fuel() {
       setFormData({ vehicle_id: '', driver_id: '', trip_id: '', date: format(new Date(), 'yyyy-MM-dd'), liters: '', price_per_liter: '', odometer_reading: '', fuel_station: '' })
       fetchLogs()
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to add fuel log')
+      toast(err.response?.data?.message || 'Failed to add fuel log', 'error')
     } finally {
       setSubmitting(false)
     }
@@ -106,7 +108,7 @@ export function Fuel() {
       title="Fuel Logs" 
       description="Record and track fuel consumption"
       headerActions={
-        <Button onClick={() => setShowCreate(true)}><Plus className="w-4 h-4 mr-2" />Add Fuel Log</Button>
+        canManage && <Button onClick={() => setShowCreate(true)}><Plus className="w-4 h-4 mr-2" />Add Fuel Log</Button>
       }
     >
       {showCreate && (
@@ -155,19 +157,3 @@ export function Fuel() {
   )
 }
 
-function Select({ label, options, required, ...props }: any) {
-  const inputId = props.id || props.name
-  return (
-    <div className="w-full">
-      {label && <label htmlFor={inputId} className="block text-sm font-medium text-[var(--text-primary)] mb-1.5">{label}{required && <span className="text-red-500 ml-1">*</span>}</label>}
-      <select id={inputId} className="form-input" {...props} required={required}>
-        <option value="">Select...</option>
-        {options.map((opt: any) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-      </select>
-    </div>
-  )
-}
-
-function handleSubmit(e: React.FormEvent) {
-  e.preventDefault()
-}

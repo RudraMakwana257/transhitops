@@ -66,11 +66,9 @@ export function StatusBadge({
     Suspended: { variant: 'danger', dotColor: 'bg-red-500' },
     Draft: { variant: 'secondary', dotColor: 'bg-gray-500' },
     Dispatched: { variant: 'info', dotColor: 'bg-blue-500' },
-    Completed: { variant: 'success', dotColor: 'bg-green-500' },
-    Cancelled: { variant: 'danger', dotColor: 'bg-red-500' },
     Open: { variant: 'danger', dotColor: 'bg-red-500' },
     'In Progress': { variant: 'warning', dotColor: 'bg-amber-500' },
-    Completed: { variant: 'success', dotColor: 'bg-green-500' },
+    Closed: { variant: 'success', dotColor: 'bg-green-500' },
   }
   
   const cfg = config[status] || { variant: 'default', dotColor: 'bg-gray-500' }

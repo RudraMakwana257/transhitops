@@ -3,7 +3,7 @@ import { api } from '../api/client'
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card'
 import { Button } from '../components/ui/Button'
 import { PageWrapper } from '../components/layout/PageWrapper'
-import { BarChart2, TrendingUp, DollarSign, Users, Truck, Download } from 'lucide-react'
+import { Download } from 'lucide-react'
 import { format } from 'date-fns'
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -11,8 +11,13 @@ import {
   PieChart, Pie, Cell, Legend
 } from 'recharts'
 import { CHART_COLORS } from '../utils/formatters'
+import { useAuth } from '../hooks/useAuth'
 
 export function Analytics() {
+  const { hasRole } = useAuth()
+  const canViewFinancial = hasRole(['fleet_manager', 'financial_analyst'])
+  const canViewDriverPerf = hasRole(['fleet_manager', 'safety_officer'])
+  
   const [fuelEff, setFuelEff] = useState<any[]>([])
   const [utilization, setUtilization] = useState<any>(null)
   const [opCost, setOpCost] = useState<any[]>([])
@@ -23,7 +28,7 @@ export function Analytics() {
   
   useEffect(() => {
     fetchAll()
-  }, [dateRange])
+  }  , [dateRange.from, dateRange.to])
   
   const fetchAll = async () => {
     setLoading(true)
@@ -32,9 +37,9 @@ export function Analytics() {
       const [feRes, utilRes, costRes, roiRes, perfRes] = await Promise.all([
         api.get(`/analytics/fuel-efficiency?${params}`),
         api.get(`/analytics/fleet-utilization?${params}`),
-        api.get(`/analytics/operational-cost?${params}`),
-        api.get(`/analytics/vehicle-roi?${params}`),
-        api.get(`/analytics/driver-performance?${params}`),
+        canViewFinancial ? api.get(`/analytics/operational-cost?${params}`) : Promise.resolve({ data: { success: false } }),
+        canViewFinancial ? api.get(`/analytics/vehicle-roi?${params}`) : Promise.resolve({ data: { success: false } }),
+        canViewDriverPerf ? api.get(`/analytics/driver-performance?${params}`) : Promise.resolve({ data: { success: false } }),
       ])
       if (feRes.data.success) setFuelEff(feRes.data.data)
       if (utilRes.data.success) setUtilization(utilRes.data.data)
@@ -73,28 +78,32 @@ export function Analytics() {
             <Card>
               <CardHeader><CardTitle>Fleet Utilization</CardTitle></CardHeader>
               <CardContent>
-                <p className="text-3xl font-bold">{utilization?.utilization_pct?.toFixed(1)}%</p>
+                <p className="text-2xl sm:text-3xl font-bold">{utilization?.utilization_pct?.toFixed(1)}%</p>
                 <p className="text-sm text-[var(--text-muted)]">{utilization?.on_trip_vehicles}/{utilization?.total_active_vehicles} vehicles on trip</p>
               </CardContent>
             </Card>
             <Card>
               <CardHeader><CardTitle>Avg Fuel Efficiency</CardTitle></CardHeader>
               <CardContent>
-                <p className="text-3xl font-bold">{fuelEff.reduce((s, v) => s + (v.avg_kmpl || 0), 0) / (fuelEff.length || 1)} km/L</p>
+                <p className="text-2xl sm:text-3xl font-bold">{fuelEff.reduce((s, v) => s + (v.avg_kmpl || 0), 0) / (fuelEff.length || 1)} km/L</p>
               </CardContent>
             </Card>
-            <Card>
-              <CardHeader><CardTitle>Total Operational Cost</CardTitle></CardHeader>
-              <CardContent>
-                <p className="text-3xl font-bold">₹{opCost.reduce((s, v) => s + (v.total_cost || 0), 0).toLocaleString()}</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader><CardTitle>Avg Fleet ROI</CardTitle></CardHeader>
-              <CardContent>
-                <p className="text-3xl font-bold">{(roi.reduce((s, v) => s + (v.roi || 0), 0) / (roi.length || 1) * 100).toFixed(1)}%</p>
-              </CardContent>
-            </Card>
+            {canViewFinancial && (
+              <>
+                <Card>
+                  <CardHeader><CardTitle>Total Operational Cost</CardTitle></CardHeader>
+                  <CardContent>
+                    <p className="text-2xl sm:text-3xl font-bold">₹{opCost.reduce((s, v) => s + (v.total_cost || 0), 0).toLocaleString()}</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader><CardTitle>Avg Fleet ROI</CardTitle></CardHeader>
+                  <CardContent>
+                    <p className="text-2xl sm:text-3xl font-bold">{(roi.reduce((s, v) => s + (v.roi || 0), 0) / (roi.length || 1) * 100).toFixed(1)}%</p>
+                  </CardContent>
+                </Card>
+              </>
+            )}
           </div>
           
           {/* Charts */}
@@ -114,22 +123,24 @@ export function Analytics() {
               </CardContent>
             </Card>
             
-            <Card>
-              <CardHeader><CardTitle>Operational Cost Breakdown</CardTitle></CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={opCost} margin={{ top: 10, right: 30, left: 0, bottom: 0 }} layout="vertical">
-                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border-default)" horizontal={false} />
-                    <XAxis type="number" tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={{ stroke: 'var(--border-default)' }} tickLine={false} />
-                    <YAxis dataKey="vehicle_name" type="category" width={100} tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} />
-                    <Tooltip contentStyle={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-default)' }} />
-                    <Legend />
-                    <Bar dataKey="fuel_cost" fill={CHART_COLORS.primary} name="Fuel" radius={[0, 4, 4, 0]} maxBarWidth={30} stackId="a" />
-                    <Bar dataKey="maintenance_cost" fill={CHART_COLORS.warning} name="Maintenance" radius={[0, 4, 4, 0]} maxBarWidth={30} stackId="a" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
+            {canViewFinancial && (
+              <Card>
+                <CardHeader><CardTitle>Operational Cost Breakdown</CardTitle></CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={opCost} margin={{ top: 10, right: 30, left: 0, bottom: 0 }} layout="vertical">
+                      <CartesianGrid strokeDasharray="3 3" stroke="var(--border-default)" horizontal={false} />
+                      <XAxis type="number" tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={{ stroke: 'var(--border-default)' }} tickLine={false} />
+                      <YAxis dataKey="vehicle_name" type="category" width={100} tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} />
+                      <Tooltip contentStyle={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-default)' }} />
+                      <Legend />
+                      <Bar dataKey="fuel_cost" fill={CHART_COLORS.primary} name="Fuel" radius={[0, 4, 4, 0]} maxBarWidth={30} stackId="a" />
+                      <Bar dataKey="maintenance_cost" fill={CHART_COLORS.warning} name="Maintenance" radius={[0, 4, 4, 0]} maxBarWidth={30} stackId="a" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+            )}
           </div>
           
           <div className="grid gap-6 md:grid-cols-2 mb-6">
@@ -156,89 +167,95 @@ export function Analytics() {
               </CardContent>
             </Card>
             
-            <Card>
-              <CardHeader><CardTitle>Cost Trend (30 Days)</CardTitle></CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <AreaChart data={[]} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="costGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor={CHART_COLORS.primary} stopOpacity={0.3} />
-                        <stop offset="95%" stopColor={CHART_COLORS.primary} stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border-default)" vertical={false} />
-                    <XAxis tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={{ stroke: 'var(--border-default)' }} tickLine={false} />
-                    <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} />
-                    <Tooltip contentStyle={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-default)' }} />
-                    <Area type="monotone" dataKey="total_cost" stroke={CHART_COLORS.primary} strokeWidth={2} fillOpacity={1} fill="url(#costGradient)" />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
+            {canViewFinancial && (
+              <Card>
+                <CardHeader><CardTitle>Operational Cost by Vehicle</CardTitle></CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <AreaChart data={opCost} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                      <defs>
+                        <linearGradient id="costGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor={CHART_COLORS.primary} stopOpacity={0.3} />
+                          <stop offset="95%" stopColor={CHART_COLORS.primary} stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="var(--border-default)" vertical={false} />
+                      <XAxis tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={{ stroke: 'var(--border-default)' }} tickLine={false} />
+                      <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} />
+                      <Tooltip contentStyle={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-default)' }} />
+                      <Area type="monotone" dataKey="total_cost" stroke={CHART_COLORS.primary} strokeWidth={2} fillOpacity={1} fill="url(#costGradient)" />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+            )}
           </div>
           
           {/* Tables */}
           <div className="grid gap-6 md:grid-cols-2">
-            <Card>
-              <CardHeader><CardTitle>Vehicle ROI</CardTitle></CardHeader>
-              <CardContent>
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-[var(--border-default)]">
-                      <th className="text-left py-2 px-4 text-xs uppercase font-semibold text-[var(--text-muted)]">Vehicle</th>
-                      <th className="text-right py-2 px-4 text-xs uppercase font-semibold text-[var(--text-muted)]">Acquisition</th>
-                      <th className="text-right py-2 px-4 text-xs uppercase font-semibold text-[var(--text-muted)]">Revenue</th>
-                      <th className="text-right py-2 px-4 text-xs uppercase font-semibold text-[var(--text-muted)]">Costs</th>
-                      <th className="text-right py-2 px-4 text-xs uppercase font-semibold text-[var(--text-muted)]">ROI</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {roi.slice(0, 10).map((r: any) => (
-                      <tr key={r.vehicle_id} className="border-b border-[var(--border-default)]/50 hover:bg-[var(--bg-hover)]">
-                        <td className="py-3 px-4 font-medium">{r.vehicle_name}</td>
-                        <td className="text-right py-3 px-4">₹{r.acquisition_cost?.toLocaleString()}</td>
-                        <td className="text-right py-3 px-4 text-green-600">₹{r.revenue?.toLocaleString()}</td>
-                        <td className="text-right py-3 px-4 text-red-600">₹{((r.fuel_cost || 0) + (r.maintenance_cost || 0)).toLocaleString()}</td>
-                        <td className="text-right py-3 px-4 font-semibold" style={{ color: (r.roi || 0) >= 0 ? 'var(--status-available)' : 'var(--status-critical)' }}>
-                          {(r.roi * 100).toFixed(1)}%
-                        </td>
+            {canViewFinancial && (
+              <Card>
+                <CardHeader><CardTitle>Vehicle ROI</CardTitle></CardHeader>
+                <CardContent>
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-[var(--border-default)]">
+                        <th className="text-left py-2 px-4 text-xs uppercase font-semibold text-[var(--text-muted)]">Vehicle</th>
+                        <th className="text-right py-2 px-4 text-xs uppercase font-semibold text-[var(--text-muted)]">Acquisition</th>
+                        <th className="text-right py-2 px-4 text-xs uppercase font-semibold text-[var(--text-muted)]">Revenue</th>
+                        <th className="text-right py-2 px-4 text-xs uppercase font-semibold text-[var(--text-muted)]">Costs</th>
+                        <th className="text-right py-2 px-4 text-xs uppercase font-semibold text-[var(--text-muted)]">ROI</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </CardContent>
-            </Card>
+                    </thead>
+                    <tbody>
+                      {roi.slice(0, 10).map((r: any) => (
+                        <tr key={r.vehicle_id} className="border-b border-[var(--border-default)]/50 hover:bg-[var(--bg-hover)]">
+                          <td className="py-3 px-4 font-medium">{r.vehicle_name}</td>
+                          <td className="text-right py-3 px-4">₹{r.acquisition_cost?.toLocaleString()}</td>
+                          <td className="text-right py-3 px-4 text-green-600">₹{r.revenue?.toLocaleString()}</td>
+                          <td className="text-right py-3 px-4 text-red-600">₹{((r.fuel_cost || 0) + (r.maintenance_cost || 0)).toLocaleString()}</td>
+                          <td className="text-right py-3 px-4 font-semibold" style={{ color: (r.roi || 0) >= 0 ? 'var(--status-available)' : 'var(--status-critical)' }}>
+                            {(r.roi * 100).toFixed(1)}%
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </CardContent>
+              </Card>
+            )}
             
-            <Card>
-              <CardHeader><CardTitle>Driver Performance</CardTitle></CardHeader>
-              <CardContent>
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-[var(--border-default)]">
-                      <th className="text-left py-2 px-4 text-xs uppercase font-semibold text-[var(--text-muted)]">Driver</th>
-                      <th className="text-center py-2 px-4 text-xs uppercase font-semibold text-[var(--text-muted)]">Trips</th>
-                      <th className="text-center py-2 px-4 text-xs uppercase font-semibold text-[var(--text-muted)]">Distance</th>
-                      <th className="text-center py-2 px-4 text-xs uppercase font-semibold text-[var(--text-muted)]">Efficiency</th>
-                      <th className="text-center py-2 px-4 text-xs uppercase font-semibold text-[var(--text-muted)]">Safety</th>
-                      <th className="text-center py-2 px-4 text-xs uppercase font-semibold text-[var(--text-muted)]">On-Time</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {driverPerf.slice(0, 10).map((d: any) => (
-                      <tr key={d.driver_id} className="border-b border-[var(--border-default)]/50 hover:bg-[var(--bg-hover)]">
-                        <td className="py-2 px-4 font-medium">{d.driver_name}</td>
-                        <td className="text-center py-2 px-4">{d.trips_completed}</td>
-                        <td className="text-center py-2 px-4">{d.total_distance_km?.toLocaleString()} km</td>
-                        <td className="text-center py-2 px-4">{d.avg_fuel_efficiency?.toFixed(1)} km/L</td>
-                        <td className="text-center py-2 px-4">{d.safety_score?.toFixed(1)}</td>
-                        <td className="text-center py-2 px-4 text-green-600">{d.on_time_pct?.toFixed(1)}%</td>
+            {canViewDriverPerf && (
+              <Card>
+                <CardHeader><CardTitle>Driver Performance</CardTitle></CardHeader>
+                <CardContent>
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-[var(--border-default)]">
+                        <th className="text-left py-2 px-4 text-xs uppercase font-semibold text-[var(--text-muted)]">Driver</th>
+                        <th className="text-center py-2 px-4 text-xs uppercase font-semibold text-[var(--text-muted)]">Trips</th>
+                        <th className="text-center py-2 px-4 text-xs uppercase font-semibold text-[var(--text-muted)]">Distance</th>
+                        <th className="text-center py-2 px-4 text-xs uppercase font-semibold text-[var(--text-muted)]">Efficiency</th>
+                        <th className="text-center py-2 px-4 text-xs uppercase font-semibold text-[var(--text-muted)]">Safety</th>
+                        <th className="text-center py-2 px-4 text-xs uppercase font-semibold text-[var(--text-muted)]">On-Time</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </CardContent>
-            </Card>
+                    </thead>
+                    <tbody>
+                      {driverPerf.slice(0, 10).map((d: any) => (
+                        <tr key={d.driver_id} className="border-b border-[var(--border-default)]/50 hover:bg-[var(--bg-hover)]">
+                          <td className="py-2 px-4 font-medium">{d.driver_name}</td>
+                          <td className="text-center py-2 px-4">{d.trips_completed}</td>
+                          <td className="text-center py-2 px-4">{d.total_distance_km?.toLocaleString()} km</td>
+                          <td className="text-center py-2 px-4">{d.avg_fuel_efficiency?.toFixed(1)} km/L</td>
+                          <td className="text-center py-2 px-4">{d.safety_score?.toFixed(1)}</td>
+                          <td className="text-center py-2 px-4 text-green-600">{d.on_time_pct?.toFixed(1)}%</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table
+                </CardContent>
+              </Card>
+            )}
           </div>
         </>
       )}

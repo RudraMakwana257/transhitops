@@ -15,6 +15,7 @@ import { Expenses } from './pages/Expenses'
 import { Analytics } from './pages/Analytics'
 import { Settings } from './pages/Settings'
 import { Unauthorized } from './pages/Unauthorized'
+import { ToastContainer } from './components/ui/Toast'
 import './styles/globals.css'
 
 const ProtectedRoute = ({ children, roles }: { children: React.ReactNode; roles?: string[] }) => {
@@ -44,25 +45,49 @@ function AppRoutes() {
       }>
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/vehicles" element={<Vehicles />} />
-        <Route path="/vehicles/:id" element={<VehicleDetail />} />
+        <Route path="/vehicles" element={
+          <ProtectedRoute roles={['fleet_manager', 'dispatcher', 'safety_officer', 'financial_analyst']}>
+            <Vehicles />
+          </ProtectedRoute>
+        } />
+        <Route path="/vehicles/:id" element={
+          <ProtectedRoute roles={['fleet_manager', 'dispatcher', 'safety_officer', 'financial_analyst']}>
+            <VehicleDetail />
+          </ProtectedRoute>
+        } />
         
         <Route path="/drivers" element={
           <ProtectedRoute roles={['fleet_manager', 'dispatcher', 'safety_officer']}>
             <Drivers />
           </ProtectedRoute>
         } />
-        <Route path="/drivers/:id" element={<Drivers />} />
+        <Route path="/drivers/:id" element={
+          <ProtectedRoute roles={['fleet_manager', 'dispatcher', 'safety_officer']}>
+            <Drivers />
+          </ProtectedRoute>
+        } />
         
-        <Route path="/trips" element={<Trips />} />
+        <Route path="/trips" element={
+          <ProtectedRoute roles={['fleet_manager', 'dispatcher', 'safety_officer', 'financial_analyst']}>
+            <Trips />
+          </ProtectedRoute>
+        } />
         <Route path="/trips/new" element={
           <ProtectedRoute roles={['fleet_manager', 'dispatcher']}>
             <TripCreate />
           </ProtectedRoute>
         } />
-        <Route path="/trips/:id" element={<TripDetail />} />
+        <Route path="/trips/:id" element={
+          <ProtectedRoute roles={['fleet_manager', 'dispatcher', 'safety_officer', 'financial_analyst']}>
+            <TripDetail />
+          </ProtectedRoute>
+        } />
         
-        <Route path="/maintenance" element={<Maintenance />} />
+        <Route path="/maintenance" element={
+          <ProtectedRoute roles={['fleet_manager', 'dispatcher', 'safety_officer', 'financial_analyst']}>
+            <Maintenance />
+          </ProtectedRoute>
+        } />
         
         <Route path="/fuel" element={
           <ProtectedRoute roles={['fleet_manager', 'dispatcher', 'financial_analyst']}>
@@ -76,7 +101,11 @@ function AppRoutes() {
           </ProtectedRoute>
         } />
         
-        <Route path="/analytics" element={<Analytics />} />
+        <Route path="/analytics" element={
+          <ProtectedRoute roles={['fleet_manager', 'dispatcher', 'safety_officer', 'financial_analyst']}>
+            <Analytics />
+          </ProtectedRoute>
+        } />
         
         <Route path="/settings" element={
           <ProtectedRoute roles={['fleet_manager']}>
@@ -89,7 +118,12 @@ function AppRoutes() {
 }
 
 function App() {
-  return <AppRoutes />
+  return (
+    <>
+      <AppRoutes />
+      <ToastContainer />
+    </>
+  )
 }
 
 export default App

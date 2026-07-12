@@ -15,6 +15,9 @@ class Expense(db.Model):
     created_by = db.Column(db.UUID(as_uuid=True), db.ForeignKey('users.id'))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
+    vehicle = db.relationship('Vehicle', backref='expenses')
+    trip = db.relationship('Trip', backref='expenses')
+    
     def to_dict(self):
         return {
             'id': str(self.id),

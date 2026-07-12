@@ -7,12 +7,14 @@ import { StatusBadge } from '../components/ui/Badge'
 import { Button } from '../components/ui/Button'
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card'
 import { PageWrapper } from '../components/layout/PageWrapper'
-import { Truck, MapPin, Wrench, Droplets, Plus, Settings, ArrowLeft, AlertCircle, CheckCircle, Clock, DollarSign } from 'lucide-react'
+import { Truck, MapPin, Wrench, Droplets, Settings, AlertCircle, Clock, DollarSign } from 'lucide-react'
 import { format } from 'date-fns'
 import { useAuth } from '../hooks/useAuth'
+import { toast } from '../store/toastStore'
 
 export function VehicleDetail({ match }: { match: { params: { id: string } } }) {
   const { hasRole } = useAuth()
+  const navigate = useNavigate()
   const [vehicle, setVehicle] = useState<Vehicle | null>(null)
   const [trips, setTrips] = useState<Trip[]>([])
   const [maintenance, setMaintenance] = useState<MaintenanceLog[]>([])
@@ -54,7 +56,7 @@ export function VehicleDetail({ match }: { match: { params: { id: string } } }) 
       await api.delete(`/vehicles/${match.params.id}`)
       navigate('/vehicles')
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to retire vehicle')
+      toast(err.response?.data?.message || 'Failed to retire vehicle', 'error')
     } finally {
       setRetiring(false)
     }
@@ -97,7 +99,7 @@ export function VehicleDetail({ match }: { match: { params: { id: string } } }) 
               </div>
               <div>
                 <p className="text-sm text-[var(--text-secondary)]">Status</p>
-                <StatusBadge status={vehicle.status} type="vehicle" size="md" />
+                <StatusBadge status={vehicle.status} type="vehicle" />
               </div>
             </div>
           </CardContent>
@@ -110,7 +112,7 @@ export function VehicleDetail({ match }: { match: { params: { id: string } } }) 
               </div>
               <div>
                 <p className="text-sm text-[var(--text-secondary)]">Health Score</p>
-                <p className="text-2xl font-bold text-green-600 dark:text-green-400">{vehicle.health_score || '—'}/100</p>
+                <p className="text-xl sm:text-2xl font-bold text-green-600 dark:text-green-400">{vehicle.health_score || '—'}/100</p>
               </div>
             </div>
           </CardContent>
@@ -123,7 +125,7 @@ export function VehicleDetail({ match }: { match: { params: { id: string } } }) 
               </div>
               <div>
                 <p className="text-sm text-[var(--text-secondary)]">Odometer</p>
-                <p className="text-2xl font-bold">{vehicle.odometer_km.toLocaleString()} km</p>
+                <p className="text-xl sm:text-2xl font-bold">{vehicle.odometer_km.toLocaleString()} km</p>
               </div>
             </div>
           </CardContent>
@@ -136,7 +138,7 @@ export function VehicleDetail({ match }: { match: { params: { id: string } } }) 
               </div>
               <div>
                 <p className="text-sm text-[var(--text-secondary)]">Acquisition Cost</p>
-                <p className="text-2xl font-bold">₹{vehicle.acquisition_cost.toLocaleString()}</p>
+                <p className="text-xl sm:text-2xl font-bold">₹{vehicle.acquisition_cost.toLocaleString()}</p>
               </div>
             </div>
           </CardContent>
@@ -183,7 +185,7 @@ export function VehicleDetail({ match }: { match: { params: { id: string } } }) 
               <Card>
                 <CardHeader><CardTitle>Health Breakdown</CardTitle></CardHeader>
                 <CardContent>
-                  {vehicle.health ? (
+                  {(vehicle as any).health ? (
                     <div className="space-y-3">
                       {[
                         { key: 'fuel_efficiency_score', label: 'Fuel Efficiency' },
@@ -196,9 +198,9 @@ export function VehicleDetail({ match }: { match: { params: { id: string } } }) 
                           <span className="text-sm text-[var(--text-secondary)]">{item.label}</span>
                           <div className="flex items-center gap-2">
                             <div className="flex-1 h-2 bg-[var(--border-default)] rounded-full overflow-hidden">
-                              <div className="h-full bg-[var(--brand-primary)] rounded-full" style={{ width: `${vehicle.health[item.key] || 0}%` }} />
+                              <div className="h-full bg-[var(--brand-primary)] rounded-full" style={{ width: `${(vehicle as any).health[item.key] || 0}%` }} />
                             </div>
-                            <span className="text-sm font-medium w-12 text-right">{vehicle.health[item.key] || 0}</span>
+                            <span className="text-sm font-medium w-12 text-right">{(vehicle as any).health[item.key] || 0}</span>
                           </div>
                         </div>
                       ))}
@@ -248,9 +250,9 @@ export function VehicleDetail({ match }: { match: { params: { id: string } } }) 
                 <DataTable
                   columns={[
                     { key: 'type', header: 'Type', accessor: 'type' },
-                    { key: 'scheduled_date', header: 'Scheduled', accessor: 'scheduled_date', sortable: true, render: (d: string) => format(new Date(d), 'MMM d, yyyy') },
+                    { key: 'scheduled_date', header: 'Scheduled', accessor: 'scheduled_date', sortable: true, render: (m: MaintenanceLog) => format(new Date(m.scheduled_date), 'MMM d, yyyy') },
                     { key: 'status', header: 'Status', render: (m: MaintenanceLog) => <StatusBadge status={m.status} type="maintenance" /> },
-                    { key: 'cost', header: 'Cost', accessor: 'cost', align: 'right' as const, render: (c: number) => `₹${c.toLocaleString()}` },
+                    { key: 'cost', header: 'Cost', accessor: 'cost', align: 'right' as const, render: (m: MaintenanceLog) => `₹${m.cost.toLocaleString()}` },
                     { key: 'technician', header: 'Technician', accessor: 'technician' },
                   ]}
                   data={maintenance}
@@ -272,11 +274,11 @@ export function VehicleDetail({ match }: { match: { params: { id: string } } }) 
               <CardContent>
                 <DataTable
                   columns={[
-                    { key: 'date', header: 'Date', accessor: 'date', sortable: true, render: (d: string) => format(new Date(d), 'MMM d, yyyy') },
-                    { key: 'liters', header: 'Liters', accessor: 'liters', align: 'right' as const, render: (l: number) => `${l} L` },
-                    { key: 'price_per_liter', header: 'Price/L', accessor: 'price_per_liter', align: 'right' as const, render: (p: number) => `₹${p}` },
-                    { key: 'total_cost', header: 'Total', accessor: 'total_cost', align: 'right' as const, render: (c: number) => `₹${c.toLocaleString()}` },
-                    { key: 'odometer_reading', header: 'Odometer', accessor: 'odometer_reading', align: 'right' as const, render: (o: number | null) => o ? `${o.toLocaleString()} km` : '—' },
+                    { key: 'date', header: 'Date', accessor: 'date', sortable: true, render: (f: FuelLog) => format(new Date(f.date), 'MMM d, yyyy') },
+                    { key: 'liters', header: 'Liters', accessor: 'liters', align: 'right' as const, render: (f: FuelLog) => `${f.liters} L` },
+                    { key: 'price_per_liter', header: 'Price/L', accessor: 'price_per_liter', align: 'right' as const, render: (f: FuelLog) => `₹${f.price_per_liter}` },
+                    { key: 'total_cost', header: 'Total', accessor: 'total_cost', align: 'right' as const, render: (f: FuelLog) => `₹${f.total_cost.toLocaleString()}` },
+                    { key: 'odometer_reading', header: 'Odometer', accessor: 'odometer_reading', align: 'right' as const, render: (f: FuelLog) => f.odometer_reading ? `${f.odometer_reading.toLocaleString()} km` : '—' },
                     { key: 'fuel_station', header: 'Station', accessor: 'fuel_station' },
                   ]}
                   data={fuel}

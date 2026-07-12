@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Lock, Home, User, AlertCircle, ArrowLeft } from 'lucide-react'
+import { Lock, Home, ArrowLeft } from 'lucide-react'
 import { Button } from '../components/ui/Button'
 
 export function Unauthorized() {
@@ -17,8 +17,8 @@ export function Unauthorized() {
         </p>
         
         <div className="space-y-3">
-          <Button asChild variant="outline"><Link to="/dashboard"><Home className="w-4 h-4 mr-2" />Go to Dashboard</Link></Button>
-          <Button asChild variant="outline"><Link to="/logout"><ArrowLeft className="w-4 h-4 mr-2" />Logout</Link></Button>
+          <Link to="/dashboard" className="btn-secondary inline-flex items-center justify-center h-10 px-4 text-sm font-medium rounded-lg"><Home className="w-4 h-4 mr-2" />Go to Dashboard</Link>
+          <Link to="/logout" className="btn-secondary inline-flex items-center justify-center h-10 px-4 text-sm font-medium rounded-lg"><ArrowLeft className="w-4 h-4 mr-2" />Logout</Link>
         </div>
         
         <div className="mt-8 p-4 rounded-lg bg-[var(--bg-sidebar)] border border-[var(--border-default)]">
