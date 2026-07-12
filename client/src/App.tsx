@@ -1,0 +1,109 @@
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { AuthProvider, useAuth } from './store/authStore'
+import { UIProvider } from './store/uiStore'
+import { Layout } from './components/layout/Layout'
+import { Login } from './pages/Login'
+import { Dashboard } from './pages/Dashboard'
+import { Vehicles } from './pages/Vehicles'
+import { VehicleDetail } from './pages/VehicleDetail'
+import { Drivers } from './pages/Drivers'
+import { DriverDetail } from './pages/DriverDetail'
+import { Trips } from './pages/Trips'
+import { TripCreate } from './pages/TripCreate'
+import { TripDetail } from './pages/TripDetail'
+import { Maintenance } from './pages/Maintenance'
+import { Fuel } from './pages/Fuel'
+import { Expenses } from './pages/Expenses'
+import { Analytics } from './pages/Analytics'
+import { Settings } from './pages/Settings'
+import { Unauthorized } from './pages/Unauthorized'
+import './styles/globals.css'
+
+const ProtectedRoute = ({ children, roles }: { children: React.ReactNode; roles?: string[] }) => {
+  const { user, isAuthenticated, hasRole } = useAuth()
+  
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />
+  }
+  
+  if (roles && !hasRole(roles)) {
+    return <Navigate to="/unauthorized" replace />
+  }
+  
+  return <>{children}</>
+}
+
+function AppRoutes() {
+  return (
+    <Routes>
+      <Route path="/login" element={<Login />} />
+      <Route path="/unauthorized" element={<Unauthorized />} />
+      
+      <Route element={
+        <ProtectedRoute roles={['fleet_manager', 'dispatcher', 'safety_officer', 'financial_analyst']}>
+          <Layout />
+        </ProtectedRoute>
+      }>
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/vehicles" element={<Vehicles />} />
+        <Route path="/vehicles/:id" element={<VehicleDetail />} />
+        
+        <Route path="/drivers" element={
+          <ProtectedRoute roles={['fleet_manager', 'dispatcher', 'safety_officer']}>
+            <Drivers />
+          </ProtectedRoute>
+        } />
+        <Route path="/drivers/:id" element={
+          <ProtectedRoute roles={['fleet_manager', 'dispatcher', 'safety_officer']}>
+            <DriverDetail />
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/trips" element={<Trips />} />
+        <Route path="/trips/new" element={
+          <ProtectedRoute roles={['fleet_manager', 'dispatcher']}>
+            <TripCreate />
+          </ProtectedRoute>
+        } />
+        <Route path="/trips/:id" element={<TripDetail />} />
+        
+        <Route path="/maintenance" element={<Maintenance />} />
+        
+        <Route path="/fuel" element={
+          <ProtectedRoute roles={['fleet_manager', 'dispatcher', 'financial_analyst']}>
+            <Fuel />
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/expenses" element={
+          <ProtectedRoute roles={['fleet_manager', 'dispatcher', 'financial_analyst']}>
+            <Expenses />
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/analytics" element={<Analytics />} />
+        
+        <Route path="/settings" element={
+          <ProtectedRoute roles={['fleet_manager']}>
+            <Settings />
+          </ProtectedRoute>
+        } />
+      </Route>
+    </Routes>
+  )
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <UIProvider>
+        <BrowserRouter>
+          <AppRoutes />
+        </BrowserRouter>
+      </UIProvider>
+    </AuthProvider>
+  )
+}
+
+export default App

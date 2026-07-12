@@ -1,0 +1,58 @@
+import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
+import { User, UserRole } from '../types'
+
+interface AuthState {
+  user: User | null
+  token: string | null
+  isAuthenticated: boolean
+  login: (email: string, password: string) => Promise<void>
+  logout: () => void
+  hasRole: (roles: UserRole[]) => boolean
+  setUser: (user: User, token: string) => void
+}
+
+export const useAuthStore = create<AuthState>()(
+  persist(
+    (set, get) => ({
+      user: null,
+      token: null,
+      isAuthenticated: false,
+      
+      login: async (email: string, password: string) => {
+        const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ email, password })
+        })
+        
+        const data = await res.json()
+        
+        if (!res.ok) {
+          throw new Error(data.message || 'Login failed')
+        }
+        
+        set({ user: data.data.user, token: data.data.access_token, isAuthenticated: true })
+      },
+      
+      logout: () => {
+        fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/logout`, {
+          method: 'POST',
+          credentials: 'include'
+        })
+        set({ user: null, token: null, isAuthenticated: false })
+      },
+      
+      hasRole: (roles: UserRole[]) => {
+        const { user } = get()
+        return user ? roles.includes(user.role) : false
+      },
+      
+      setUser: (user: User, token: string) => {
+        set({ user, token, isAuthenticated: true })
+      }
+    }),
+    { name: 'auth-storage', partialize: (state) => ({ user: state.user, token: state.token, isAuthenticated: state.isAuthenticated }) }
+  )
+)
