@@ -9,6 +9,6 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     JWT_ACCESS_TOKEN_EXPIRES = 8 * 60 * 60
     JWT_REFRESH_TOKEN_EXPIRES = 7 * 24 * 60 * 60
-    JWT_TOKEN_LOCATION = ['cookies']
+    JWT_TOKEN_LOCATION = ['headers', 'cookies']
     JWT_COOKIE_SECURE = False
     JWT_COOKIE_CSRF_PROTECT = False

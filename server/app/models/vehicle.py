@@ -45,5 +45,5 @@ class Vehicle(db.Model):
         }
         if self.health:
             data['health_score'] = float(self.health.health_score) if self.health.health_score else None
-            data['health_grade'] = self.health.get_grade()
+            data['health_grade'] = self.health.grade
         return data
