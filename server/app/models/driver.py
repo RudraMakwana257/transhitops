@@ -6,6 +6,7 @@ class Driver(db.Model):
     __tablename__ = 'drivers'
     
     id = db.Column(db.UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    company_id = db.Column(db.UUID(as_uuid=True), db.ForeignKey('companies.id'), index=True)
     name = db.Column(db.String(100), nullable=False)
     license_number = db.Column(db.String(50), unique=True, nullable=False)
     license_category = db.Column(db.String(10), nullable=False)

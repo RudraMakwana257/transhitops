@@ -1,5 +1,5 @@
 import { Cell, ResponsiveContainer, PieChart, Pie, Tooltip, Legend } from 'recharts'
-import { CHART_COLORS } from '../../utils/formatters'
+
 
 interface FleetStatusChartProps {
   data: Array<{ status: string; count: number; color: string }>
@@ -23,7 +23,7 @@ export function FleetStatusChart({ data }: FleetStatusChartProps) {
               paddingAngle={2}
               dataKey="count"
               nameKey="status"
-              label={({ status, count, percent }) => `${status}: ${count} (${(percent * 100).toFixed(1)}%)`}
+              label={(props: any) => `${props.name}: ${props.value} (${(props.percent * 100).toFixed(1)}%)`}
               labelLine={false}
             >
               {data.map((entry, index) => (
@@ -31,7 +31,7 @@ export function FleetStatusChart({ data }: FleetStatusChartProps) {
               ))}
             </Pie>
             <Tooltip 
-              formatter={(value: number, name: string) => [value, name]}
+              formatter={(value: any, name: any) => [value, name]}
               contentStyle={{ 
                 backgroundColor: 'var(--bg-card)', 
                 border: '1px solid var(--border-default)',

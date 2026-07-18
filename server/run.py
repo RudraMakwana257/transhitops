@@ -1,5 +1,5 @@
 from app import create_app, db
-from app.models import User, Vehicle, Driver, Trip, TripEvent, MaintenanceLog, FuelLog, Expense, Notification, VehicleHealth, AuditLog
+from app.models import Company, User, Vehicle, Driver, Trip, TripEvent, MaintenanceLog, FuelLog, Expense, Notification, VehicleHealth, AuditLog
 
 app = create_app()
 

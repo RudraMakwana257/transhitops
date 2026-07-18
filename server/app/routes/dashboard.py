@@ -1,132 +1,132 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, jsonify, g
 from app import db
 from app.models.vehicle import Vehicle
 from app.models.driver import Driver
 from app.models.trip import Trip
 from app.models.maintenance_log import MaintenanceLog
-from app.models.fuel_log import FuelLog
-from app.middleware.rbac import require_roles
-from sqlalchemy import func, desc
-from datetime import date, datetime, timedelta
+from app.middleware import require_roles, require_company, require_feature
+from sqlalchemy import func
+from datetime import datetime, timedelta
 
 bp = Blueprint('dashboard', __name__, url_prefix='/api/dashboard')
 
-@bp.route('/kpis', methods=['GET'])
+from app.middleware.rate_limiter import limiter, GENERAL_LIMIT
+@bp.before_request
+@limiter.limit(GENERAL_LIMIT)
+def general_limit():
+    pass
+
+@bp.route('/stats', methods=['GET'])
 @require_roles('fleet_manager', 'dispatcher', 'safety_officer', 'financial_analyst')
-def get_kpis():
-    active_vehicles = Vehicle.query.filter_by(is_active=True).count()
-    available_vehicles = Vehicle.query.filter_by(status='Available', is_active=True).count()
-    vehicles_in_shop = Vehicle.query.filter_by(status='In Shop', is_active=True).count()
-    active_trips = Trip.query.filter_by(status='Dispatched').count()
-    pending_trips = Trip.query.filter_by(status='Draft').count()
-    drivers_available = Driver.query.filter_by(status='Available', is_active=True).count()
+@require_company
+@require_feature('dashboard')
+def get_dashboard_stats():
+    # Base query filters
+    company_filter = {"company_id": g.company_id}
     
-    fleet_utilization = round((active_trips / active_vehicles * 100), 1) if active_vehicles > 0 else 0
+    # 1. Vehicle Stats
+    total_vehicles = Vehicle.query.filter_by(**company_filter, is_active=True).count()
+    active_vehicles = Vehicle.query.filter_by(**company_filter, is_active=True, status='Available').count() + \
+                      Vehicle.query.filter_by(**company_filter, is_active=True, status='On Trip').count()
+    maintenance_vehicles = Vehicle.query.filter_by(**company_filter, is_active=True, status='In Shop').count()
     
-    from app.models.vehicle_health import VehicleHealth
-    avg_health = db.session.query(func.avg(VehicleHealth.health_score)).scalar()
-    fleet_health = round(float(avg_health), 1) if avg_health else None
+    # 2. Driver Stats
+    total_drivers = Driver.query.filter_by(**company_filter, is_active=True).count()
+    active_drivers = Driver.query.filter_by(**company_filter, is_active=True, status='Available').count() + \
+                     Driver.query.filter_by(**company_filter, is_active=True, status='On Trip').count()
+                     
+    # License expiry alerts (within 30 days)
+    thirty_days_from_now = datetime.utcnow().date() + timedelta(days=30)
+    expiring_licenses = Driver.query.filter(
+        Driver.company_id == g.company_id,
+        Driver.is_active == True,
+        Driver.license_expiry <= thirty_days_from_now,
+        Driver.license_expiry >= datetime.utcnow().date()
+    ).count()
+    
+    expired_licenses = Driver.query.filter(
+        Driver.company_id == g.company_id,
+        Driver.is_active == True,
+        Driver.license_expiry < datetime.utcnow().date()
+    ).count()
+    
+    # 3. Trip Stats (Today)
+    today = datetime.utcnow().date()
+    active_trips = Trip.query.filter(
+        Trip.company_id == g.company_id,
+        Trip.status.in_(['Dispatched', 'In Progress'])
+    ).count()
+    
+    # 4. Maintenance Alerts
+    pending_maintenance = MaintenanceLog.query.filter(
+        MaintenanceLog.company_id == g.company_id,
+        MaintenanceLog.status.in_(['Scheduled', 'In Progress'])
+    ).count()
     
     return jsonify({
         "success": True,
         "data": {
-            "active_vehicles": active_vehicles,
-            "available_vehicles": available_vehicles,
-            "vehicles_in_shop": vehicles_in_shop,
-            "active_trips": active_trips,
-            "pending_trips": pending_trips,
-            "drivers_available": drivers_available,
-            "fleet_utilization_pct": fleet_utilization,
-            "fleet_health_score": fleet_health
+            "vehicles": {
+                "total": total_vehicles,
+                "active": active_vehicles,
+                "in_maintenance": maintenance_vehicles,
+                "utilization_rate": round((active_vehicles / total_vehicles * 100), 1) if total_vehicles > 0 else 0
+            },
+            "drivers": {
+                "total": total_drivers,
+                "active": active_drivers,
+                "expiring_licenses": expiring_licenses,
+                "expired_licenses": expired_licenses
+            },
+            "trips": {
+                "active_now": active_trips
+            },
+            "alerts": {
+                "pending_maintenance": pending_maintenance,
+                "total_alerts": expiring_licenses + expired_licenses + pending_maintenance
+            }
         }
     })
 
-@bp.route('/fleet-status', methods=['GET'])
+@bp.route('/recent-activity', methods=['GET'])
 @require_roles('fleet_manager', 'dispatcher', 'safety_officer', 'financial_analyst')
-def fleet_status():
-    statuses = ['Available', 'On Trip', 'In Shop', 'Retired']
-    data = []
-    for status in statuses:
-        count = Vehicle.query.filter_by(status=status, is_active=True).count()
-        colors = {
-            'Available': '#22C55E',
-            'On Trip': '#3B82F6',
-            'In Shop': '#F59E0B',
-            'Retired': '#6B7280'
-        }
-        data.append({"status": status, "count": count, "color": colors.get(status, '#6B7280')})
-    return jsonify({"success": True, "data": data})
-
-@bp.route('/recent-trips', methods=['GET'])
-@require_roles('fleet_manager', 'dispatcher', 'safety_officer', 'financial_analyst')
-def recent_trips():
-    limit = request.args.get('limit', 5, type=int)
-    trips = Trip.query.order_by(desc(Trip.created_at)).limit(limit).all()
-    return jsonify({"success": True, "data": [t.to_dict(include_relations=True) for t in trips]})
-
-@bp.route('/alerts', methods=['GET'])
-@require_roles('fleet_manager', 'dispatcher', 'safety_officer', 'financial_analyst')
-def alerts():
-    today = date.today()
-    thirty_days = today + timedelta(days=30)
+@require_company
+@require_feature('dashboard')
+def get_recent_activity():
+    # Get 5 most recent trips
+    recent_trips = Trip.query.filter_by(company_id=g.company_id)\
+        .order_by(Trip.updated_at.desc())\
+        .limit(5).all()
+        
+    activities = []
     
-    license_expiring = Driver.query.filter(
-        Driver.license_expiry <= thirty_days,
-        Driver.license_expiry >= today,
-        Driver.is_active == True
-    ).all()
-    
-    license_expired = Driver.query.filter(
-        Driver.license_expiry < today,
-        Driver.is_active == True
-    ).all()
-    
-    maintenance_due = MaintenanceLog.query.filter(
-        MaintenanceLog.scheduled_date <= today + timedelta(days=7),
-        MaintenanceLog.status.in_(['Open', 'In Progress'])
-    ).all()
-    
+    for trip in recent_trips:
+        vehicle = Vehicle.query.get(trip.vehicle_id) if trip.vehicle_id else None
+        driver = Driver.query.get(trip.driver_id) if trip.driver_id else None
+        
+        v_name = vehicle.name if vehicle else "Unknown Vehicle"
+        d_name = driver.name if driver else "Unknown Driver"
+        
+        if trip.status == 'Completed':
+            msg = f"{d_name} completed trip to {trip.destination}"
+        elif trip.status == 'Dispatched':
+            msg = f"{v_name} dispatched to {trip.destination}"
+        elif trip.status == 'Cancelled':
+            msg = f"Trip to {trip.destination} was cancelled"
+        else:
+            msg = f"Trip to {trip.destination} is {trip.status}"
+            
+        activities.append({
+            "id": f"trip-{trip.id}",
+            "type": "trip",
+            "message": msg,
+            "timestamp": trip.updated_at.isoformat(),
+            "status": trip.status
+        })
+        
+    # Could also add recent maintenance logs here and sort by timestamp
+        
     return jsonify({
         "success": True,
-        "data": {
-            "license_expiring": [{
-                "driver_id": str(d.id),
-                "name": d.name,
-                "license_number": d.license_number,
-                "expiry_date": d.license_expiry.isoformat(),
-                "days_remaining": (d.license_expiry - today).days,
-                "status": "expiring"
-            } for d in license_expiring],
-            "license_expired": [{
-                "driver_id": str(d.id),
-                "name": d.name,
-                "license_number": d.license_number,
-                "expiry_date": d.license_expiry.isoformat(),
-                "days_remaining": (d.license_expiry - today).days,
-                "status": "expired"
-            } for d in license_expired],
-            "maintenance_due": [{
-                "vehicle_id": str(m.vehicle_id),
-                "vehicle_name": m.vehicle.name if m.vehicle else None,
-                "reg_number": m.vehicle.reg_number if m.vehicle else None,
-                "scheduled_date": m.scheduled_date.isoformat(),
-                "type": m.type
-            } for m in maintenance_due]
-        }
+        "data": activities
     })
-
-@bp.route('/fuel-trend', methods=['GET'])
-@require_roles('fleet_manager', 'dispatcher', 'financial_analyst')
-def fuel_trend():
-    days = request.args.get('days', 30, type=int)
-    start_date = date.today() - timedelta(days=days)
-    
-    results = db.session.query(
-        FuelLog.date,
-        func.sum(FuelLog.total_cost).label('total_cost')
-    ).filter(
-        FuelLog.date >= start_date
-    ).group_by(FuelLog.date).order_by(FuelLog.date).all()
-    
-    data = [{"date": r.date.isoformat(), "total_cost": float(r.total_cost)} for r in results]
-    return jsonify({"success": True, "data": data})

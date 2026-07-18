@@ -1,7 +1,11 @@
 import { Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { Lock, Home, ArrowLeft } from 'lucide-react'
+import { useAuth } from '../store/authStore'
 
 export function Unauthorized() {
+  const navigate = useNavigate()
+  const { logout } = useAuth()
   return (
     <div className="min-h-screen bg-[var(--bg-page)] flex items-center justify-center p-4">
       <div className="max-w-md w-full text-center">
@@ -17,7 +21,7 @@ export function Unauthorized() {
         
         <div className="space-y-3">
           <Link to="/dashboard" className="btn-secondary inline-flex items-center justify-center h-10 px-4 text-sm font-medium rounded-lg"><Home className="w-4 h-4 mr-2" />Go to Dashboard</Link>
-          <Link to="/logout" className="btn-secondary inline-flex items-center justify-center h-10 px-4 text-sm font-medium rounded-lg"><ArrowLeft className="w-4 h-4 mr-2" />Logout</Link>
+          <button onClick={() => { logout(); navigate('/login') }} className="btn-secondary inline-flex items-center justify-center h-10 px-4 text-sm font-medium rounded-lg"><ArrowLeft className="w-4 h-4 mr-2" />Logout</button>
         </div>
         
         <div className="mt-8 p-4 rounded-lg bg-[var(--bg-sidebar)] border border-[var(--border-default)]">

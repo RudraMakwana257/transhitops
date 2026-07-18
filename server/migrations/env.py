@@ -38,7 +38,12 @@ import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from app import db
-from app.models import User, Vehicle, Driver, Trip, TripEvent, MaintenanceLog, FuelLog, Expense, Notification, VehicleHealth, AuditLog
+from app.models import (
+    Company, User, Vehicle, Driver, Trip, TripEvent,
+    MaintenanceLog, FuelLog, Expense, Notification, VehicleHealth,
+    AuditLog, SubscriptionPlan, CompanySubscription, CompanyFeature,
+    LoginAttempt, PasswordResetToken,
+)
 target_metadata = db.metadata
 
 config.set_main_option('sqlalchemy.url', get_engine_url())

@@ -1,34 +1,64 @@
-version: '3.8'
 
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: transitops-db
     environment:
-      POSTGRES_USER: transitops_user
-      POSTGRES_PASSWORD: transit123
-      POSTGRES_DB: transitops_db
+      POSTGRES_USER: ${POSTGRES_USER:-transitops}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+      POSTGRES_DB: ${POSTGRES_DB:-transitops}
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U transitops_user -d transitops_db"]
-      interval: 5s
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-transitops} -d ${POSTGRES_DB:-transitops}"]
+      interval: 10s
       timeout: 5s
       retries: 5
-    restart: unless-stopped
+    networks:
+      - transitops-network
 
   redis:
     image: redis:7-alpine
-    container_name: transitops-redis
-    ports:
-      - "6379:6379"
     volumes:
       - redis_data:/data
-    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - transitops-network
+
+  backend:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    env_file: .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - transitops-network
+
+  frontend:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - backend
+    networks:
+      - transitops-network
 
 volumes:
   postgres_data:
   redis_data:
+
+networks:
+  transitops-network:
+    driver: bridge

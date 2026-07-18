@@ -4,8 +4,11 @@ from app.middleware.rbac import require_roles
 
 bp = Blueprint('ai_chat', __name__, url_prefix='/api/ai')
 
+from app.middleware.rate_limiter import limiter, AI_LIMIT
+
 @bp.route('/chat', methods=['POST'])
 @require_roles('fleet_manager', 'dispatcher', 'safety_officer', 'financial_analyst')
+@limiter.limit(AI_LIMIT)
 def chat():
     data = request.get_json()
     user_message = data.get('message', '').strip()

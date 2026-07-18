@@ -1,6 +1,6 @@
-import { Vehicle } from '../../types'
-import { StatusBadge } from '../ui/Badge'
-import { Truck, MapPin, Settings, Clock, DollarSign } from 'lucide-react'
+import type { Vehicle } from '../../types'
+
+
 
 interface VehicleInfoCardProps {
   vehicle: Vehicle | null

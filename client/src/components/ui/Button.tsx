@@ -1,6 +1,7 @@
-import { ButtonHTMLAttributes, forwardRef } from 'react'
+import { forwardRef } from 'react';
+import type { ButtonHTMLAttributes } from 'react'
 import { clsx } from 'clsx'
-import { Loader2 } from 'lucide-react'
+
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger'

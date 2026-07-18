@@ -1,12 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { api } from '../api/client'
-import type { Trip, Vehicle, Driver } from '../types'
+import type { Trip } from '../types'
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card'
 import { Button } from '../components/ui/Button'
-import { Input } from '../components/ui/Input'
 import { StatusBadge } from '../components/ui/Badge'
-import { Modal } from '../components/ui/Modal'
 import { PageWrapper } from '../components/layout/PageWrapper'
 import { MapPin, Calendar, CheckCircle, XCircle, Play, ChevronLeft } from 'lucide-react'
 import { format } from 'date-fns'
@@ -43,7 +41,7 @@ export function TripDetail() {
       const res = await api.get(`/trips/${id}`)
       if (res.data.success) setTrip(res.data.data)
     } catch (err) {
-      console.error('Failed to fetch trip:', err)
+      toast('Failed to load trip', 'error')
       navigate('/trips')
     } finally {
       setLoading(false)
@@ -77,7 +75,7 @@ export function TripDetail() {
     }
   }
   
-  if (loading) return <div className="p-6 text-center text-[var(--text-muted)]">Loading...</div>
+  if (loading) return <div className="p-6 space-y-6 animate-pulse"><div className="h-8 bg-[var(--bg-sidebar)] rounded w-48" /><div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">{[1,2,3].map(i => <div key={i} className="h-24 bg-[var(--bg-sidebar)] rounded-lg" />)}</div><div className="h-64 bg-[var(--bg-sidebar)] rounded-lg" /></div>
   if (!trip) return <div className="p-6 text-center text-red-600">Trip not found</div>
   
   const vehicle = trip.vehicle
@@ -208,7 +206,7 @@ export function TripDetail() {
               </div>
             </CardHeader>
             <CardContent className="space-y-3">
-              <VehicleInfoCard vehicle={vehicle} />
+              <VehicleInfoCard vehicle={vehicle || null} />
             </CardContent>
           </Card>
           
@@ -221,7 +219,7 @@ export function TripDetail() {
               </div>
             </CardHeader>
             <CardContent className="space-y-3">
-              <DriverInfoCard driver={driver} />
+              <DriverInfoCard driver={driver || null} />
             </CardContent>
           </Card>
           

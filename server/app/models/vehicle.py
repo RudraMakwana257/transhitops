@@ -6,6 +6,7 @@ class Vehicle(db.Model):
     __tablename__ = 'vehicles'
     
     id = db.Column(db.UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    company_id = db.Column(db.UUID(as_uuid=True), db.ForeignKey('companies.id'), index=True)
     reg_number = db.Column(db.String(20), unique=True, nullable=False)
     name = db.Column(db.String(100), nullable=False)
     type = db.Column(db.String(50), nullable=False)

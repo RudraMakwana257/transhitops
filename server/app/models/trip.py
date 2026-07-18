@@ -6,6 +6,7 @@ class Trip(db.Model):
     __tablename__ = 'trips'
     
     id = db.Column(db.UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    company_id = db.Column(db.UUID(as_uuid=True), db.ForeignKey('companies.id'), index=True)
     trip_number = db.Column(db.String(20), unique=True, nullable=False)
     vehicle_id = db.Column(db.UUID(as_uuid=True), db.ForeignKey('vehicles.id'), nullable=False)
     driver_id = db.Column(db.UUID(as_uuid=True), db.ForeignKey('drivers.id'), nullable=False)

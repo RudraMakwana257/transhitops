@@ -6,6 +6,7 @@ class MaintenanceLog(db.Model):
     __tablename__ = 'maintenance_logs'
     
     id = db.Column(db.UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    company_id = db.Column(db.UUID(as_uuid=True), db.ForeignKey('companies.id'), index=True)
     vehicle_id = db.Column(db.UUID(as_uuid=True), db.ForeignKey('vehicles.id'), nullable=False)
     type = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text)

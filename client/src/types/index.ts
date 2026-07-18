@@ -1,13 +1,13 @@
-export type UserRole = 'fleet_manager' | 'dispatcher' | 'safety_officer' | 'financial_analyst'
+export type UserRole = 'fleet_manager' | 'dispatcher' | 'safety_officer' | 'financial_analyst' | 'super_admin'
 
-export type VehicleStatus = 'Available' | 'On Trip' | 'In Shop' | 'Retired'
+export type VehicleStatus = 'Available' | 'On Trip' | 'In Shop' | 'Retired' | 'Reserved'
 export type VehicleType = 'Truck' | 'Van' | 'Pickup' | 'Trailer' | 'Bus' | 'Tanker'
 
-export type DriverStatus = 'Available' | 'On Trip' | 'Off Duty' | 'Suspended'
+export type DriverStatus = 'Available' | 'On Trip' | 'Off Duty' | 'Suspended' | 'On Leave'
 export type LicenseCategory = 'LMV' | 'HMV' | 'HPMV' | 'Transport'
 
-export type TripStatus = 'Draft' | 'Dispatched' | 'Completed' | 'Cancelled'
-export type MaintenanceStatus = 'Open' | 'In Progress' | 'Completed'
+export type TripStatus = 'Draft' | 'Dispatched' | 'In Transit' | 'Completed' | 'Cancelled'
+export type MaintenanceStatus = 'Open' | 'In Progress' | 'Completed' | 'Cancelled'
 export type ExpenseType = 'Fuel' | 'Repair' | 'Tyre' | 'Insurance' | 'Permit' | 'Fine' | 'Toll' | 'Other'
 export type HealthGrade = 'Excellent' | 'Good' | 'Fair' | 'Poor' | 'Critical'
 
@@ -20,75 +20,102 @@ export interface User {
   created_at: string
 }
 
+export interface Company {
+  id: string
+  name: string
+  slug: string
+  email: string
+  phone?: string
+  logo_url?: string
+  is_active: boolean
+  timezone: string
+  currency: string
+  vehicle_limit: number
+  driver_limit: number
+  user_limit: number
+  created_at: string
+}
+
 export interface Vehicle {
   id: string
+  company_id: string
   reg_number: string
   name: string
-  type: VehicleType
+  type: string
   capacity_kg: number
-  acquisition_cost: number
+  status: 'Available' | 'On Trip' | 'In Shop' | 'Retired' | 'Reserved'
   odometer_km: number
-  purchase_date: string | null
-  status: VehicleStatus
-  region: string
-  health_score?: number
-  health_grade?: HealthGrade
+  acquisition_cost: number
+  purchase_date?: string
+  region?: string
+  is_active: boolean
   created_at: string
   updated_at: string
+  // Optional legacy fields that might still be used by UI components
+  health_score?: number
+  health_grade?: HealthGrade
 }
 
 export interface Driver {
   id: string
+  company_id: string
   name: string
   license_number: string
-  license_category: LicenseCategory
+  license_category: string
   license_expiry: string
   phone: string
   safety_score: number
-  status: DriverStatus
+  status: 'Available' | 'On Trip' | 'Off Duty' | 'Suspended' | 'On Leave'
   is_active: boolean
-  is_license_expired: boolean
-  days_until_expiry: number
   created_at: string
+  updated_at: string
+  // Legacy UI fields
+  is_license_expired?: boolean
+  days_until_expiry?: number
 }
 
 export interface Trip {
   id: string
+  company_id: string
   trip_number: string
   vehicle_id: string
-  vehicle: Vehicle
   driver_id: string
-  driver: Driver
   source: string
   destination: string
+  status: 'Draft' | 'Dispatched' | 'In Transit' | 'Completed' | 'Cancelled'
   cargo_weight_kg: number
-  planned_distance_km: number | null
-  actual_distance_km: number | null
-  status: TripStatus
-  start_odometer: number | null
-  end_odometer: number | null
-  fuel_consumed_l: number | null
+  planned_distance_km?: number
+  actual_distance_km?: number
   revenue: number
-  notes: string | null
-  dispatched_at: string | null
-  completed_at: string | null
-  cancelled_at: string | null
+  dispatched_at?: string
+  completed_at?: string
+  cancelled_at?: string
   created_at: string
+  updated_at: string
+  vehicle?: Vehicle
+  driver?: Driver
+  // Legacy fields
+  start_odometer?: number | null
+  end_odometer?: number | null
+  fuel_consumed_l?: number | null
+  notes?: string | null
 }
 
 export interface MaintenanceLog {
   id: string
+  company_id: string
   vehicle_id: string
-  vehicle: Vehicle
   type: string
-  description: string
-  status: MaintenanceStatus
+  description?: string
+  status: string
   cost: number
-  technician: string
-  scheduled_date: string
-  completed_date: string | null
-  odometer_at_service: number | null
+  technician?: string
+  scheduled_date?: string
+  completed_date?: string
   created_at: string
+  vehicle?: Vehicle
+  // Legacy fields
+  odometer_at_service?: number | null
 }
 
 export interface FuelLog {
@@ -109,7 +136,9 @@ export interface FuelLog {
 export interface Expense {
   id: string
   vehicle_id: string | null
+  vehicle: { id: string; name: string; reg_number: string } | null
   trip_id: string | null
+  trip: { id: string; trip_number: string } | null
   type: ExpenseType
   amount: number
   description: string | null
@@ -128,20 +157,20 @@ export interface DashboardKPIs {
   fleet_health_score?: number
 }
 
-export interface ApiResponse<T> {
-  success: boolean
-  data: T
-  message: string
-  error?: {
-    code: string
-    details?: string
-  }
-}
-
 export interface PaginatedResponse<T> {
   items: T[]
   total: number
   page: number
   page_size: number
   total_pages: number
+}
+
+export interface ApiResponse<T> {
+  success: boolean
+  data: T
+  message?: string
+  error?: {
+    code: string
+    details?: string
+  }
 }

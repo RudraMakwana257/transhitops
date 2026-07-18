@@ -6,6 +6,7 @@ class TripEvent(db.Model):
     __tablename__ = 'trip_events'
     
     id = db.Column(db.UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    company_id = db.Column(db.UUID(as_uuid=True), db.ForeignKey('companies.id'), index=True)
     trip_id = db.Column(db.UUID(as_uuid=True), db.ForeignKey('trips.id'), nullable=False)
     event_type = db.Column(db.String(50), nullable=False)
     description = db.Column(db.Text)

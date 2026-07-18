@@ -1,14 +1,29 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, g
 from app import db
 from app.models.vehicle import Vehicle
-from app.middleware.rbac import require_roles
+from app.middleware import require_roles, require_company, require_feature
 from sqlalchemy import or_, desc
 import uuid
 
+from app.schemas import (
+    VehicleSchema,
+    CreateVehicleSchema,
+    UpdateVehicleSchema,
+    validate_request,
+)
+
 bp = Blueprint('vehicles', __name__, url_prefix='/api/vehicles')
+
+from app.middleware.rate_limiter import limiter, GENERAL_LIMIT
+@bp.before_request
+@limiter.limit(GENERAL_LIMIT)
+def general_limit():
+    pass
 
 @bp.route('', methods=['GET'])
 @require_roles('fleet_manager', 'dispatcher', 'safety_officer', 'financial_analyst')
+@require_company
+@require_feature('vehicles')
 def list_vehicles():
     page = request.args.get('page', 1, type=int)
     page_size = request.args.get('page_size', 20, type=int)
@@ -19,7 +34,7 @@ def list_vehicles():
     sort_by = request.args.get('sort_by', 'name')
     sort_order = request.args.get('sort_order', 'asc')
     
-    query = Vehicle.query.filter_by(is_active=True)
+    query = Vehicle.query.filter_by(company_id=g.company_id, is_active=True)
     
     if search:
         query = query.filter(or_(
@@ -51,90 +66,82 @@ def list_vehicles():
         }
     })
 
+@bp.route('/<id>', methods=['GET'])
+@require_roles('fleet_manager', 'dispatcher', 'safety_officer', 'financial_analyst')
+@require_company
+@require_feature('vehicles')
+def get_vehicle(id):
+    vehicle = Vehicle.query.filter_by(id=id, company_id=g.company_id).first_or_404()
+    return jsonify({"success": True, "data": vehicle.to_dict()})
+
 @bp.route('', methods=['POST'])
-@require_roles('fleet_manager')
+@require_roles('fleet_manager', 'dispatcher')
+@require_company
+@require_feature('vehicles')
 def create_vehicle():
-    data = request.get_json()
+    data = validate_request(CreateVehicleSchema)
     
-    if Vehicle.query.filter_by(reg_number=data.get('reg_number')).first():
+    if Vehicle.query.filter_by(company_id=g.company_id, reg_number=data['reg_number']).first():
         return jsonify({"success": False, "message": "Registration number already exists"}), 400
-    
+        
     vehicle = Vehicle(
+        company_id=g.company_id,
         reg_number=data['reg_number'],
         name=data['name'],
         type=data['type'],
-        capacity_kg=data['capacity_kg'],
-        acquisition_cost=data['acquisition_cost'],
+        capacity_kg=data.get('capacity_kg'),
+        acquisition_cost=data.get('acquisition_cost'),
         odometer_km=data.get('odometer_km', 0),
         purchase_date=data.get('purchase_date'),
+        status=data.get('status', 'Available'),
         region=data.get('region'),
-        status=data.get('status', 'Available')
+        is_active=True
     )
     
     db.session.add(vehicle)
     db.session.commit()
     
-    return jsonify({"success": True, "data": vehicle.to_dict(), "message": "Vehicle created"}), 201
-
-@bp.route('/available', methods=['GET'])
-@require_roles('fleet_manager', 'dispatcher')
-def get_available():
-    vehicles = Vehicle.query.filter_by(status='Available', is_active=True).all()
-    return jsonify({"success": True, "data": [v.to_dict() for v in vehicles]})
-
-@bp.route('/<id>', methods=['GET'])
-@require_roles('fleet_manager', 'dispatcher', 'safety_officer', 'financial_analyst')
-def get_vehicle(id):
-    vehicle = Vehicle.query.get_or_404(id)
-    return jsonify({"success": True, "data": vehicle.to_dict(include_relations=True)})
+    return jsonify({
+        "success": True, 
+        "data": vehicle.to_dict(),
+        "message": "Vehicle created successfully"
+    }), 201
 
 @bp.route('/<id>', methods=['PUT'])
-@require_roles('fleet_manager')
+@require_roles('fleet_manager', 'dispatcher')
+@require_company
+@require_feature('vehicles')
 def update_vehicle(id):
-    vehicle = Vehicle.query.get_or_404(id)
-    data = request.get_json()
+    vehicle = Vehicle.query.filter_by(id=id, company_id=g.company_id).first_or_404()
+    data = validate_request(UpdateVehicleSchema)
     
-    for field in ['name', 'type', 'capacity_kg', 'acquisition_cost', 'odometer_km', 'purchase_date', 'region', 'status']:
-        if field in data:
+    if 'reg_number' in data and data['reg_number'] != vehicle.reg_number:
+        if Vehicle.query.filter_by(company_id=g.company_id, reg_number=data['reg_number']).first():
+            return jsonify({"success": False, "message": "Registration number already exists"}), 400
+            
+    for field in ['reg_number', 'name', 'type', 'capacity_kg', 
+                  'acquisition_cost', 'odometer_km', 'purchase_date', 'status', 'region', 'is_active']:
+        if field in data and data[field] is not None:
             setattr(vehicle, field, data[field])
-    
+            
     db.session.commit()
-    return jsonify({"success": True, "data": vehicle.to_dict(), "message": "Vehicle updated"})
+    
+    return jsonify({
+        "success": True, 
+        "data": vehicle.to_dict(),
+        "message": "Vehicle updated successfully"
+    })
 
 @bp.route('/<id>', methods=['DELETE'])
 @require_roles('fleet_manager')
+@require_company
+@require_feature('vehicles')
 def delete_vehicle(id):
-    vehicle = Vehicle.query.get_or_404(id)
-    vehicle.status = 'Retired'
+    vehicle = Vehicle.query.filter_by(id=id, company_id=g.company_id).first_or_404()
     vehicle.is_active = False
     db.session.commit()
-    return jsonify({"success": True, "message": "Vehicle retired"})
-
-@bp.route('/<id>/trips', methods=['GET'])
-@require_roles('fleet_manager', 'dispatcher', 'safety_officer', 'financial_analyst')
-def vehicle_trips(id):
-    vehicle = Vehicle.query.get_or_404(id)
-    trips = vehicle.trips.order_by(desc('created_at')).all()
-    return jsonify({"success": True, "data": [t.to_dict() for t in trips]})
-
-@bp.route('/<id>/fuel', methods=['GET'])
-@require_roles('fleet_manager', 'dispatcher', 'financial_analyst')
-def vehicle_fuel(id):
-    vehicle = Vehicle.query.get_or_404(id)
-    logs = vehicle.fuel_logs.order_by(desc('date')).all()
-    return jsonify({"success": True, "data": [l.to_dict() for l in logs]})
-
-@bp.route('/<id>/maintenance', methods=['GET'])
-@require_roles('fleet_manager', 'dispatcher', 'safety_officer', 'financial_analyst')
-def vehicle_maintenance(id):
-    vehicle = Vehicle.query.get_or_404(id)
-    logs = vehicle.maintenance_logs.order_by(desc('scheduled_date')).all()
-    return jsonify({"success": True, "data": [l.to_dict() for l in logs]})
-
-@bp.route('/<id>/health', methods=['GET'])
-@require_roles('fleet_manager', 'dispatcher', 'safety_officer', 'financial_analyst')
-def vehicle_health(id):
-    vehicle = Vehicle.query.get_or_404(id)
-    if vehicle.health:
-        return jsonify({"success": True, "data": vehicle.health.to_dict()})
-    return jsonify({"success": True, "data": None})
+    
+    return jsonify({
+        "success": True, 
+        "message": "Vehicle deactivated successfully"
+    })

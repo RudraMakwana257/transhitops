@@ -1,3 +1,4 @@
+from app.models.company import Company
 from app.models.user import User
 from app.models.vehicle import Vehicle
 from app.models.driver import Driver
@@ -9,3 +10,8 @@ from app.models.expense import Expense
 from app.models.notification import Notification
 from app.models.vehicle_health import VehicleHealth
 from app.models.audit_log import AuditLog
+from app.models.subscription_plan import SubscriptionPlan
+from app.models.company_subscription import CompanySubscription
+from app.models.company_feature import CompanyFeature
+from app.models.login_attempt import LoginAttempt
+from app.models.password_reset_token import PasswordResetToken

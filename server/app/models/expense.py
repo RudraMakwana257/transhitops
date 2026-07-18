@@ -6,6 +6,7 @@ class Expense(db.Model):
     __tablename__ = 'expenses'
     
     id = db.Column(db.UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    company_id = db.Column(db.UUID(as_uuid=True), db.ForeignKey('companies.id'), index=True)
     vehicle_id = db.Column(db.UUID(as_uuid=True), db.ForeignKey('vehicles.id'))
     trip_id = db.Column(db.UUID(as_uuid=True), db.ForeignKey('trips.id'))
     type = db.Column(db.String(50), nullable=False)

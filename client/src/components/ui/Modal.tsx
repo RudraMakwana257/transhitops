@@ -1,4 +1,5 @@
-import { ReactNode, Fragment } from 'react'
+import type { ReactNode } from 'react'
+import { Fragment } from 'react'
 import { X } from 'lucide-react'
 import { createPortal } from 'react-dom'
 import { clsx } from 'clsx'

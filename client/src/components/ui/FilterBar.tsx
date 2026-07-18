@@ -1,8 +1,9 @@
-import { ReactNode } from 'react'
-import { Filter, X, Search, ChevronDown } from 'lucide-react'
+import type { ReactNode } from 'react'
+import { X, Search, SlidersHorizontal } from 'lucide-react'
 import { Button } from './Button'
 import { Input } from './Input'
-import { Select, SelectOption } from './Select'
+import { Select } from './Select'
+import type { SelectOption } from './Select'
 import { clsx } from 'clsx'
 
 export interface FilterField {
@@ -13,11 +14,13 @@ export interface FilterField {
   options?: SelectOption[]
   className?: string
   value?: string | string[]
-  onChange: (value: string | string[]) => void
+  onChange?: (value: string | string[]) => void
 }
 
 interface FilterBarProps {
   fields: FilterField[]
+  values?: Record<string, any>
+  onChange?: (values: Record<string, any>) => void
   searchField?: {
     placeholder: string
     value: string
@@ -29,22 +32,45 @@ interface FilterBarProps {
   hasActiveFilters?: boolean
   className?: string
   children?: ReactNode
+  showOnMobile?: boolean
 }
 
-export function FilterBar({ 
-  fields, 
-  searchField, 
-  onClear, 
-  onToggleAdvanced, 
-  showAdvanced, 
+export function FilterBar({
+  fields,
+  values,
+  onChange,
+  searchField,
+  onClear,
+  onToggleAdvanced,
+  showAdvanced,
   hasActiveFilters,
   className,
-  children 
+  children,
+  showOnMobile = false,
 }: FilterBarProps) {
+  const getFieldValue = (key: string) => {
+    if (values) return values[key] ?? ''
+    return fields.find(f => f.key === key)?.value ?? ''
+  }
+
+  const handleFieldChange = (key: string, val: string) => {
+    if (onChange && values) {
+      onChange({ ...values, [key]: val })
+    }
+  }
+
+  const activeCount = values
+    ? Object.entries(values).filter(([, v]) => v !== '' && v !== undefined && v !== null).length
+    : 0
+
   return (
-    <div className={clsx('flex flex-wrap items-end gap-3', className)}>
+    <div className={clsx(
+      'flex flex-wrap items-end gap-2 sm:gap-3',
+      !showOnMobile && 'max-sm:hidden',
+      className
+    )}>
       {searchField && (
-        <div className="relative flex-1 min-w-[200px]">
+        <div className="relative flex-1 min-w-[160px] sm:min-w-[200px] max-w-full sm:max-w-xs">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
           <Input
             placeholder={searchField.placeholder}
@@ -54,79 +80,83 @@ export function FilterBar({
           />
         </div>
       )}
-      
-      {fields.map(field => (
-        <div key={field.key} className={clsx(field.className)}>
-          {field.label && <label className="block text-xs text-[var(--text-muted)] mb-1">{field.label}</label>}
-          {field.type === 'select' && (
-            <Select
-              value={field.value as string}
-              onChange={(e) => field.onChange(e.target.value)}
-              options={field.options || []}
-              placeholder={field.placeholder}
-              className={field.className}
-            />
-          )}
-          {field.type === 'text' && (
-            <Input
-              placeholder={field.placeholder}
-              value={field.value as string}
-              onChange={(e) => field.onChange(e.target.value)}
-              className={field.className}
-            />
-          )}
-          {field.type === 'date' && (
-            <Input
-              type="date"
-              value={field.value as string}
-              onChange={(e) => field.onChange(e.target.value)}
-              className={field.className}
-            />
-          )}
-          {field.type === 'date-range' && (
-            <div className="flex items-center gap-2">
-              <Input
-                type="date"
-                value={(field.value as string[])[0] || ''}
-                onChange={(e) => field.onChange([e.target.value, (field.value as string[])[1] || ''])}
-                className="w-36"
-                placeholder="From"
-              />
-              <span className="text-[var(--text-muted)] text-sm">to</span>
-              <Input
-                type="date"
-                value={(field.value as string[])[1] || ''}
-                onChange={(e) => field.onChange([(field.value as string[])[0] || '', e.target.value])}
-                className="w-36"
-                placeholder="To"
-              />
+
+      <div className="flex flex-wrap items-end gap-2 sm:gap-3 flex-1 sm:flex-none">
+        {fields.map(field => {
+          const val = getFieldValue(field.key)
+          const handleChange = (v: string) => handleFieldChange(field.key, v)
+
+          return (
+            <div key={field.key} className={clsx(field.className || 'min-w-0')}>
+              {field.label && <label className="block text-xs text-[var(--text-muted)] mb-1 font-medium">{field.label}</label>}
+              {field.type === 'select' && (
+                <Select
+                  value={val}
+                  onChange={(e) => handleChange(e.target.value)}
+                  options={field.options || []}
+                  placeholder={field.placeholder}
+                  className={clsx('w-full sm:w-auto', field.className)}
+                />
+              )}
+              {field.type === 'text' && (
+                <Input
+                  placeholder={field.placeholder}
+                  value={val}
+                  onChange={(e) => handleChange(e.target.value)}
+                  className={clsx('w-full sm:w-auto', field.className)}
+                />
+              )}
+              {field.type === 'date' && (
+                <Input
+                  type="date"
+                  value={val}
+                  onChange={(e) => handleChange(e.target.value)}
+                  className={clsx('w-full sm:w-auto', field.className)}
+                />
+              )}
+              {field.type === 'date-range' && (
+                <div className="flex items-center gap-1.5">
+                  <Input
+                    type="date"
+                    value={val}
+                    onChange={(e) => handleChange(e.target.value)}
+                    className="w-32 sm:w-36"
+                    placeholder="From"
+                  />
+                </div>
+              )}
             </div>
-          )}
-        </div>
-      ))}
-      
-      {onToggleAdvanced && (
-        <Button 
-          variant={showAdvanced ? 'primary' : 'outline'} 
-          size="sm"
-          onClick={onToggleAdvanced}
-          className="gap-1"
-        >
-          <Filter className="w-4 h-4" />
-          <span className="hidden sm:inline">Filters</span>
-          <ChevronDown className={clsx('w-4 h-4 transition-transform', showAdvanced && 'rotate-180')} />
-          {hasActiveFilters && <span className="w-1.5 h-1.5 bg-red-500 rounded-full" />}
-        </Button>
-      )}
-      
-      {onClear && hasActiveFilters && (
-        <Button variant="ghost" size="sm" onClick={onClear} className="gap-1">
-          <X className="w-4 h-4" />
-          <span className="hidden sm:inline">Clear</span>
-        </Button>
-      )}
-      
-      {children}
+          )
+        })}
+      </div>
+
+      <div className="flex items-center gap-2">
+        {onToggleAdvanced && (
+          <Button
+            variant={showAdvanced ? 'primary' : 'outline'}
+            size="sm"
+            onClick={onToggleAdvanced}
+            className="gap-1"
+          >
+            <SlidersHorizontal className="w-4 h-4" />
+            <span className="hidden sm:inline">Filters</span>
+            {activeCount > 0 && (
+              <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-[var(--brand-primary)] text-white text-[10px] font-bold leading-none">
+                {activeCount}
+              </span>
+            )}
+          </Button>
+        )}
+
+        {onClear && hasActiveFilters && (
+          <Button variant="ghost" size="sm" onClick={onClear} className="gap-1 text-[var(--text-muted)]">
+            <X className="w-4 h-4" />
+            <span className="hidden sm:inline">Clear</span>
+          </Button>
+        )}
+
+        {children}
+      </div>
     </div>
   )
 }
@@ -141,12 +171,13 @@ interface AdvancedFiltersPanelProps {
 
 export function AdvancedFiltersPanel({ isOpen, onClose, onClear, title = 'Advanced Filters', children }: AdvancedFiltersPanelProps) {
   if (!isOpen) return null
-  
+
   return (
-    <div className="mb-6 p-4 rounded-lg bg-[var(--bg-sidebar)] border border-[var(--border-default)] animate-slide-down">
-      <div className="flex items-center justify-between mb-3">
-        <h4 className="font-medium text-sm">{title}</h4>
-        <Button variant="ghost" size="sm" onClick={() => { onClear(); onClose(); }}>
+    <div className="mb-6 p-4 sm:p-5 rounded-xl bg-[var(--bg-sidebar)] border border-[var(--border-default)] shadow-sm animate-slide-down">
+      <div className="flex items-center justify-between mb-4">
+        <h4 className="font-semibold text-sm text-[var(--text-primary)]">{title}</h4>
+        <Button variant="ghost" size="sm" onClick={() => { onClear(); onClose(); }} className="text-[var(--text-muted)]">
+          <X className="w-4 h-4 mr-1" />
           Clear All
         </Button>
       </div>
@@ -164,17 +195,18 @@ interface FilterChipProps {
 
 export function FilterChip({ label, value, onRemove, variant = 'default' }: FilterChipProps) {
   const variants = {
-    default: 'bg-[var(--bg-sidebar)] border border-[var(--border-default)]',
-    primary: 'bg-[var(--brand-primary-light)] border border-[var(--brand-primary)]',
-    danger: 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800'
+    default: 'bg-[var(--bg-sidebar)] border border-[var(--border-default)] text-[var(--text-secondary)]',
+    primary: 'bg-[var(--brand-primary-light)] border border-[var(--brand-primary)] text-[var(--brand-primary)]',
+    danger: 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400'
   }
-  
+
   return (
     <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium ${variants[variant]}`}>
-      {label}: {value}
-      <button 
+      <span className="opacity-70">{label}:</span>
+      <span className="font-semibold">{value}</span>
+      <button
         onClick={onRemove}
-        className="ml-1 p-0.5 rounded hover:bg-[var(--bg-hover)]"
+        className="ml-0.5 p-0.5 rounded hover:bg-[var(--bg-hover)] transition-colors"
         aria-label={`Remove ${label} filter`}
       >
         <X className="w-3 h-3" />

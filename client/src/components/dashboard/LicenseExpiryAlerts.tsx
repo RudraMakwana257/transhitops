@@ -1,6 +1,5 @@
-import { format, differenceInDays } from 'date-fns'
 import { AlertTriangle, AlertCircle, Clock, CheckCircle } from 'lucide-react'
-import { Badge } from '../ui/Badge'
+
 import { Button } from '../ui/Button'
 
 interface LicenseAlert {

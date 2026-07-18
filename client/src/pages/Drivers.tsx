@@ -1,56 +1,56 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { api } from '../api/client'
-import type { Driver, DriverStatus, LicenseCategory } from '../types'
+// api removed
+import type { Driver, UserRole } from '../types'
 import { DataTable } from '../components/ui/DataTable'
 import { StatusBadge } from '../components/ui/Badge'
-import { Button } from '../components/ui/Button'
-import { Input } from '../components/ui/Input'
-import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card'
 import { PageWrapper } from '../components/layout/PageWrapper'
-import { Plus, Shield } from 'lucide-react'
+import { TableSkeleton } from '../components/ui/TableSkeleton'
+import { EmptyState } from '../components/ui/EmptyState'
+import { FilterBar, FilterChip, type FilterField } from '../components/ui/FilterBar'
+import { Plus, Shield, Users, Clock, Truck } from 'lucide-react'
 import { format } from 'date-fns'
 import { useAuth } from '../hooks/useAuth'
-import type { UserRole } from '../types'
-import { FilterBar, type FilterField } from '../components/ui/FilterBar'
+
+import { useDriverStore } from '../stores/driverStore'
 
 export function Drivers() {
   const { hasRole } = useAuth()
-  const [drivers, setDrivers] = useState<Driver[]>([])
-  const [loading, setLoading] = useState(true)
-  const [pagination, setPagination] = useState({ page: 1, pageSize: 20, total: 0, totalPages: 0 })
+  const { drivers, loading, pagination: storePagination, fetchDrivers } = useDriverStore()
+  
+  const [page, setPage] = useState(1)
   const [filters, setFilters] = useState({ search: '', status: '' })
-  const [sorting, setSorting] = useState({ column: 'name', direction: 'asc' })
+  const [sorting, setSorting] = useState<{ column: string; direction: 'asc' | 'desc' }>({ column: 'name', direction: 'asc' })
+  
+  const pagination = { 
+    page: storePagination.page, 
+    pageSize: storePagination.page_size, 
+    total: storePagination.total, 
+    totalPages: storePagination.total_pages 
+  }
+  
+
   
   const canManage = hasRole(['fleet_manager'] as UserRole[])
-  const canEditSafety = hasRole(['fleet_manager', 'safety_officer'] as UserRole[])
   
   useEffect(() => {
-    fetchDrivers()
-  }, [pagination.page, filters, sorting])
+    fetchDrivers({
+      page,
+      page_size: 20,
+      ...filters,
+      sort_by: sorting.column,
+      sort_order: sorting.direction,
+    })
+  }, [page, filters, sorting.column, sorting.direction, fetchDrivers])
   
-  const fetchDrivers = async () => {
-    setLoading(true)
-    try {
-      const params = new URLSearchParams({
-        page: pagination.page.toString(),
-        page_size: pagination.pageSize.toString(),
-        ...filters,
-        sort_by: sorting.column,
-        sort_order: sorting.direction,
-      })
-      
-      const res = await api.get(`/drivers?${params}`)
-      if (res.data.success) {
-        setDrivers(res.data.data.items)
-        setPagination(prev => ({ ...prev, total: res.data.data.total, totalPages: res.data.data.total_pages }))
-      }
-    } catch (err) {
-      console.error('Failed to fetch drivers:', err)
-    } finally {
-      setLoading(false)
-    }
-  }
+  const stats = useMemo(() => {
+    const available = drivers.filter(d => d.status === 'Available').length
+    const onTrip = drivers.filter(d => d.status === 'On Trip').length
+    const offDuty = drivers.filter(d => d.status === 'Off Duty').length
+    const suspended = drivers.filter(d => d.status === 'Suspended').length
+    const expiringSoon = drivers.filter(d => d.days_until_expiry !== undefined && d.days_until_expiry >= 0 && d.days_until_expiry <= 30).length
+    return { available, onTrip, offDuty, suspended, expiringSoon }
+  }, [drivers])
   
   const columns = [
     { key: 'name', header: 'Name', accessor: 'name', sortable: true },
@@ -60,18 +60,18 @@ export function Drivers() {
       const days = d.days_until_expiry
       return (
         <div>
-          <p className="font-medium">{format(new Date(d.license_expiry), 'MMM d, yyyy')}</p>
-          {days < 0 && <span className="text-xs text-red-600 dark:text-red-400">EXPIRED {Math.abs(days)} days ago</span>}
-          {days >= 0 && days <= 30 && <span className="text-xs text-amber-600 dark:text-amber-400">Expires in {days} days</span>}
-          {days > 30 && <span className="text-xs text-[var(--text-muted)]">{days} days left</span>}
+          <p className="font-medium text-sm">{format(new Date(d.license_expiry), 'MMM d, yyyy')}</p>
+          {days !== undefined && days < 0 && <span className="text-[11px] text-red-600 dark:text-red-400 font-medium">EXPIRED {Math.abs(days as number)}d ago</span>}
+          {days !== undefined && days >= 0 && days <= 30 && <span className="text-[11px] text-amber-600 dark:text-amber-400 font-medium">Expires in {days}d</span>}
+          {days !== undefined && days > 30 && <span className="text-[11px] text-[var(--text-muted)]">{days}d left</span>}
         </div>
       )
     }},
     { key: 'status', header: 'Status', render: (d: Driver) => <StatusBadge status={d.status} type="driver" /> },
     { key: 'safety_score', header: 'Safety', accessor: 'safety_score', sortable: true, align: 'center' as const, render: (d: Driver) => (
-      <div className="flex items-center justify-center gap-1">
+      <div className="flex items-center justify-center gap-1.5">
         <Shield className="w-4 h-4 text-[var(--text-muted)]" />
-        <span className="font-medium">{d.safety_score.toFixed(1)}</span>
+        <span className="font-semibold text-sm">{d.safety_score.toFixed(1)}</span>
       </div>
     )},
     { key: 'phone', header: 'Phone', accessor: 'phone' },
@@ -90,11 +90,19 @@ export function Drivers() {
     ]},
   ]
   
-  const hasActiveFilters = filters.search || filters.status
+  const hasActiveFilters = !!(filters.search || filters.status)
   
   const clearAllFilters = () => {
     setFilters({ search: '', status: '' })
   }
+
+  const removeFilter = (key: string) => {
+    setFilters(prev => ({ ...prev, [key]: '' }))
+  }
+
+  const activeFilterChips = [
+    { key: 'status', label: 'Status', value: filters.status },
+  ].filter(f => f.value)
 
   if (!canView) return null
   
@@ -103,19 +111,69 @@ export function Drivers() {
       title="Drivers" 
       description="Manage driver records and licenses"
       headerActions={
-        canManage && <Button asChild><Link to="/drivers/new"><Plus className="w-4 h-4 mr-2" />Add Driver</Link></Button>
+        canManage && <Link to="/drivers/new" className="btn-primary inline-flex items-center gap-2"><Plus className="w-4 h-4" />Add Driver</Link>
       }
       filters={
         <FilterBar
           fields={driverFields}
           values={filters}
-          onChange={setFilters}
+          onChange={(v) => setFilters(v as typeof filters)}
           onClear={clearAllFilters}
           hasActiveFilters={hasActiveFilters}
         />
       }
     >
-      <DataTable
+      {/* Summary Stats */}
+      <div className="flex flex-wrap gap-3 mb-5">
+        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[var(--bg-sidebar)] border border-[var(--border-default)]">
+          <Users className="w-4 h-4 text-[var(--text-muted)]" />
+          <span className="text-xs text-[var(--text-muted)]">Total:</span>
+          <span className="font-semibold text-sm">{pagination.total}</span>
+        </div>
+        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
+          <Users className="w-4 h-4 text-green-600 dark:text-green-400" />
+          <span className="text-xs text-green-700 dark:text-green-400">Available:</span>
+          <span className="font-semibold text-sm text-green-700 dark:text-green-400">{stats.available}</span>
+        </div>
+        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+          <Truck className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+          <span className="text-xs text-blue-700 dark:text-blue-400">On Trip:</span>
+          <span className="font-semibold text-sm text-blue-700 dark:text-blue-400">{stats.onTrip}</span>
+        </div>
+        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+          <Clock className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+          <span className="text-xs text-amber-700 dark:text-amber-400">Off Duty:</span>
+          <span className="font-semibold text-sm text-amber-700 dark:text-amber-400">{stats.offDuty}</span>
+        </div>
+        {stats.expiringSoon > 0 && (
+          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+            <Shield className="w-4 h-4 text-red-600 dark:text-red-400" />
+            <span className="text-xs text-red-700 dark:text-red-400">License expiring:</span>
+            <span className="font-semibold text-sm text-red-700 dark:text-red-400">{stats.expiringSoon}</span>
+          </div>
+        )}
+      </div>
+
+      {/* Active Filter Chips */}
+      {activeFilterChips.length > 0 && (
+        <div className="flex flex-wrap gap-2 mb-4">
+          {activeFilterChips.map(f => (
+            <FilterChip key={f.key} label={f.label} value={f.value} onRemove={() => removeFilter(f.key)} />
+          ))}
+        </div>
+      )}
+
+      
+      {loading ? (
+        <TableSkeleton columns={6} />
+      ) : drivers.length === 0 ? (
+        <EmptyState 
+          title="No drivers yet." 
+          description="Add your first driver."
+          action={<Link to="/drivers/new" className="inline-flex items-center justify-center px-4 py-2 bg-[var(--brand-primary)] text-white text-sm font-medium rounded-lg hover:bg-[var(--brand-primary-hover)]">Add Driver</Link>} 
+        />
+      ) : (
+        <DataTable
         columns={columns}
         data={drivers}
         loading={loading}
@@ -124,7 +182,7 @@ export function Drivers() {
           page: pagination.page,
           pageSize: pagination.pageSize,
           total: pagination.total,
-          onPageChange: (page) => setPagination(prev => ({ ...prev, page })),
+          onPageChange: (page) => setPage(page),
         }}
         sorting={{
           column: sorting.column,
@@ -132,8 +190,9 @@ export function Drivers() {
           onSort: (col) => setSorting(prev => ({ column: col, direction: prev.column === col && prev.direction === 'asc' ? 'desc' : 'asc' })),
         }}
         emptyMessage="No drivers found"
-        emptyAction={canManage && <Button asChild><Link to="/drivers/new"><Plus className="w-4 h-4 mr-2" />Add Driver</Link></Button>}
+        emptyAction={canManage && <Link to="/drivers/new" className="btn-primary inline-flex items-center gap-2"><Plus className="w-4 h-4" /> Add Driver</Link>}
       />
+      )}
     </PageWrapper>
   )
 }

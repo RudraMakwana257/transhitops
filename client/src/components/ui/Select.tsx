@@ -1,7 +1,8 @@
-import { SelectHTMLAttributes, forwardRef } from 'react'
+import type { SelectHTMLAttributes } from 'react'
+import { forwardRef } from 'react'
 import { clsx } from 'clsx'
 
-interface SelectOption {
+export interface SelectOption {
   value: string
   label: string
 }

@@ -6,6 +6,7 @@ class VehicleHealth(db.Model):
     __tablename__ = 'vehicle_health'
     
     id = db.Column(db.UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    company_id = db.Column(db.UUID(as_uuid=True), db.ForeignKey('companies.id'), index=True)
     vehicle_id = db.Column(db.UUID(as_uuid=True), db.ForeignKey('vehicles.id'), unique=True, nullable=False)
     health_score = db.Column(db.Numeric(5, 2), default=100.00)
     fuel_efficiency_score = db.Column(db.Numeric(5, 2))

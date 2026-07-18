@@ -1,4 +1,5 @@
-import { ReactNode, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react';
+import type { ReactNode } from 'react'
 import { ChevronUp, ChevronDown } from 'lucide-react'
 import { clsx } from 'clsx'
 
@@ -147,7 +148,7 @@ export function DataTable<T extends { id?: string }>({
                   type="checkbox"
                   className="w-4 h-4 rounded border-[var(--border-default)] text-[var(--brand-primary)] focus:ring-[var(--brand-primary-light)] cursor-pointer"
                   checked={selection.selectedIds.length === sortedData.length && sortedData.length > 0}
-                  indeterminate={selection.selectedIds.length > 0 && selection.selectedIds.length < sortedData.length}
+                  {...({ indeterminate: selection.selectedIds.length > 0 && selection.selectedIds.length < sortedData.length } as any)}
                   onChange={(e) => {
                     if (e.target.checked) {
                       selection.onSelectionChange(sortedData.map(selection.getRowId))
@@ -290,19 +291,19 @@ export function DataTable<T extends { id?: string }>({
                 <ChevronUp className="w-4 h-4" />
               </button>
               <span className="px-3 text-sm text-[var(--text-secondary)] min-w-[80px] text-center">
-                Page {pagination.page} of {pagination.totalPages}
+                Page {pagination.page} of {(pagination as any).totalPages}
               </span>
               <button
                 onClick={() => pagination.onPageChange(pagination.page + 1)}
-                disabled={pagination.page === pagination.totalPages}
+                disabled={pagination.page === (pagination as any).totalPages}
                 className="btn-secondary p-1.5"
                 aria-label="Next page"
               >
                 <ChevronDown className="w-4 h-4" />
               </button>
               <button
-                onClick={() => pagination.onPageChange(pagination.totalPages)}
-                disabled={pagination.page === pagination.totalPages}
+                onClick={() => pagination.onPageChange((pagination as any).totalPages)}
+                disabled={pagination.page === (pagination as any).totalPages}
                 className="btn-secondary p-1.5"
                 aria-label="Last page"
               >

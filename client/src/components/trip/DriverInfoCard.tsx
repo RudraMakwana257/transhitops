@@ -1,6 +1,6 @@
-import { Driver } from '../../types'
-import { StatusBadge } from '../ui/Badge'
-import { Shield, Calendar, IdCard } from 'lucide-react'
+import type { Driver } from '../../types'
+
+
 import { format } from 'date-fns'
 
 interface DriverInfoCardProps {

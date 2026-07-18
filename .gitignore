@@ -179,6 +179,8 @@ temp/
 # TransitOps specific
 server/venv/
 server/migrations/versions/
+!server/migrations/versions/
+!server/migrations/versions/*.py
 server/instance/
 server/*.log
 server/__pycache__/

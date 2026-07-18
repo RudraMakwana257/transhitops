@@ -50,7 +50,7 @@ export function Badge({ children, variant = 'default', size = 'md', className, d
 
 export function StatusBadge({ 
   status, 
-  type = 'vehicle',
+  
   showDot = true 
 }: { 
   status: string

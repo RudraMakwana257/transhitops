@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -8,10 +8,10 @@ import type { Vehicle, Driver } from '../types'
 import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Input'
 import { Select } from '../components/ui/Select'
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '../components/ui/Card'
+import { Card, CardContent } from '../components/ui/Card'
 import { PageWrapper } from '../components/layout/PageWrapper'
 import { StatusBadge } from '../components/ui/Badge'
-import { Truck, Users, MapPin, AlertCircle, CheckCircle, ChevronLeft, ChevronRight, AlertTriangle } from 'lucide-react'
+import { Truck, Users, MapPin, AlertCircle, CheckCircle, ChevronLeft, ChevronRight, AlertTriangle, Play } from 'lucide-react'
 import { format } from 'date-fns'
 import { useAuth } from '../hooks/useAuth'
 import { toast } from '../store/toastStore'
@@ -83,6 +83,8 @@ export function TripCreate() {
     try {
       const res = await api.get('/vehicles/available')
       if (res.data.success) setVehicles(res.data.data)
+    } catch (err) {
+      toast('Failed to load available vehicles', 'error')
     } finally { setLoadingVehicles(false) }
   }
   
@@ -91,6 +93,8 @@ export function TripCreate() {
     try {
       const res = await api.get('/drivers/available')
       if (res.data.success) setDrivers(res.data.data)
+    } catch (err) {
+      toast('Failed to load available drivers', 'error')
     } finally { setLoadingDrivers(false) }
   }
   
@@ -99,6 +103,8 @@ export function TripCreate() {
     try {
       const res = await api.get(`/trips/recommend-vehicle?cargo_weight=${weight}`)
       if (res.data.success) setRecommendations(res.data.data)
+    } catch (err) {
+      toast('Failed to load recommendations', 'error')
     } finally { setLoadingRecommendations(false) }
   }
   
@@ -197,7 +203,7 @@ export function TripCreate() {
                     <div className="mb-4 p-3 rounded-lg bg-[var(--brand-primary-light)] border border-[var(--brand-primary)]">
                       <p className="text-sm font-medium text-[var(--brand-primary)] mb-2">Recommended Vehicles</p>
                       <div className="flex flex-wrap gap-2">
-                        {recommendations.slice(0, 3).map((rec: any, i: number) => (
+                        {recommendations.slice(0, 3).map((rec: any) => (
                           <button
                             key={rec.vehicle.id}
                             type="button"
@@ -271,7 +277,7 @@ export function TripCreate() {
                         <AlertCircle className="w-5 h-5 inline mr-2" /> Driver's license has expired!
                       </div>
                     )}
-                    {selectedDriver.days_until_expiry > 0 && selectedDriver.days_until_expiry <= 30 && !selectedDriver.is_license_expired && (
+                    {selectedDriver.days_until_expiry !== undefined && selectedDriver.days_until_expiry > 0 && selectedDriver.days_until_expiry <= 30 && !selectedDriver.is_license_expired && (
                       <div className="mt-3 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400">
                         <AlertTriangle className="w-5 h-5 inline mr-2" /> License expires in {selectedDriver.days_until_expiry} days
                       </div>

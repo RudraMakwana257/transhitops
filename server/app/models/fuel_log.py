@@ -6,6 +6,7 @@ class FuelLog(db.Model):
     __tablename__ = 'fuel_logs'
     
     id = db.Column(db.UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    company_id = db.Column(db.UUID(as_uuid=True), db.ForeignKey('companies.id'), index=True)
     vehicle_id = db.Column(db.UUID(as_uuid=True), db.ForeignKey('vehicles.id'), nullable=False)
     driver_id = db.Column(db.UUID(as_uuid=True), db.ForeignKey('drivers.id'))
     trip_id = db.Column(db.UUID(as_uuid=True), db.ForeignKey('trips.id'))
@@ -16,6 +17,7 @@ class FuelLog(db.Model):
     odometer_reading = db.Column(db.Numeric(10, 2))
     fuel_station = db.Column(db.String(200))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    deleted_at = db.Column(db.DateTime, nullable=True)
     
     vehicle = db.relationship('Vehicle', back_populates='fuel_logs')
     driver = db.relationship('Driver', back_populates='fuel_logs')

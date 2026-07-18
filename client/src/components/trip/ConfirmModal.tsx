@@ -1,7 +1,6 @@
 import { Modal } from '../ui/Modal'
 import { Button } from '../ui/Button'
 import { Textarea } from '../ui/Input'
-import { ReactNode } from 'react'
 
 interface ConfirmModalProps {
   isOpen: boolean
@@ -30,7 +29,7 @@ export function ConfirmModal({ isOpen, onClose, onConfirm, loading, title, messa
             onChange={(e) => onReasonChange?.(e.target.value)} 
             placeholder={reasonPlaceholder} 
             label="Reason (required)" 
-            rows={3} 
+
           />
         )}
         <div className="flex justify-end gap-2 pt-4 border-t border-[var(--border-default)]">

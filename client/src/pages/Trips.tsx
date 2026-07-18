@@ -1,13 +1,17 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { api } from '../api/client'
-import type { Trip, TripStatus } from '../types'
+import type { Trip, TripStatus, Vehicle, Driver } from '../types'
+import { useVehicleStore } from '../stores/vehicleStore'
+import { useDriverStore } from '../stores/driverStore'
 import { DataTable, type Column } from '../components/ui/DataTable'
 import { Button } from '../components/ui/Button'
 import { PageWrapper } from '../components/layout/PageWrapper'
+import { TableSkeleton } from '../components/ui/TableSkeleton'
+import { EmptyState } from '../components/ui/EmptyState'
 import { Input } from '../components/ui/Input'
 import { Select } from '../components/ui/Select'
-import { Plus, Search, Filter, Truck, MapPin, Calendar, Eye, CheckCircle, XCircle } from 'lucide-react'
+import { FilterBar, AdvancedFiltersPanel, FilterChip, type FilterField } from '../components/ui/FilterBar'
+import { Plus, Truck, MapPin, Calendar, Eye, CheckCircle, XCircle } from 'lucide-react'
 import { format } from 'date-fns'
 import { useAuth } from '../hooks/useAuth'
 import type { UserRole } from '../types'
@@ -16,16 +20,22 @@ import { toast } from '../store/toastStore'
 const STATUS_COLORS: Record<TripStatus, string> = {
   Draft: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
   Dispatched: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
+  'In Transit': 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400',
   Completed: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
   Cancelled: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
 }
 
+import { useTripStore } from '../stores/tripStore'
+
 export function Trips() {
   const { hasRole } = useAuth()
   const navigate = useNavigate()
-  const [trips, setTrips] = useState<Trip[]>([])
-  const [loading, setLoading] = useState(true)
-  const [pagination, setPagination] = useState({ page: 1, pageSize: 15, total: 0, totalPages: 0 })
+  const { trips, loading, pagination: storePagination, fetchTrips, dispatchTrip, completeTrip, cancelTrip } = useTripStore()
+  
+  const [vehicles, setVehicles] = useState<Vehicle[]>([])
+  const [drivers, setDrivers] = useState<Driver[]>([])
+  
+  const [page, setPage] = useState(1)
   const [filters, setFilters] = useState({ 
     search: '', 
     status: '', 
@@ -37,33 +47,41 @@ export function Trips() {
   const [sorting, setSorting] = useState<{ column: string; direction: 'asc' | 'desc' }>({ column: 'created_at', direction: 'desc' })
   const [showFilters, setShowFilters] = useState(false)
   
+  const pagination = { 
+    page: storePagination.page, 
+    pageSize: storePagination.page_size, 
+    total: storePagination.total, 
+    totalPages: storePagination.total_pages 
+  }
+  
+
+  
   const canManage = hasRole(['fleet_manager', 'dispatcher'] as UserRole[])
   
   useEffect(() => {
-    fetchTrips()
-  }, [pagination.page, filters.search, filters.status, filters.vehicle_id, filters.driver_id, filters.from_date, filters.to_date, sorting.column, sorting.direction])
-  
-  const fetchTrips = async () => {
-    setLoading(true)
+    fetchTrips({
+      page,
+      page_size: 15,
+      ...filters,
+      sort_by: sorting.column,
+      sort_order: sorting.direction,
+    })
+  }, [page, filters, sorting.column, sorting.direction, fetchTrips])
+
+  useEffect(() => {
+    fetchLookups()
+  }, [])
+
+  const fetchLookups = async () => {
     try {
-      const params = new URLSearchParams({
-        page: pagination.page.toString(),
-        page_size: pagination.pageSize.toString(),
-        ...filters,
-        sort_by: sorting.column,
-        sort_order: sorting.direction,
+      useVehicleStore.getState().fetchVehicles({ page_size: 100 }).then(() => {
+        setVehicles(useVehicleStore.getState().vehicles)
       })
-      
-      const res = await api.get(`/trips?${params}`)
-      if (res.data.success) {
-        setTrips(res.data.data.items)
-        setPagination(prev => ({ ...prev, total: res.data.data.total, totalPages: res.data.data.total_pages }))
-      }
+      useDriverStore.getState().fetchDrivers({ page_size: 100 }).then(() => {
+        setDrivers(useDriverStore.getState().drivers)
+      })
     } catch (err) {
-      console.error('Failed to fetch trips:', err)
-      toast('Failed to load trips', 'error')
-    } finally {
-      setLoading(false)
+      toast('Failed to load vehicle/driver data', 'error')
     }
   }
   
@@ -72,14 +90,20 @@ export function Trips() {
   }
   
   const handleAction = async (trip: Trip, action: 'dispatch' | 'complete' | 'cancel') => {
-    if (action === 'dispatch') {
-      try {
-        await api.put(`/trips/${trip.id}/dispatch`, { confirm: true })
+    try {
+      if (action === 'dispatch') {
+        await dispatchTrip(trip.id)
         toast('Trip dispatched successfully', 'success')
-        fetchTrips()
-      } catch (err: any) {
-        toast(err.response?.data?.message || 'Failed to dispatch', 'error')
+      } else if (action === 'complete') {
+        // Assume default complete params for the list view action
+        await completeTrip(trip.id, { actual_distance_km: trip.planned_distance_km || 0, end_odometer: 0 })
+        toast('Trip completed successfully', 'success')
+      } else if (action === 'cancel') {
+        await cancelTrip(trip.id, 'Cancelled from list')
+        toast('Trip cancelled successfully', 'success')
       }
+    } catch (err: any) {
+      toast(err.response?.data?.message || `Failed to ${action} trip`, 'error')
     }
   }
   
@@ -87,10 +111,18 @@ export function Trips() {
     switch (status) {
       case 'Draft': return <Calendar className="w-3.5 h-3.5" />
       case 'Dispatched': return <Truck className="w-3.5 h-3.5" />
+      case 'In Transit': return <MapPin className="w-3.5 h-3.5" />
       case 'Completed': return <CheckCircle className="w-3.5 h-3.5" />
       case 'Cancelled': return <XCircle className="w-3.5 h-3.5" />
     }
   }
+  
+  const stats = useMemo(() => ({
+    draft: trips.filter(t => t.status === 'Draft').length,
+    dispatched: trips.filter(t => t.status === 'Dispatched').length,
+    completed: trips.filter(t => t.status === 'Completed').length,
+    cancelled: trips.filter(t => t.status === 'Cancelled').length,
+  }), [trips])
   
   const columns: Column<Trip>[] = [
     { 
@@ -110,15 +142,15 @@ export function Trips() {
       render: (t: Trip) => (
         <div>
           <div className="flex items-center gap-2 font-medium text-sm">
-            <MapPin className="w-4 h-4 text-[var(--text-muted)]" />
-            <span>{t.source}</span>
-            <span className="text-[var(--text-muted)]">→</span>
-            <span>{t.destination}</span>
+            <MapPin className="w-4 h-4 text-[var(--text-muted)] flex-shrink-0" />
+            <span className="truncate">{t.source}</span>
+            <span className="text-[var(--text-muted)] flex-shrink-0">→</span>
+            <span className="truncate">{t.destination}</span>
           </div>
           {t.vehicle && (
             <div className="flex items-center gap-1.5 mt-1 text-xs text-[var(--text-muted)]">
-              <Truck className="w-3 h-3" />
-              <span>{t.vehicle.name}</span>
+              <Truck className="w-3 h-3 flex-shrink-0" />
+              <span className="truncate">{t.vehicle.name}</span>
               <span className="text-[var(--border-default)]">•</span>
               <span className="font-mono">{t.vehicle.reg_number}</span>
             </div>
@@ -132,10 +164,10 @@ export function Trips() {
       width: '160px',
       render: (t: Trip) => t.driver ? (
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-full bg-[var(--brand-primary-light)] flex items-center justify-center text-[var(--brand-primary)] text-xs font-medium">
+          <div className="w-7 h-7 rounded-full bg-[var(--brand-primary-light)] flex items-center justify-center text-[var(--brand-primary)] text-xs font-medium flex-shrink-0">
             {t.driver.name.charAt(0)}
           </div>
-          <span className="font-medium text-sm">{t.driver.name}</span>
+          <span className="font-medium text-sm truncate">{t.driver.name}</span>
         </div>
       ) : (
         <span className="text-[var(--text-muted)] text-sm">—</span>
@@ -155,14 +187,10 @@ export function Trips() {
       header: 'Status', 
       width: '130px',
       render: (t: Trip) => (
-        <div className="flex items-center gap-2">
-          <span 
-            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${STATUS_COLORS[t.status]}`}
-          >
-            {getStatusIcon(t.status)}
-            {t.status}
-          </span>
-        </div>
+        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${STATUS_COLORS[t.status]}`}>
+          {getStatusIcon(t.status)}
+          {t.status}
+        </span>
       )
     },
     { 
@@ -198,7 +226,7 @@ export function Trips() {
               variant="primary" 
               size="sm" 
               onClick={(e) => { e.stopPropagation(); handleAction(t, 'dispatch') }}
-              className="h-8 px-3 text-xs"
+              className="h-8 px-3 text-xs whitespace-nowrap"
             >
               <Truck className="w-3.5 h-3.5 mr-1" />
               Dispatch
@@ -209,7 +237,32 @@ export function Trips() {
     },
   ]
   
-  const hasActiveFilters = filters.search || filters.status || filters.vehicle_id || filters.driver_id || filters.from_date || filters.to_date
+  const hasActiveFilters = !!(filters.search || filters.status || filters.vehicle_id || filters.driver_id || filters.from_date || filters.to_date)
+  
+  const clearAllFilters = () => {
+    setFilters({ search: '', status: '', vehicle_id: '', driver_id: '', from_date: '', to_date: '' })
+  }
+
+  const removeFilter = (key: string) => {
+    setFilters(prev => ({ ...prev, [key]: '' }))
+  }
+
+  const activeFilterChips = [
+    { key: 'status', label: 'Status', value: filters.status },
+    { key: 'vehicle_id', label: 'Vehicle', value: filters.vehicle_id ? vehicles.find(v => v.id === filters.vehicle_id)?.name || filters.vehicle_id : '' },
+    { key: 'driver_id', label: 'Driver', value: filters.driver_id ? drivers.find(d => d.id === filters.driver_id)?.name || filters.driver_id : '' },
+  ].filter(f => f.value)
+
+  const tripFields: FilterField[] = [
+    { key: 'search', type: 'text', placeholder: 'Search trip #, route...' },
+    { key: 'status', type: 'select', options: [
+      { value: '', label: 'All Status' },
+      { value: 'Draft', label: 'Draft' },
+      { value: 'Dispatched', label: 'Dispatched' },
+      { value: 'Completed', label: 'Completed' },
+      { value: 'Cancelled', label: 'Cancelled' },
+    ]},
+  ]
   
   return (
     <PageWrapper 
@@ -217,153 +270,124 @@ export function Trips() {
       description="Create, dispatch, and manage trips"
       headerActions={
         canManage && (
-          <Link to="/trips/new" className="btn-primary inline-flex items-center gap-2">
+          <Link to="/trips/new" className="btn-primary inline-flex items-center gap-2 whitespace-nowrap">
             <Plus className="w-4 h-4" />
-            Create Trip
+            <span className="hidden sm:inline">Create Trip</span>
+            <span className="sm:hidden">New</span>
           </Link>
         )
       }
       filters={
-        <div className="flex flex-wrap items-end gap-3">
-          {/* Search */}
-          <div className="relative flex-1 min-w-[200px]">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
-            <Input 
-              placeholder="Search trip #, route..." 
-              value={filters.search} 
-              onChange={(e) => setFilters({...filters, search: e.target.value})} 
-              className="pl-10"
-            />
-          </div>
-          
-          {/* Status Filter */}
-          <Select
-            value={filters.status}
-            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFilters({...filters, status: e.target.value})}
-            options={[
-              { value: '', label: 'All Status' },
-              { value: 'Draft', label: 'Draft' },
-              { value: 'Dispatched', label: 'Dispatched' },
-              { value: 'Completed', label: 'Completed' },
-              { value: 'Cancelled', label: 'Cancelled' },
-            ]}
-            className="w-36"
-          />
-          
-          {/* Date Range */}
-          <div className="flex items-center gap-2">
-            <Input 
-              type="date" 
-              value={filters.from_date} 
-              onChange={(e) => setFilters({...filters, from_date: e.target.value})} 
-              className="w-36" 
-              placeholder="From"
-              title="From date"
-            />
-            <span className="text-[var(--text-muted)] text-sm">to</span>
-            <Input 
-              type="date" 
-              value={filters.to_date} 
-              onChange={(e) => setFilters({...filters, to_date: e.target.value})} 
-              className="w-36" 
-              placeholder="To"
-              title="To date"
-            />
-          </div>
-          
-          {/* Advanced Filters Toggle */}
-          <Button 
-            variant={showFilters ? 'primary' : 'outline'} 
-            size="sm"
-            onClick={() => setShowFilters(!showFilters)}
-            className="gap-1"
+        <>
+          <FilterBar
+            fields={tripFields}
+            values={filters}
+            onChange={(v) => setFilters(v as typeof filters)}
+            onClear={clearAllFilters}
+            onToggleAdvanced={() => setShowFilters(!showFilters)}
+            showAdvanced={showFilters}
+            hasActiveFilters={hasActiveFilters}
           >
-            <Filter className="w-4 h-4" />
-            <span className="hidden sm:inline">Filters</span>
-            {hasActiveFilters && <span className="w-1.5 h-1.5 bg-red-500 rounded-full" />}
-          </Button>
-        </div>
+            {/* Date Range */}
+            <div className="flex items-center gap-1.5">
+              <Input 
+                type="date" 
+                value={filters.from_date} 
+                onChange={(e) => setFilters({...filters, from_date: e.target.value})} 
+                className="w-32 sm:w-36" 
+                title="From date"
+              />
+              <span className="text-[var(--text-muted)] text-xs">—</span>
+              <Input 
+                type="date" 
+                value={filters.to_date} 
+                onChange={(e) => setFilters({...filters, to_date: e.target.value})} 
+                className="w-32 sm:w-36" 
+                title="To date"
+              />
+            </div>
+          </FilterBar>
+
+          {/* Advanced Filters Panel */}
+          <AdvancedFiltersPanel isOpen={showFilters} onClose={() => setShowFilters(false)} onClear={clearAllFilters}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              <Select
+                value={filters.vehicle_id}
+                onChange={(e) => setFilters({...filters, vehicle_id: e.target.value})}
+                options={[{ value: '', label: 'All Vehicles' }, ...vehicles.map(v => ({ value: v.id, label: `${v.name} (${v.reg_number})` }))]}
+                placeholder="Filter by vehicle"
+                className="w-full"
+              />
+              <Select
+                value={filters.driver_id}
+                onChange={(e) => setFilters({...filters, driver_id: e.target.value})}
+                options={[{ value: '', label: 'All Drivers' }, ...drivers.map(d => ({ value: d.id, label: d.name }))]}
+                placeholder="Filter by driver"
+                className="w-full"
+              />
+              <Input 
+                type="date" 
+                value={filters.from_date} 
+                onChange={(e) => setFilters({...filters, from_date: e.target.value})} 
+                placeholder="From date"
+                className="w-full"
+              />
+              <Input 
+                type="date" 
+                value={filters.to_date} 
+                onChange={(e) => setFilters({...filters, to_date: e.target.value})} 
+                placeholder="To date"
+                className="w-full"
+              />
+            </div>
+          </AdvancedFiltersPanel>
+        </>
       }
     >
-      {/* Advanced Filters Panel */}
-      {showFilters && (
-        <div className="mb-6 p-4 rounded-lg bg-[var(--bg-sidebar)] border border-[var(--border-default)] animate-slide-down">
-          <div className="flex items-center justify-between mb-3">
-            <h4 className="font-medium text-sm">Advanced Filters</h4>
-            <Button variant="ghost" size="sm" onClick={() => {
-              setFilters({ search: '', status: '', vehicle_id: '', driver_id: '', from_date: '', to_date: '' })
-              setShowFilters(false)
-            }}>
-              Clear All
-            </Button>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-            <Select
-              value={filters.vehicle_id}
-              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFilters({...filters, vehicle_id: e.target.value})}
-              options={[]}
-              placeholder="Filter by vehicle"
-              className="w-full"
-            />
-            <Select
-              value={filters.driver_id}
-              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFilters({...filters, driver_id: e.target.value})}
-              options={[]}
-              placeholder="Filter by driver"
-              className="w-full"
-            />
-            <Input 
-              type="date" 
-              value={filters.from_date} 
-              onChange={(e) => setFilters({...filters, from_date: e.target.value})} 
-              placeholder="From date"
-              className="w-full"
-            />
-            <Input 
-              type="date" 
-              value={filters.to_date} 
-              onChange={(e) => setFilters({...filters, to_date: e.target.value})} 
-              placeholder="To date"
-              className="w-full"
-            />
-          </div>
-        </div>
-      )}
-      
       {/* Quick Stats Bar */}
-      <div className="mb-6 flex flex-wrap gap-4">
+      <div className="flex flex-wrap gap-2 sm:gap-3 mb-5">
         <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[var(--bg-sidebar)] border border-[var(--border-default)]">
           <span className="text-xs text-[var(--text-muted)]">Total:</span>
-          <span className="font-medium text-[var(--text-primary)]">{pagination.total}</span>
-          <span className="text-xs text-[var(--text-muted)]">trips</span>
+          <span className="font-semibold text-sm">{pagination.total}</span>
         </div>
         <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
           <span className="text-xs text-blue-700 dark:text-blue-400">Draft:</span>
-          <span className="font-medium text-blue-700 dark:text-blue-400">
-            {trips.filter(t => t.status === 'Draft').length}
-          </span>
+          <span className="font-semibold text-sm text-blue-700 dark:text-blue-400">{stats.draft}</span>
         </div>
         <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800">
           <span className="text-xs text-purple-700 dark:text-purple-400">Dispatched:</span>
-          <span className="font-medium text-purple-700 dark:text-purple-400">
-            {trips.filter(t => t.status === 'Dispatched').length}
-          </span>
+          <span className="font-semibold text-sm text-purple-700 dark:text-purple-400">{stats.dispatched}</span>
         </div>
         <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
           <span className="text-xs text-green-700 dark:text-green-400">Completed:</span>
-          <span className="font-medium text-green-700 dark:text-green-400">
-            {trips.filter(t => t.status === 'Completed').length}
-          </span>
+          <span className="font-semibold text-sm text-green-700 dark:text-green-400">{stats.completed}</span>
         </div>
         <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
           <span className="text-xs text-red-700 dark:text-red-400">Cancelled:</span>
-          <span className="font-medium text-red-700 dark:text-red-400">
-            {trips.filter(t => t.status === 'Cancelled').length}
-          </span>
+          <span className="font-semibold text-sm text-red-700 dark:text-red-400">{stats.cancelled}</span>
         </div>
       </div>
+
+      {/* Active Filter Chips */}
+      {activeFilterChips.length > 0 && (
+        <div className="flex flex-wrap gap-2 mb-4">
+          {activeFilterChips.map(f => (
+            <FilterChip key={f.key} label={f.label} value={f.value} onRemove={() => removeFilter(f.key)} />
+          ))}
+        </div>
+      )}
       
-      <DataTable
+      
+      {loading ? (
+        <TableSkeleton columns={8} />
+      ) : trips.length === 0 ? (
+        <EmptyState 
+          title="No trips yet." 
+          description="Create your first trip."
+          action={<Link to="/trips/new" className="inline-flex items-center justify-center px-4 py-2 bg-[var(--brand-primary)] text-white text-sm font-medium rounded-lg hover:bg-[var(--brand-primary-hover)]">Create Trip</Link>} 
+        />
+      ) : (
+        <DataTable
         columns={columns}
         data={trips}
         loading={loading}
@@ -372,7 +396,7 @@ export function Trips() {
           page: pagination.page,
           pageSize: pagination.pageSize,
           total: pagination.total,
-          onPageChange: (page) => setPagination(prev => ({ ...prev, page })),
+          onPageChange: (page) => setPage(page),
         }}
         sorting={{
           column: sorting.column,
@@ -383,7 +407,7 @@ export function Trips() {
           })),
         }}
         emptyMessage="No trips found"
-        emptyAction={canManage && <Link to="/trips/new" className="btn-primary inline-flex items-center gap-2"><Plus className="w-4 h-4" />Create Trip</Link>}
+        emptyAction={canManage && <Link to="/trips/new" className="btn-primary inline-flex items-center gap-2"><Plus className="w-4 h-4" /> Create Trip</Link>}
         rowClassName={(t: Trip) => `cursor-pointer hover:bg-[var(--bg-hover)] transition-colors ${
           t.status === 'Draft' ? 'border-l-4 border-l-blue-500' :
           t.status === 'Dispatched' ? 'border-l-4 border-l-purple-500' :
@@ -391,6 +415,7 @@ export function Trips() {
           'border-l-4 border-l-red-500'
         }`}
       />
+      )}
     </PageWrapper>
   )
 }

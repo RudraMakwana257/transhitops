@@ -8,16 +8,16 @@ from app.models.maintenance_log import MaintenanceLog
 from app.models.vehicle_health import VehicleHealth
 from datetime import datetime
 
-def recalculate_health_score(vehicle_id):
-    vehicle = Vehicle.query.get(vehicle_id)
+def recalculate_health_score(company_id, vehicle_id):
+    vehicle = Vehicle.query.filter_by(id=vehicle_id, company_id=company_id).first()
     if not vehicle:
         return
     
-    fuel_score = calculate_fuel_efficiency_score(vehicle)
-    maintenance_score = calculate_maintenance_score(vehicle)
-    utilization_score = calculate_utilization_score(vehicle)
+    fuel_score = calculate_fuel_efficiency_score(company_id, vehicle)
+    maintenance_score = calculate_maintenance_score(company_id, vehicle)
+    utilization_score = calculate_utilization_score(company_id, vehicle)
     age_score = calculate_age_score(vehicle)
-    cost_score = calculate_cost_score(vehicle)
+    cost_score = calculate_cost_score(company_id, vehicle)
     
     final_score = (
         fuel_score * 0.30 +
@@ -27,9 +27,9 @@ def recalculate_health_score(vehicle_id):
         cost_score * 0.10
     )
     
-    health = VehicleHealth.query.filter_by(vehicle_id=vehicle_id).first()
+    health = VehicleHealth.query.filter_by(vehicle_id=vehicle_id, company_id=company_id).first()
     if not health:
-        health = VehicleHealth(vehicle_id=vehicle_id)
+        health = VehicleHealth(vehicle_id=vehicle_id, company_id=company_id)
         db.session.add(health)
     
     health.health_score = round(final_score, 1)
@@ -42,15 +42,17 @@ def recalculate_health_score(vehicle_id):
     
     db.session.commit()
 
-def calculate_fuel_efficiency_score(vehicle):
+def calculate_fuel_efficiency_score(company_id, vehicle):
     thirty_days_ago = date.today() - timedelta(days=30)
     
     vehicle_fuel = db.session.query(func.sum(FuelLog.liters)).filter(
+        FuelLog.company_id == company_id,
         FuelLog.vehicle_id == vehicle.id,
         FuelLog.date >= thirty_days_ago
     ).scalar() or 0
     
     vehicle_distance = db.session.query(func.sum(Trip.actual_distance_km)).filter(
+        Trip.company_id == company_id,
         Trip.vehicle_id == vehicle.id,
         Trip.status == 'Completed',
         Trip.completed_at >= thirty_days_ago
@@ -59,10 +61,12 @@ def calculate_fuel_efficiency_score(vehicle):
     vehicle_avg = float(vehicle_distance) / float(vehicle_fuel) if vehicle_fuel > 0 else 0
     
     fleet_fuel = db.session.query(func.sum(FuelLog.liters)).filter(
+        FuelLog.company_id == company_id,
         FuelLog.date >= thirty_days_ago
     ).scalar() or 0
     
     fleet_distance = db.session.query(func.sum(Trip.actual_distance_km)).filter(
+        Trip.company_id == company_id,
         Trip.status == 'Completed',
         Trip.completed_at >= thirty_days_ago
     ).scalar() or 0
@@ -75,10 +79,11 @@ def calculate_fuel_efficiency_score(vehicle):
     score = min(100, (vehicle_avg / fleet_avg) * 100)
     return round(score, 1)
 
-def calculate_maintenance_score(vehicle):
+def calculate_maintenance_score(company_id, vehicle):
     one_year_ago = date.today() - timedelta(days=365)
     
     maint_count = MaintenanceLog.query.filter(
+        MaintenanceLog.company_id == company_id,
         MaintenanceLog.vehicle_id == vehicle.id,
         MaintenanceLog.scheduled_date >= one_year_ago
     ).count()
@@ -94,16 +99,18 @@ def calculate_maintenance_score(vehicle):
     else:
         return 20
 
-def calculate_utilization_score(vehicle):
+def calculate_utilization_score(company_id, vehicle):
     thirty_days_ago = date.today() - timedelta(days=30)
     
     trips_on_trip = Trip.query.filter(
+        Trip.company_id == company_id,
         Trip.vehicle_id == vehicle.id,
         Trip.status == 'Dispatched',
         Trip.dispatched_at >= thirty_days_ago
     ).count()
     
     completed_trips = Trip.query.filter(
+        Trip.company_id == company_id,
         Trip.vehicle_id == vehicle.id,
         Trip.status == 'Completed',
         Trip.completed_at >= thirty_days_ago
@@ -122,31 +129,36 @@ def calculate_age_score(vehicle):
     score = max(0, 100 - (age_years * 10))
     return round(score, 1)
 
-def calculate_cost_score(vehicle):
+def calculate_cost_score(company_id, vehicle):
     thirty_days_ago = date.today() - timedelta(days=30)
     
-    vehicle_fuel_cost = db.session.query(func.sum(FuelLog.total_cost)).filter(
+    # Notice: FuelLog model has `cost`, not `total_cost`
+    vehicle_fuel_cost = db.session.query(func.sum(FuelLog.cost)).filter(
+        FuelLog.company_id == company_id,
         FuelLog.vehicle_id == vehicle.id,
         FuelLog.date >= thirty_days_ago
     ).scalar() or 0
     
     vehicle_maint_cost = db.session.query(func.sum(MaintenanceLog.cost)).filter(
+        MaintenanceLog.company_id == company_id,
         MaintenanceLog.vehicle_id == vehicle.id,
         MaintenanceLog.scheduled_date >= thirty_days_ago
     ).scalar() or 0
     
     vehicle_monthly = float(vehicle_fuel_cost) + float(vehicle_maint_cost)
     
-    fleet_fuel = db.session.query(func.sum(FuelLog.total_cost)).filter(
+    fleet_fuel = db.session.query(func.sum(FuelLog.cost)).filter(
+        FuelLog.company_id == company_id,
         FuelLog.date >= thirty_days_ago
     ).scalar() or 0
     
     fleet_maint = db.session.query(func.sum(MaintenanceLog.cost)).filter(
+        MaintenanceLog.company_id == company_id,
         MaintenanceLog.scheduled_date >= thirty_days_ago
     ).scalar() or 0
     
     fleet_monthly = float(fleet_fuel) + float(fleet_maint)
-    active_count = Vehicle.query.filter_by(is_active=True).count()
+    active_count = Vehicle.query.filter_by(company_id=company_id, is_active=True).count()
     fleet_avg = fleet_monthly / active_count if active_count > 0 else 1
     
     if fleet_avg == 0:

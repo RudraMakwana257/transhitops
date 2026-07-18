@@ -1,6 +1,6 @@
-import { ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import { Outlet, Navigate, useLocation } from 'react-router-dom'
-import { useAuth } from '../hooks/useAuth'
+import { useAuth } from '../../hooks/useAuth'
 
 interface ProtectedRouteProps {
   roles?: string[]
@@ -15,7 +15,7 @@ export function ProtectedRoute({ roles, children }: ProtectedRouteProps) {
     return <Navigate to="/login" state={{ from: location }} replace />
   }
   
-  if (roles && !hasRole(roles)) {
+  if (roles && !hasRole(roles as any)) {
     return <Navigate to="/unauthorized" replace />
   }
   

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api } from '../api/client'
-import type { User, UserRole, Vehicle, VehicleType } from '../types'
+import type { User } from '../types'
 import { Input } from '../components/ui/Input'
 import { Button } from '../components/ui/Button'
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card'
@@ -8,7 +8,7 @@ import { PageWrapper } from '../components/layout/PageWrapper'
 import { DataTable } from '../components/ui/DataTable'
 import { StatusBadge } from '../components/ui/Badge'
 import { Select } from '../components/ui/Select'
-import { Plus, Shield, AlertCircle } from 'lucide-react'
+import { Plus, AlertCircle } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 import { toast } from '../store/toastStore'
 import { format } from 'date-fns'
@@ -21,7 +21,7 @@ const userSchema = z.object({
   email: z.string().email('Invalid email'),
   password: z.string().min(8, 'Password must be at least 8 characters').optional().or(z.literal('')),
   role: z.enum(['fleet_manager', 'dispatcher', 'safety_officer', 'financial_analyst']),
-  is_active: z.boolean().default(true),
+  is_active: z.boolean(),
 })
 
 type UserForm = z.infer<typeof userSchema>
@@ -51,7 +51,7 @@ export function Settings() {
       const res = await api.get('/settings/users')
       if (res.data.success) setUsers(res.data.data)
     } catch (err) {
-      console.error('Failed to fetch users:', err)
+      toast('Failed to load users', 'error')
     } finally {
       setLoading(false)
     }
@@ -82,21 +82,13 @@ export function Settings() {
       name: user.name, 
       email: user.email, 
       password: '', 
-      role: user.role, 
+      role: user.role as any, 
       is_active: user.is_active 
     })
     setShowCreate(true)
   }
   
-  const handleDelete = async (userId: string) => {
-    if (!confirm('Are you sure you want to deactivate this user?')) return
-    try {
-      await api.delete(`/settings/users/${userId}`)
-      fetchUsers()
-    } catch (err) {
-      toast('Failed to deactivate user', 'error')
-    }
-  }
+
   
   if (!canManage) {
     return (
@@ -129,11 +121,11 @@ export function Settings() {
             </div>
           </CardHeader>
           <CardContent>
-            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4 md:grid md:grid-cols-2 md:gap-4">
+            <form onSubmit={form.handleSubmit(handleSubmit as any)} className="space-y-4 md:grid md:grid-cols-2 md:gap-4">
               <Input {...form.register('name')} label="Full Name *" error={form.formState.errors.name?.message} placeholder="John Doe" required />
               <Input {...form.register('email')} label="Email *" type="email" error={form.formState.errors.email?.message} placeholder="user@company.com" required />
               <Input {...form.register('password')} label={editingUser ? 'New Password (leave blank to keep current)' : 'Password *'} type="password" error={form.formState.errors.password?.message} minLength={8} />
-              <Select {...{ value: form.watch('role'), onChange: (e) => form.setValue('role', e.target.value) }} label="Role *" options={[
+              <Select value={form.watch('role')} onChange={(e: any) => form.setValue('role', e.target.value as any)} label="Role *" options={[
                 { value: 'fleet_manager', label: 'Fleet Manager' },
                 { value: 'dispatcher', label: 'Dispatcher' },
                 { value: 'safety_officer', label: 'Safety Officer' },
@@ -155,7 +147,7 @@ export function Settings() {
       )}
       
       <DataTable
-        columns={columns}
+        columns={columns as any}
         data={users}
         loading={loading}
         onRowClick={handleEdit}
