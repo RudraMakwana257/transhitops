@@ -1,6 +1,6 @@
-import { Modal } from '../ui/Modal'
-import { Button } from '../ui/Button'
-import { Textarea } from '../ui/Input'
+import { Modal } from '../ui/ModalWrapper'
+import { Button } from '../ui/ButtonWrapper'
+import { Textarea } from '../ui/InputWrapper'
 
 interface ConfirmModalProps {
   isOpen: boolean
@@ -22,7 +22,7 @@ export function ConfirmModal({ isOpen, onClose, onConfirm, loading, title, messa
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={title} size="md">
       <div className="space-y-4">
-        <p className="text-[var(--text-secondary)]">{message}</p>
+        <p className="text-muted-foreground">{message}</p>
         {requireReason && (
           <Textarea 
             value={reason} 
@@ -32,7 +32,7 @@ export function ConfirmModal({ isOpen, onClose, onConfirm, loading, title, messa
 
           />
         )}
-        <div className="flex justify-end gap-2 pt-4 border-t border-[var(--border-default)]">
+        <div className="flex justify-end gap-2 pt-4 border-t border-border">
           <Button variant="secondary" onClick={onClose} disabled={loading}>Cancel</Button>
           <Button variant={confirmVariant} onClick={onConfirm} loading={loading} disabled={requireReason && !reason?.trim()}>
             {confirmLabel}

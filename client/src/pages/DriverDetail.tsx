@@ -2,10 +2,10 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { api } from '../api/client'
 import type { Driver, Trip } from '../types'
-import { DataTable } from '../components/ui/DataTable'
-import { StatusBadge } from '../components/ui/Badge'
-import { Button } from '../components/ui/Button'
-import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card'
+import { DataTable } from '../components/ui/DataTableWrapper'
+import { StatusBadge } from '../components/ui/BadgeWrapper'
+import { Button } from '../components/ui/ButtonWrapper'
+import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/CardWrapper'
 import { PageWrapper } from '../components/layout/PageWrapper'
 import { Users, Shield, AlertTriangle, MapPin } from 'lucide-react'
 import { format } from 'date-fns'
@@ -76,8 +76,8 @@ export function DriverDetail() {
     }
   }
 
-  if (loading) return <div className="p-6 space-y-6 animate-pulse"><div className="h-8 bg-[var(--bg-sidebar)] rounded w-48" /><div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">{[1,2,3,4].map(i => <div key={i} className="h-24 bg-[var(--bg-sidebar)] rounded-lg" />)}</div><div className="h-64 bg-[var(--bg-sidebar)] rounded-lg" /></div>
-  if (!driver) return <div className="p-6 text-center text-[var(--text-secondary)]">Driver not found</div>
+  if (loading) return <div className="p-6 space-y-6 animate-pulse"><div className="h-8 bg-muted/50 rounded w-48" /><div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">{[1,2,3,4].map(i => <div key={i} className="h-24 bg-muted/50 rounded-xl" />)}</div><div className="h-64 bg-muted/50 rounded-xl" /></div>
+  if (!driver) return <div className="p-6 text-center text-muted-foreground">Driver not found</div>
 
   const days = driver.days_until_expiry
   const isExpired = days !== undefined && days < 0
@@ -115,7 +115,7 @@ export function DriverDetail() {
                   step="0.1"
                   value={scoreValue}
                   onChange={(e) => setScoreValue(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] text-[var(--text-primary)]"
+                  className="w-full px-3 py-2 rounded-xl border border-border bg-card text-foreground"
                 />
               </div>
               <Button onClick={handleScoreUpdate} loading={updatingScore}>Save</Button>
@@ -129,11 +129,11 @@ export function DriverDetail() {
         <Card>
           <CardContent className="py-4">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-[var(--brand-primary-light)] flex items-center justify-center">
-                <Users className="w-6 h-6 text-[var(--brand-primary)]" />
+              <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                <Users className="w-6 h-6 text-primary" />
               </div>
               <div>
-                <p className="text-sm text-[var(--text-secondary)]">Status</p>
+                <p className="text-sm text-muted-foreground">Status</p>
                 <StatusBadge status={driver.status} type="driver" />
               </div>
             </div>
@@ -146,8 +146,8 @@ export function DriverDetail() {
                 <Shield className="w-6 h-6 text-green-600 dark:text-green-400" />
               </div>
               <div>
-                <p className="text-sm text-[var(--text-secondary)]">Safety Score</p>
-                <p className="text-xl sm:text-2xl font-bold text-green-600 dark:text-green-400">{driver.safety_score.toFixed(1)}</p>
+                <p className="text-sm text-muted-foreground">Safety Score</p>
+                <p className="text-xl sm:text-2xl font-bold text-green-600 dark:text-green-400">{Number(driver.safety_score || 0).toFixed(1)}</p>
               </div>
             </div>
           </CardContent>
@@ -159,11 +159,11 @@ export function DriverDetail() {
                 <AlertTriangle className={`w-6 h-6 ${isExpired ? 'text-red-600 dark:text-red-400' : isExpiringSoon ? 'text-amber-600 dark:text-amber-400' : 'text-blue-600 dark:text-blue-400'}`} />
               </div>
               <div>
-                <p className="text-sm text-[var(--text-secondary)]">License Expiry</p>
+                <p className="text-sm text-muted-foreground">License Expiry</p>
                 <p className={`font-bold ${isExpired ? 'text-red-600 dark:text-red-400' : isExpiringSoon ? 'text-amber-600 dark:text-amber-400' : ''}`}>
                   {format(new Date(driver.license_expiry), 'MMM d, yyyy')}
                 </p>
-                <p className="text-xs text-[var(--text-muted)]">
+                <p className="text-xs text-muted-foreground">
                   {isExpired ? `Expired ${Math.abs(days as number)} days ago` : isExpiringSoon ? `Expires in ${days} days` : `${days !== undefined ? days : 'Unknown'} days left`}
                 </p>
               </div>
@@ -177,7 +177,7 @@ export function DriverDetail() {
                 <MapPin className="w-6 h-6 text-purple-600 dark:text-purple-400" />
               </div>
               <div>
-                <p className="text-sm text-[var(--text-secondary)]">Phone</p>
+                <p className="text-sm text-muted-foreground">Phone</p>
                 <p className="font-bold">{driver.phone}</p>
               </div>
             </div>
@@ -185,15 +185,15 @@ export function DriverDetail() {
         </Card>
       </div>
 
-      <div className="flex border-b border-[var(--border-default)] mb-6">
+      <div className="flex border-b border-border mb-6">
         {(['overview', 'trips'] as const).map(tab => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
             className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors capitalize ${
               activeTab === tab
-                ? 'border-[var(--brand-primary)] text-[var(--brand-primary)]'
-                : 'border-transparent text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-muted-foreground hover:text-foreground'
             }`}
           >
             {tab}
@@ -207,10 +207,10 @@ export function DriverDetail() {
           <CardContent>
             <dl className="space-y-3">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div><dt className="text-sm text-[var(--text-secondary)]">Full Name</dt><dd className="font-medium">{driver.name}</dd></div>
-                <div><dt className="text-sm text-[var(--text-secondary)]">License Number</dt><dd className="font-medium font-mono">{driver.license_number}</dd></div>
-                <div><dt className="text-sm text-[var(--text-secondary)]">License Category</dt><dd className="font-medium">{driver.license_category}</dd></div>
-                <div><dt className="text-sm text-[var(--text-secondary)]">Phone</dt><dd className="font-medium">{driver.phone}</dd></div>
+                <div><dt className="text-sm text-muted-foreground">Full Name</dt><dd className="font-medium">{driver.name}</dd></div>
+                <div><dt className="text-sm text-muted-foreground">License Number</dt><dd className="font-medium font-mono">{driver.license_number}</dd></div>
+                <div><dt className="text-sm text-muted-foreground">License Category</dt><dd className="font-medium">{driver.license_category}</dd></div>
+                <div><dt className="text-sm text-muted-foreground">Phone</dt><dd className="font-medium">{driver.phone}</dd></div>
               </div>
             </dl>
           </CardContent>

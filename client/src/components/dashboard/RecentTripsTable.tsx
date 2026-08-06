@@ -1,5 +1,5 @@
-import { DataTable } from '../ui/DataTable'
-import { StatusBadge } from '../ui/Badge'
+import { DataTable } from '../ui/DataTableWrapper'
+import { StatusBadge } from '../ui/BadgeWrapper'
 import { format } from 'date-fns'
 import type { TripStatus } from '../../types'
 
@@ -20,7 +20,7 @@ export function RecentTripsTable({ trips = [] }: { trips: RecentTrip[] }) {
     { key: 'route', header: 'Route', render: (row: RecentTrip) => (
       <div>
         <p className="font-medium text-sm">{row.source} → {row.destination}</p>
-        <p className="text-xs text-[var(--text-muted)]">{row.vehicle?.name} ({row.vehicle?.reg_number})</p>
+        <p className="text-xs text-muted-foreground">{row.vehicle?.name} ({row.vehicle?.reg_number})</p>
       </div>
     )},
     { key: 'driver', header: 'Driver', render: (row: RecentTrip) => row.driver?.name },

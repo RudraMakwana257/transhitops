@@ -3,11 +3,11 @@ import { api } from '../api/client'
 import { TableSkeleton } from '../components/ui/TableSkeleton'
 import { EmptyState } from '../components/ui/EmptyState'
 import type { FuelLog, Vehicle, Driver } from '../types'
-import { DataTable } from '../components/ui/DataTable'
-import { Button } from '../components/ui/Button'
-import { Input } from '../components/ui/Input'
-import { Select } from '../components/ui/Select'
-import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card'
+import { DataTable } from '../components/ui/DataTableWrapper'
+import { Button } from '../components/ui/ButtonWrapper'
+import { Input } from '../components/ui/InputWrapper'
+import { Select } from '../components/ui/SelectWrapper'
+import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/CardWrapper'
 import { PageWrapper } from '../components/layout/PageWrapper'
 import { FilterBar, FilterChip, type FilterField } from '../components/ui/FilterBar'
 import { Droplets, Plus } from 'lucide-react'
@@ -170,7 +170,7 @@ export function Fuel() {
               className="w-32 sm:w-36" 
               title="From date"
             />
-            <span className="text-[var(--text-muted)] text-xs">—</span>
+            <span className="text-muted-foreground text-xs">—</span>
             <Input 
               type="date" 
               value={filters.date_to} 
@@ -184,17 +184,17 @@ export function Fuel() {
     >
       {/* Summary Stats */}
       <div className="flex flex-wrap gap-3 mb-5">
-        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[var(--bg-sidebar)] border border-[var(--border-default)]">
-          <Droplets className="w-4 h-4 text-[var(--text-muted)]" />
-          <span className="text-xs text-[var(--text-muted)]">Entries:</span>
+        <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-muted/50 border border-border">
+          <Droplets className="w-4 h-4 text-muted-foreground" />
+          <span className="text-xs text-muted-foreground">Entries:</span>
           <span className="font-semibold text-sm">{pagination.total}</span>
         </div>
-        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+        <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
           <Droplets className="w-4 h-4 text-blue-600 dark:text-blue-400" />
           <span className="text-xs text-blue-700 dark:text-blue-400">Total Fuel:</span>
           <span className="font-semibold text-sm text-blue-700 dark:text-blue-400">{stats.totalLiters.toFixed(1)} L</span>
         </div>
-        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
+        <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
           <span className="text-xs text-green-700 dark:text-green-400 font-medium">Total Cost:</span>
           <span className="font-semibold text-sm text-green-700 dark:text-green-400">₹{stats.totalCost.toLocaleString()}</span>
         </div>
@@ -211,7 +211,7 @@ export function Fuel() {
       
       {/* Create Form */}
       {showCreate && (
-        <Card className="mb-6 border-[var(--brand-primary-light)]">
+        <Card className="mb-6 border-primary/10">
           <CardHeader className="pb-3">
             <CardTitle className="text-base">Add Fuel Log</CardTitle>
           </CardHeader>
@@ -224,7 +224,7 @@ export function Fuel() {
               <Input {...{ value: formData.date, onChange: (e) => setFormData({...formData, date: e.target.value}) }} type="date" label="Date *" required />
               <Input {...{ value: formData.odometer_reading, onChange: (e) => setFormData({...formData, odometer_reading: e.target.value}) }} label="Odometer (km)" type="number" min="0" step="1" />
               <Input {...{ value: formData.fuel_station, onChange: (e) => setFormData({...formData, fuel_station: e.target.value}) }} label="Fuel Station" className="md:col-span-2" placeholder="e.g., HP Petrol Pump" />
-              <div className="flex justify-end gap-2 lg:col-span-4 pt-4 border-t border-[var(--border-default)]">
+              <div className="flex justify-end gap-2 lg:col-span-4 pt-4 border-t border-border">
                 <Button type="button" variant="secondary" onClick={() => setShowCreate(false)}>Cancel</Button>
                 <Button type="submit" loading={submitting}><Plus className="w-4 h-4 sm:mr-2" /><span className="hidden sm:inline">Add Log</span></Button>
               </div>

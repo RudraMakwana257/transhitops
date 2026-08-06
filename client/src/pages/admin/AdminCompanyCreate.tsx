@@ -2,9 +2,9 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAdminStore } from '../../stores/adminStore'
 import { adminApi } from '../../api'
-import { Card } from '../../components/ui/Card'
-import { Button } from '../../components/ui/Button'
-import { Input } from '../../components/ui/Input'
+import { Card } from '../../components/ui/CardWrapper'
+import { Button } from '../../components/ui/ButtonWrapper'
+import { Input } from '../../components/ui/InputWrapper'
 import { Building2, User, Copy, Check } from 'lucide-react'
 
 export function AdminCompanyCreate() {
@@ -99,7 +99,7 @@ export function AdminCompanyCreate() {
             <p className="text-slate-500 mt-2">The company and initial administrator account have been provisioned.</p>
           </div>
           
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-6 text-left space-y-4">
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 text-left space-y-4">
             <h3 className="font-semibold text-amber-800">Admin Credentials</h3>
             <p className="text-sm text-amber-700">Please save this password now. It is auto-generated and cannot be recovered later.</p>
             
@@ -140,7 +140,7 @@ export function AdminCompanyCreate() {
       </div>
 
       {error && (
-        <div className="bg-red-50 text-red-600 p-4 rounded-lg border border-red-200">
+        <div className="bg-red-50 text-red-600 p-4 rounded-xl border border-red-200">
           {error}
         </div>
       )}
@@ -164,7 +164,7 @@ export function AdminCompanyCreate() {
 
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Timezone</label>
-              <select name="timezone" value={formData.timezone} onChange={handleChange} className="w-full h-10 px-3 py-2 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+              <select name="timezone" value={formData.timezone} onChange={handleChange} className="w-full h-10 px-3 py-2 bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
                 <option value="Asia/Kolkata">Asia/Kolkata</option>
                 <option value="UTC">UTC</option>
                 <option value="America/New_York">America/New_York</option>
@@ -173,7 +173,7 @@ export function AdminCompanyCreate() {
             
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Currency</label>
-              <select name="currency" value={formData.currency} onChange={handleChange} className="w-full h-10 px-3 py-2 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+              <select name="currency" value={formData.currency} onChange={handleChange} className="w-full h-10 px-3 py-2 bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
                 <option value="INR">INR (₹)</option>
                 <option value="USD">USD ($)</option>
                 <option value="EUR">EUR (€)</option>

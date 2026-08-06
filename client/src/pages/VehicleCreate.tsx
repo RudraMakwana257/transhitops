@@ -2,10 +2,10 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { api } from '../api/client'
 import type { VehicleType } from '../types'
-import { Button } from '../components/ui/Button'
-import { Input } from '../components/ui/Input'
-import { Select } from '../components/ui/Select'
-import { Card, CardContent, CardFooter } from '../components/ui/Card'
+import { Button } from '../components/ui/ButtonWrapper'
+import { Input } from '../components/ui/InputWrapper'
+import { Select } from '../components/ui/SelectWrapper'
+import { Card, CardContent, CardFooter } from '../components/ui/CardWrapper'
 import { PageWrapper } from '../components/layout/PageWrapper'
 import { ArrowLeft, Save } from 'lucide-react'
 import { toast } from '../store/toastStore'
@@ -73,7 +73,7 @@ export function VehicleCreate() {
   const set = (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
     setForm(prev => ({ ...prev, [field]: e.target.value }))
 
-  if (loading) return <div className="p-6 space-y-6 animate-pulse"><div className="h-8 bg-[var(--bg-sidebar)] rounded w-48" /><div className="h-64 bg-[var(--bg-sidebar)] rounded-lg" /></div>
+  if (loading) return <div className="p-6 space-y-6 animate-pulse"><div className="h-8 bg-muted/50 rounded w-48" /><div className="h-64 bg-muted/50 rounded-xl" /></div>
 
   return (
     <PageWrapper

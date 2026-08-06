@@ -2,9 +2,9 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { api } from '../api/client'
 import type { Trip } from '../types'
-import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card'
-import { Button } from '../components/ui/Button'
-import { StatusBadge } from '../components/ui/Badge'
+import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/CardWrapper'
+import { Button } from '../components/ui/ButtonWrapper'
+import { StatusBadge } from '../components/ui/BadgeWrapper'
 import { PageWrapper } from '../components/layout/PageWrapper'
 import { MapPin, Calendar, CheckCircle, XCircle, Play, ChevronLeft } from 'lucide-react'
 import { format } from 'date-fns'
@@ -75,7 +75,7 @@ export function TripDetail() {
     }
   }
   
-  if (loading) return <div className="p-6 space-y-6 animate-pulse"><div className="h-8 bg-[var(--bg-sidebar)] rounded w-48" /><div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">{[1,2,3].map(i => <div key={i} className="h-24 bg-[var(--bg-sidebar)] rounded-lg" />)}</div><div className="h-64 bg-[var(--bg-sidebar)] rounded-lg" /></div>
+  if (loading) return <div className="p-6 space-y-6 animate-pulse"><div className="h-8 bg-muted/50 rounded w-48" /><div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">{[1,2,3].map(i => <div key={i} className="h-24 bg-muted/50 rounded-xl" />)}</div><div className="h-64 bg-muted/50 rounded-xl" /></div>
   if (!trip) return <div className="p-6 text-center text-red-600">Trip not found</div>
   
   const vehicle = trip.vehicle
@@ -115,36 +115,36 @@ export function TripDetail() {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <p className="text-sm text-[var(--text-muted)]">Route</p>
+                  <p className="text-sm text-muted-foreground">Route</p>
                   <p className="font-medium flex items-center gap-2">
                     <MapPin className="w-4 h-4" /> {trip.source} → {trip.destination}
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm text-[var(--text-muted)]">Cargo Weight</p>
+                  <p className="text-sm text-muted-foreground">Cargo Weight</p>
                   <p className="font-medium">{trip.cargo_weight_kg.toLocaleString()} kg</p>
                 </div>
                 <div>
-                  <p className="text-sm text-[var(--text-muted)]">Planned Distance</p>
+                  <p className="text-sm text-muted-foreground">Planned Distance</p>
                   <p className="font-medium">{trip.planned_distance_km ? `${trip.planned_distance_km} km` : '—'}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-[var(--text-muted)]">Actual Distance</p>
+                  <p className="text-sm text-muted-foreground">Actual Distance</p>
                   <p className="font-medium">{trip.actual_distance_km ? `${trip.actual_distance_km} km` : '—'}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-[var(--text-muted)]">Created</p>
+                  <p className="text-sm text-muted-foreground">Created</p>
                   <p className="font-medium">{format(new Date(trip.created_at), 'MMM d, yyyy HH:mm')}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-[var(--text-muted)]">Revenue</p>
+                  <p className="text-sm text-muted-foreground">Revenue</p>
                   <p className="font-medium text-green-600">{formatCurrency(trip.revenue || 0)}</p>
                 </div>
               </div>
               
               {trip.notes && (
-                <div className="p-3 rounded-lg bg-[var(--bg-sidebar)]">
-                  <p className="text-sm text-[var(--text-secondary)]">{trip.notes}</p>
+                <div className="p-3 rounded-xl bg-muted/50">
+                  <p className="text-sm text-muted-foreground">{trip.notes}</p>
                 </div>
               )}
             </CardContent>
@@ -228,8 +228,8 @@ export function TripDetail() {
             <Card>
               <CardHeader><CardTitle>Fuel Consumption</CardTitle></CardHeader>
               <CardContent className="space-y-2">
-                <div className="flex justify-between"><span className="text-[var(--text-secondary)]">Fuel Consumed</span><span className="font-medium">{trip.fuel_consumed_l} L</span></div>
-                <div className="flex justify-between"><span className="text-[var(--text-secondary)]">Efficiency</span><span className="font-medium">{trip.actual_distance_km && trip.fuel_consumed_l ? `${(trip.actual_distance_km / trip.fuel_consumed_l).toFixed(1)} km/L` : '—'}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Fuel Consumed</span><span className="font-medium">{trip.fuel_consumed_l} L</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Efficiency</span><span className="font-medium">{trip.actual_distance_km && trip.fuel_consumed_l ? `${(trip.actual_distance_km / trip.fuel_consumed_l).toFixed(1)} km/L` : '—'}</span></div>
               </CardContent>
             </Card>
           )}
@@ -238,8 +238,8 @@ export function TripDetail() {
           <Card>
             <CardHeader><CardTitle>Financial Summary</CardTitle></CardHeader>
             <CardContent className="space-y-2">
-              <div className="flex justify-between"><span className="text-[var(--text-secondary)]">Revenue</span><span className="font-medium text-green-600">{formatCurrency(trip.revenue || 0)}</span></div>
-              <div className="flex justify-between"><span className="text-[var(--text-secondary)]">Fuel Cost</span><span className="font-medium">—</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Revenue</span><span className="font-medium text-green-600">{formatCurrency(trip.revenue || 0)}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Fuel Cost</span><span className="font-medium">—</span></div>
             </CardContent>
           </Card>
         </div>

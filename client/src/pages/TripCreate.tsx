@@ -5,12 +5,12 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { api } from '../api/client'
 import type { Vehicle, Driver } from '../types'
-import { Button } from '../components/ui/Button'
-import { Input } from '../components/ui/Input'
-import { Select } from '../components/ui/Select'
-import { Card, CardContent } from '../components/ui/Card'
+import { Button } from '../components/ui/ButtonWrapper'
+import { Input } from '../components/ui/InputWrapper'
+import { Select } from '../components/ui/SelectWrapper'
+import { Card, CardContent } from '../components/ui/CardWrapper'
 import { PageWrapper } from '../components/layout/PageWrapper'
-import { StatusBadge } from '../components/ui/Badge'
+import { StatusBadge } from '../components/ui/BadgeWrapper'
 import { Truck, Users, MapPin, AlertCircle, CheckCircle, ChevronLeft, ChevronRight, AlertTriangle, Play } from 'lucide-react'
 import { format } from 'date-fns'
 import { useAuth } from '../hooks/useAuth'
@@ -144,7 +144,7 @@ export function TripCreate() {
   const selectedDriver = drivers.find(d => d.id === step3Data.driver_id)
   const capacityOk = selectedVehicle ? cargoWeight <= selectedVehicle.capacity_kg : true
   
-  if (!canManage) return <div className="p-6 text-center text-[var(--text-secondary)]">Access denied</div>
+  if (!canManage) return <div className="p-6 text-center text-muted-foreground">Access denied</div>
   
   return (
     <PageWrapper title="Create Trip" description="Dispatch a new trip with vehicle and driver assignment">
@@ -155,16 +155,16 @@ export function TripCreate() {
             {steps.map((step, idx) => (
               <div key={step.id} className="flex flex-col items-center flex-1 relative">
                 {idx < steps.length - 1 && (
-                  <div className="absolute top-5 left-1/2 w-full h-1 bg-[var(--border-default)] z-0" />
+                  <div className="absolute top-5 left-1/2 w-full h-1 bg-border z-0" />
                 )}
                 <div className={`relative z-10 w-10 h-10 rounded-full flex items-center justify-center font-medium transition-all ${
-                  idx + 1 < currentStep ? 'bg-[var(--brand-primary)] text-white' :
-                  idx + 1 === currentStep ? 'bg-[var(--brand-primary-light)] text-[var(--brand-primary)] ring-2 ring-[var(--brand-primary)]' :
-                  'bg-[var(--bg-sidebar)] text-[var(--text-muted)]'
+                  idx + 1 < currentStep ? 'bg-primary text-white' :
+                  idx + 1 === currentStep ? 'bg-primary/10 text-primary ring-2 ring-[hsl(var(--primary))]' :
+                  'bg-muted/50 text-muted-foreground'
                 }`}>
                   {idx + 1 < currentStep ? <CheckCircle className="w-5 h-5" /> : <step.icon className="w-5 h-5" />}
                 </div>
-                <p className={`mt-2 text-xs font-medium ${idx + 1 <= currentStep ? 'text-[var(--text-primary)]' : 'text-[var(--text-muted)]'}`}>
+                <p className={`mt-2 text-xs font-medium ${idx + 1 <= currentStep ? 'text-foreground' : 'text-muted-foreground'}`}>
                   {step.title}
                 </p>
               </div>
@@ -187,7 +187,7 @@ export function TripCreate() {
                   <Input {...step1Form.register('planned_distance_km', { valueAsNumber: true })} label="Planned Distance (km)" type="number" min="1" placeholder="150" />
                 </div>
                 <Input {...step1Form.register('notes')} label="Notes" placeholder="Special instructions..." className="md:col-span-2" />
-                <div className="flex justify-end gap-2 pt-4 border-t border-[var(--border-default)]">
+                <div className="flex justify-end gap-2 pt-4 border-t border-border">
                   <Button type="submit" className="w-full md:w-auto">Next <ChevronRight className="w-4 h-4 ml-2" /></Button>
                 </div>
               </form>
@@ -197,21 +197,21 @@ export function TripCreate() {
             {currentStep === 2 && (
               <form onSubmit={(e) => { e.preventDefault(); nextStep(3); }} className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">Select Vehicle</label>
-                  {loadingRecommendations && <div className="animate-pulse h-8 bg-[var(--bg-hover)] rounded mb-4" />}
+                  <label className="block text-sm font-medium text-foreground mb-2">Select Vehicle</label>
+                  {loadingRecommendations && <div className="animate-pulse h-8 hover:bg-accent hover:text-accent-foreground rounded mb-4" />}
                   {recommendations.length > 0 && (
-                    <div className="mb-4 p-3 rounded-lg bg-[var(--brand-primary-light)] border border-[var(--brand-primary)]">
-                      <p className="text-sm font-medium text-[var(--brand-primary)] mb-2">Recommended Vehicles</p>
+                    <div className="mb-4 p-3 rounded-xl bg-primary/10 border border-primary">
+                      <p className="text-sm font-medium text-primary mb-2">Recommended Vehicles</p>
                       <div className="flex flex-wrap gap-2">
                         {recommendations.slice(0, 3).map((rec: any) => (
                           <button
                             key={rec.vehicle.id}
                             type="button"
                             onClick={() => step2Form.setValue('vehicle_id', rec.vehicle.id, { shouldValidate: true })}
-                            className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${
+                            className={`px-3 py-1.5 rounded-xl text-sm border transition-colors ${
                               step2Data.vehicle_id === rec.vehicle.id
-                                ? 'bg-[var(--brand-primary)] text-white border-[var(--brand-primary)]'
-                                : 'bg-white dark:bg-[var(--bg-card)] border-[var(--border-default)] hover:bg-[var(--bg-hover)]'
+                                ? 'bg-primary text-white border-primary'
+                                : 'bg-white dark:bg-card border-border hover:hover:bg-accent hover:text-accent-foreground'
                             }`}
                           >
                             {rec.vehicle.name} ({rec.vehicle.capacity_kg.toLocaleString()}kg)
@@ -229,15 +229,15 @@ export function TripCreate() {
                     error={step2Form.formState.errors.vehicle_id?.message}
                   />
                   {step2Data.vehicle_id && selectedVehicle && (
-                    <div className="p-4 rounded-lg bg-[var(--bg-sidebar)] border border-[var(--border-default)]">
+                    <div className="p-4 rounded-xl bg-muted/50 border border-border">
                       <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div><span className="text-[var(--text-muted)]">Type:</span> <span className="font-medium">{selectedVehicle.type}</span></div>
-                        <div><span className="text-[var(--text-muted)]">Capacity:</span> <span className="font-medium">{selectedVehicle.capacity_kg.toLocaleString()} kg</span></div>
-                        <div><span className="text-[var(--text-muted)]">Health Score:</span> <span className="font-medium">{selectedVehicle.health_score}/100</span></div>
-                        <div><span className="text-[var(--text-muted)]">Status:</span> <StatusBadge status={selectedVehicle.status} type="vehicle" /></div>
+                        <div><span className="text-muted-foreground">Type:</span> <span className="font-medium">{selectedVehicle.type}</span></div>
+                        <div><span className="text-muted-foreground">Capacity:</span> <span className="font-medium">{selectedVehicle.capacity_kg.toLocaleString()} kg</span></div>
+                        <div><span className="text-muted-foreground">Health Score:</span> <span className="font-medium">{selectedVehicle.health_score}/100</span></div>
+                        <div><span className="text-muted-foreground">Status:</span> <StatusBadge status={selectedVehicle.status} type="vehicle" /></div>
                       </div>
                       {!capacityOk && (
-                        <div className="mt-3 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+                        <div className="mt-3 p-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
                           <div className="flex items-center gap-2 text-red-700 dark:text-red-400">
                             <AlertTriangle className="w-5 h-5 flex-shrink-0" />
                             <span className="font-medium">Cargo weight ({cargoWeight.toLocaleString()}kg) exceeds vehicle capacity ({selectedVehicle.capacity_kg.toLocaleString()}kg)</span>
@@ -247,7 +247,7 @@ export function TripCreate() {
                     </div>
                   )}
                 </div>
-                <div className="flex justify-between pt-4 border-t border-[var(--border-default)]">
+                <div className="flex justify-between pt-4 border-t border-border">
                   <Button type="button" variant="secondary" onClick={prevStep}><ChevronLeft className="w-4 h-4 mr-2" />Back</Button>
                   <Button type="submit" disabled={!step2Data.vehicle_id || !capacityOk || loadingVehicles}>Next <ChevronRight className="w-4 h-4 ml-2" /></Button>
                 </div>
@@ -265,26 +265,26 @@ export function TripCreate() {
                   error={step3Form.formState.errors.driver_id?.message}
                 />
                 {step3Data.driver_id && selectedDriver && (
-                  <div className="p-4 rounded-lg bg-[var(--bg-sidebar)] border border-[var(--border-default)]">
+                  <div className="p-4 rounded-xl bg-muted/50 border border-border">
                     <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div><span className="text-[var(--text-muted)]">Category:</span> <span className="font-medium">{selectedDriver.license_category}</span></div>
-                      <div><span className="text-[var(--text-muted)]">Expiry:</span> <span className="font-medium">{selectedDriver.license_expiry ? format(new Date(selectedDriver.license_expiry), 'MMM d, yyyy') : 'N/A'}</span></div>
-                      <div><span className="text-[var(--text-muted)]">Safety Score:</span> <span className="font-medium">{selectedDriver.safety_score}</span></div>
-                      <div><span className="text-[var(--text-muted)]">Status:</span> <StatusBadge status={selectedDriver.status} type="driver" /></div>
+                      <div><span className="text-muted-foreground">Category:</span> <span className="font-medium">{selectedDriver.license_category}</span></div>
+                      <div><span className="text-muted-foreground">Expiry:</span> <span className="font-medium">{selectedDriver.license_expiry ? format(new Date(selectedDriver.license_expiry), 'MMM d, yyyy') : 'N/A'}</span></div>
+                      <div><span className="text-muted-foreground">Safety Score:</span> <span className="font-medium">{selectedDriver.safety_score}</span></div>
+                      <div><span className="text-muted-foreground">Status:</span> <StatusBadge status={selectedDriver.status} type="driver" /></div>
                     </div>
                     {selectedDriver.is_license_expired && (
-                      <div className="mt-3 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400">
+                      <div className="mt-3 p-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400">
                         <AlertCircle className="w-5 h-5 inline mr-2" /> Driver's license has expired!
                       </div>
                     )}
                     {selectedDriver.days_until_expiry !== undefined && selectedDriver.days_until_expiry > 0 && selectedDriver.days_until_expiry <= 30 && !selectedDriver.is_license_expired && (
-                      <div className="mt-3 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400">
+                      <div className="mt-3 p-3 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400">
                         <AlertTriangle className="w-5 h-5 inline mr-2" /> License expires in {selectedDriver.days_until_expiry} days
                       </div>
                     )}
                   </div>
                 )}
-                <div className="flex justify-between pt-4 border-t border-[var(--border-default)]">
+                <div className="flex justify-between pt-4 border-t border-border">
                   <Button type="button" variant="secondary" onClick={prevStep}><ChevronLeft className="w-4 h-4 mr-2" />Back</Button>
                   <Button type="submit" disabled={!step3Data.driver_id || loadingDrivers}>Next <ChevronRight className="w-4 h-4 ml-2" /></Button>
                 </div>
@@ -295,30 +295,30 @@ export function TripCreate() {
             {currentStep === 4 && (
               <div className="space-y-6">
                 <div className="grid gap-4 md:grid-cols-2">
-                  <div className="p-4 rounded-lg bg-[var(--bg-sidebar)]">
-                    <h4 className="font-medium text-[var(--text-secondary)] mb-2">Route</h4>
+                  <div className="p-4 rounded-xl bg-muted/50">
+                    <h4 className="font-medium text-muted-foreground mb-2">Route</h4>
                     <p className="font-medium">{step1Data.source} → {step1Data.destination}</p>
-                    <p className="text-sm text-[var(--text-muted)]">{cargoWeight.toLocaleString()} kg • {step1Data.planned_distance_km || '—'} km</p>
+                    <p className="text-sm text-muted-foreground">{cargoWeight.toLocaleString()} kg • {step1Data.planned_distance_km || '—'} km</p>
                   </div>
-                  <div className="p-4 rounded-lg bg-[var(--bg-sidebar)]">
-                    <h4 className="font-medium text-[var(--text-secondary)] mb-2">Vehicle</h4>
+                  <div className="p-4 rounded-xl bg-muted/50">
+                    <h4 className="font-medium text-muted-foreground mb-2">Vehicle</h4>
                     {selectedVehicle ? (
                       <p className="font-medium">{selectedVehicle.name} ({selectedVehicle.reg_number})</p>
-                    ) : <p className="text-[var(--text-muted)]">Not selected</p>}
+                    ) : <p className="text-muted-foreground">Not selected</p>}
                   </div>
-                  <div className="p-4 rounded-lg bg-[var(--bg-sidebar)]">
-                    <h4 className="font-medium text-[var(--text-secondary)] mb-2">Driver</h4>
+                  <div className="p-4 rounded-xl bg-muted/50">
+                    <h4 className="font-medium text-muted-foreground mb-2">Driver</h4>
                     {selectedDriver ? (
                       <p className="font-medium">{selectedDriver.name} - {selectedDriver.license_category}</p>
-                    ) : <p className="text-[var(--text-muted)]">Not selected</p>}
+                    ) : <p className="text-muted-foreground">Not selected</p>}
                   </div>
-                  <div className="p-4 rounded-lg bg-[var(--bg-sidebar)]">
-                    <h4 className="font-medium text-[var(--text-secondary)] mb-2">Notes</h4>
-                    <p className="text-sm text-[var(--text-muted)]">{step1Data.notes || 'No notes'}</p>
+                  <div className="p-4 rounded-xl bg-muted/50">
+                    <h4 className="font-medium text-muted-foreground mb-2">Notes</h4>
+                    <p className="text-sm text-muted-foreground">{step1Data.notes || 'No notes'}</p>
                   </div>
                 </div>
                 
-                <div className="flex justify-end gap-2 pt-4 border-t border-[var(--border-default)]">
+                <div className="flex justify-end gap-2 pt-4 border-t border-border">
                   <Button type="button" variant="secondary" onClick={prevStep}><ChevronLeft className="w-4 h-4 mr-2" />Back</Button>
                   <Button variant="outline" onClick={() => createTrip(false)} disabled={dispatching}>Create as Draft</Button>
                   <Button onClick={() => createTrip(true)} loading={dispatching} disabled={dispatching}>

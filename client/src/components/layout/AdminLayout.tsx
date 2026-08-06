@@ -28,7 +28,7 @@ export function AdminLayout() {
               <Link
                 key={item.path}
                 to={item.path}
-                className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${
+                className={`flex items-center gap-3 px-3 py-2 rounded-xl transition-colors ${
                   isActive ? 'bg-slate-800 text-white' : 'hover:bg-slate-800 hover:text-white'
                 }`}
               >

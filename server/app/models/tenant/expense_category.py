@@ -1,0 +1,1 @@
+"""Expense category model placeholder."""

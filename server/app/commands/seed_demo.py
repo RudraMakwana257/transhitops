@@ -102,6 +102,7 @@ def register_commands(app):
         for i in range(10):
             source = random.choice(cities)
             dest = random.choice([c for c in cities if c != source])
+            trip_date = datetime.utcnow() - timedelta(days=(30 - (i * 3)))
             t = Trip(
                 trip_number=f"TRP-DEMO-{1000+i}",
                 company_id=company.id,
@@ -112,9 +113,13 @@ def register_commands(app):
                 cargo_weight_kg=random.uniform(500, 5000),
                 planned_distance_km=random.uniform(50, 1500),
                 status=trip_statuses[i],
-                created_by=user.id
+                created_by=user.id,
+                created_at=trip_date
             )
+            if trip_statuses[i] in ['Dispatched', 'In Transit', 'Completed']:
+                t.dispatched_at = trip_date + timedelta(hours=1)
             if trip_statuses[i] == 'Completed':
+                t.completed_at = trip_date + timedelta(days=1)
                 t.actual_distance_km = t.planned_distance_km * random.uniform(0.95, 1.1)
                 t.fuel_consumed_l = float(t.actual_distance_km) / random.uniform(3.0, 8.0)
                 t.revenue = random.uniform(10000, 50000)
@@ -126,6 +131,7 @@ def register_commands(app):
         for i in range(15):
             liters = random.uniform(20, 100)
             price_per_liter = random.uniform(90, 110)
+            log_date = datetime.utcnow() - timedelta(days=(30 - (i * 2)))
             fl = FuelLog(
                 company_id=company.id,
                 vehicle_id=random.choice(vehicles).id,
@@ -134,12 +140,13 @@ def register_commands(app):
                 price_per_liter=price_per_liter,
                 total_cost=liters * price_per_liter,
                 odometer_reading=random.uniform(1000, 100000),
-                date=(datetime.utcnow() - timedelta(days=random.randint(0, 30))).date()
+                date=log_date.date()
             )
             db.session.add(fl)
 
         # Create 8 expenses
         for i in range(8):
+            ex_date = datetime.utcnow() - timedelta(days=(30 - (i * 3)))
             ex = Expense(
                 company_id=company.id,
                 vehicle_id=random.choice(vehicles).id,
@@ -147,13 +154,15 @@ def register_commands(app):
                 type=random.choice(['Toll', 'Food', 'Maintenance', 'Other']),
                 description="Demo expense",
                 amount=random.uniform(500, 5000),
-                date=(datetime.utcnow() - timedelta(days=random.randint(0, 30))).date(),
-                created_by=user.id
+                date=ex_date.date(),
+                created_by=user.id,
+                created_at=ex_date
             )
             db.session.add(ex)
 
         # Create 5 maintenance logs
         for i in range(5):
+            ml_date = datetime.utcnow() - timedelta(days=(20 - (i * 4)))
             ml = MaintenanceLog(
                 company_id=company.id,
                 vehicle_id=random.choice(vehicles).id,
@@ -161,8 +170,9 @@ def register_commands(app):
                 description=f"Demo Maintenance {i}",
                 status=random.choice(['Open', 'Completed']),
                 cost=random.uniform(1000, 10000),
-                scheduled_date=(datetime.utcnow() - timedelta(days=random.randint(-10, 10))).date(),
-                created_by=user.id
+                scheduled_date=ml_date.date(),
+                created_by=user.id,
+                created_at=ml_date
             )
             db.session.add(ml)
 

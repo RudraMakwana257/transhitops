@@ -53,7 +53,8 @@ class TripService:
             driver.status = 'On Trip'
             
         trip.status = 'Dispatched'
-        trip.actual_start_time = datetime.utcnow()
+        trip.dispatched_at = datetime.utcnow()
+
         
         event = TripEvent(company_id=company_id, trip_id=trip.id, event_type='Dispatch', created_by=user_id)
         db.session.add(event)

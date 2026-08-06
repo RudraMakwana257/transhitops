@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useAdminStore } from '../../stores/adminStore'
-import { Card } from '../../components/ui/Card'
-import { Button } from '../../components/ui/Button'
-import { Input } from '../../components/ui/Input'
+import { Card } from '../../components/ui/CardWrapper'
+import { Button } from '../../components/ui/ButtonWrapper'
+import { Input } from '../../components/ui/InputWrapper'
 import { Package, Plus, Edit2 } from 'lucide-react'
 
 export function AdminPlans() {

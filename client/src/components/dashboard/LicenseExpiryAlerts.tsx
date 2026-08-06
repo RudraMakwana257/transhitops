@@ -1,6 +1,6 @@
 import { AlertTriangle, AlertCircle, Clock, CheckCircle } from 'lucide-react'
 
-import { Button } from '../ui/Button'
+import { Button } from '../ui/ButtonWrapper'
 
 interface LicenseAlert {
   driver_id: string
@@ -27,7 +27,7 @@ export function LicenseExpiryAlerts({
     return (
       <div className="text-center py-8">
         <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-2" />
-        <p className="text-[var(--text-secondary)]">All licenses are valid</p>
+        <p className="text-muted-foreground">All licenses are valid</p>
       </div>
     )
   }
@@ -37,7 +37,7 @@ export function LicenseExpiryAlerts({
       {allAlerts.slice(0, 5).map(alert => (
         <div 
           key={alert.driver_id} 
-          className={`flex items-start gap-3 p-3 rounded-lg border ${
+          className={`flex items-start gap-3 p-3 rounded-xl border ${
             alert.severity === 'danger' 
               ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800' 
               : 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800'
@@ -51,10 +51,10 @@ export function LicenseExpiryAlerts({
             )}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="font-medium text-sm text-[var(--text-primary)]">{alert.name}</p>
-            <p className="text-xs text-[var(--text-muted)]">License: {alert.license_number}</p>
+            <p className="font-medium text-sm text-foreground">{alert.name}</p>
+            <p className="text-xs text-muted-foreground">License: {alert.license_number}</p>
             <div className="flex items-center gap-2 mt-1">
-              <Clock className="w-3.5 h-3.5 text-[var(--text-muted)]" />
+              <Clock className="w-3.5 h-3.5 text-muted-foreground" />
               <span className={`text-xs font-medium ${
                 alert.severity === 'danger' ? 'text-red-600 dark:text-red-400' : 'text-amber-600 dark:text-amber-400'
               }`}>

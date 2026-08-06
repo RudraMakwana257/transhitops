@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: transitops-ai-backend
+  namespace: transitops-prod
+  labels:
+    app.kubernetes.io/name: transitops-ai-backend
+    app.kubernetes.io/part-of: transitops-platform
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: transitops-ai-backend
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: transitops-ai-backend
+    spec:
+      serviceAccountName: transitops-sa
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: backend
+          image: transitops/ai-backend:v1.0.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5000
+              name: http
+          envFrom:
+            - configMapRef:
+                name: transitops-config
+            - secretRef:
+                name: transitops-secrets
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              cpu: "1000m"
+              memory: "1Gi"
+          livenessProbe:
+            httpGet:
+              path: /api/ai/health/liveness
+              port: 5000
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /api/ai/health/readiness
+              port: 5000
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 2

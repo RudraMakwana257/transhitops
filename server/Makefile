@@ -10,3 +10,5 @@ test-security:
 demo:
 	flask seed-demo
 
+pre-demo:
+	./scripts/pre_demo.sh

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api } from '../api/client'
-import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card'
-import { Button } from '../components/ui/Button'
+import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/CardWrapper'
+import { Button } from '../components/ui/ButtonWrapper'
 import { PageWrapper } from '../components/layout/PageWrapper'
 import { Download, Calendar, BarChart3 } from 'lucide-react'
 import { format } from 'date-fns'
@@ -18,7 +18,7 @@ const DAY_MS = 86400000
 
 function EmptyChart({ message }: { message: string }) {
   return (
-    <div className="flex flex-col items-center justify-center h-full text-[var(--text-muted)]">
+    <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
       <BarChart3 className="w-10 h-10 mb-2 opacity-40" />
       <p className="text-sm">{message}</p>
     </div>
@@ -92,10 +92,10 @@ export function Analytics() {
       {/* Date Range + Export */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
         <div className="flex flex-wrap items-center gap-2">
-          <Calendar className="w-4 h-4 text-[var(--text-muted)] flex-shrink-0" />
+          <Calendar className="w-4 h-4 text-muted-foreground flex-shrink-0" />
           <div className="flex items-center gap-1.5">
             <input type="date" value={dateRange.from} onChange={(e) => setDateRange(d => ({ ...d, from: e.target.value }))} className="form-input w-36 sm:w-40" />
-            <span className="text-[var(--text-muted)] text-sm">—</span>
+            <span className="text-muted-foreground text-sm">—</span>
             <input type="date" value={dateRange.to} onChange={(e) => setDateRange(d => ({ ...d, to: e.target.value }))} className="form-input w-36 sm:w-40" />
           </div>
           <div className="flex gap-1">
@@ -103,10 +103,10 @@ export function Analytics() {
               <button
                 key={preset.days}
                 onClick={() => applyPreset(preset.days)}
-                className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
+                className={`px-2.5 py-1 text-xs font-medium rounded-xl transition-colors ${
                   Math.round((Date.now() - new Date(dateRange.from).getTime()) / DAY_MS) === preset.days
-                    ? 'bg-[var(--brand-primary)] text-white'
-                    : 'bg-[var(--bg-sidebar)] text-[var(--text-muted)] hover:text-[var(--text-primary)] border border-[var(--border-default)]'
+                    ? 'bg-primary text-white'
+                    : 'bg-muted/50 text-muted-foreground hover:text-foreground border border-border'
                 }`}
               >
                 {preset.label}
@@ -123,18 +123,18 @@ export function Analytics() {
         <div className="space-y-6">
           <div className={`grid grid-cols-2 gap-4 ${canViewFinancial ? 'lg:grid-cols-4' : 'lg:grid-cols-2'}`}>
             {Array.from({ length: canViewFinancial ? 4 : 2 }).map((_, i) => (
-              <div key={i} className="bg-[var(--bg-card)] border border-[var(--border-default)] rounded-xl animate-pulse p-4">
-                <div className="h-4 bg-[var(--bg-hover)] rounded w-24 mb-4" />
-                <div className="h-8 bg-[var(--bg-hover)] rounded w-20 mb-2" />
-                <div className="h-3 bg-[var(--bg-hover)] rounded w-32" />
+              <div key={i} className="bg-card border border-border rounded-xl animate-pulse p-4">
+                <div className="h-4 hover:bg-accent hover:text-accent-foreground rounded w-24 mb-4" />
+                <div className="h-8 hover:bg-accent hover:text-accent-foreground rounded w-20 mb-2" />
+                <div className="h-3 hover:bg-accent hover:text-accent-foreground rounded w-32" />
               </div>
             ))}
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {[1, 2].map(i => (
-              <div key={i} className="bg-[var(--bg-card)] border border-[var(--border-default)] rounded-xl animate-pulse p-6">
-                <div className="h-5 bg-[var(--bg-hover)] rounded w-48 mb-4" />
-                <div className="h-64 bg-[var(--bg-hover)] rounded" />
+              <div key={i} className="bg-card border border-border rounded-xl animate-pulse p-6">
+                <div className="h-5 hover:bg-accent hover:text-accent-foreground rounded w-48 mb-4" />
+                <div className="h-64 hover:bg-accent hover:text-accent-foreground rounded" />
               </div>
             ))}
           </div>
@@ -147,7 +147,7 @@ export function Analytics() {
               <CardHeader className="pb-2"><CardTitle className="text-sm">Fleet Utilization</CardTitle></CardHeader>
               <CardContent>
                 <p className="text-xl sm:text-2xl lg:text-3xl font-bold">{utilization?.utilization_pct?.toFixed(1) || 0}%</p>
-                <p className="text-xs text-[var(--text-muted)] mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   {utilization?.on_trip_vehicles || 0}/{utilization?.total_active_vehicles || 0} vehicles on trip
                 </p>
               </CardContent>
@@ -160,7 +160,7 @@ export function Analytics() {
                     ? (fuelEff.reduce((s, v) => s + (v.avg_kmpl || 0), 0) / fuelEff.length).toFixed(1)
                     : '—'}
                 </p>
-                <p className="text-xs text-[var(--text-muted)] mt-1">km/L</p>
+                <p className="text-xs text-muted-foreground mt-1">km/L</p>
               </CardContent>
             </Card>
             {canViewFinancial && (
@@ -185,19 +185,20 @@ export function Analytics() {
             )}
           </div>
           
-          {/* Chart Row 1 — always side-by-side: fuel efficiency + fleet status */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-            <Card>
+          {/* Chart Row 1 — 2/3 for wide bar chart, 1/3 for pie chart */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+            <div className="lg:col-span-2">
+              <Card className="h-full">
               <CardHeader><CardTitle className="text-sm">Fuel Efficiency by Vehicle</CardTitle></CardHeader>
               <CardContent>
                 <div className="h-[250px] sm:h-[300px]">
                   {fuelEff.length > 0 ? (
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={fuelEff} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="var(--border-default)" vertical={false} />
-                        <XAxis dataKey="vehicle_name" tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={{ stroke: 'var(--border-default)' }} tickLine={false} />
-                        <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} />
-                        <Tooltip contentStyle={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-default)', borderRadius: '8px' }} />
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                        <XAxis dataKey="vehicle_name" tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} axisLine={{ stroke: 'hsl(var(--border))' }} tickLine={false} />
+                        <YAxis tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} axisLine={false} tickLine={false} />
+                        <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }} />
                         <Bar dataKey="avg_kmpl" fill={CHART_COLORS.primary} />
                       </BarChart>
                     </ResponsiveContainer>
@@ -206,33 +207,46 @@ export function Analytics() {
                   )}
                 </div>
               </CardContent>
-            </Card>
-            <Card>
+              </Card>
+            </div>
+            <div className="lg:col-span-1">
+              <Card className="h-full">
               <CardHeader><CardTitle className="text-sm">Fleet Status Distribution</CardTitle></CardHeader>
               <CardContent>
-                <div className="h-[250px] sm:h-[300px]">
+                <div className="h-[250px] sm:h-[300px] relative">
                   {fleetStatusData.some(d => d.value > 0) ? (
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie
                           data={fleetStatusData}
-                          cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={2}
-                          dataKey="value" nameKey="name" labelLine={false}
+                          cx="50%" cy="50%" innerRadius={75} outerRadius={100} paddingAngle={5}
+                          dataKey="value" nameKey="name" labelLine={false} stroke="none"
                         >
                           {fleetStatusData.map((_, i) => (
-                            <Cell key={`cell-${i}`} fill={fleetStatusData[i].color} />
+                            <Cell key={`cell-${i}`} fill={fleetStatusData[i].color} className="drop-shadow-sm hover:drop-shadow-md transition-all duration-300 outline-none" />
                           ))}
                         </Pie>
-                        <Tooltip contentStyle={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-default)', borderRadius: '8px' }} />
+                        <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }} />
                         <Legend layout="horizontal" align="center" verticalAlign="bottom" iconType="circle" iconSize={10} />
                       </PieChart>
                     </ResponsiveContainer>
                   ) : (
                     <EmptyChart message="No fleet status data" />
                   )}
+                  
+                  {/* Center Text */}
+                  {fleetStatusData.some(d => d.value > 0) && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none pb-[24px]">
+                      <span className="text-3xl font-black text-foreground">
+                        {fleetStatusData.reduce((s, d) => s + d.value, 0)}
+                      </span>
+                      <span className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Total</span>
+                    </div>
+                  )}
                 </div>
               </CardContent>
-            </Card>
+              </Card>
+            </div>
           </div>
           
           {/* Chart Row 2 — financial charts (side-by-side only when visible) */}
@@ -245,10 +259,10 @@ export function Analytics() {
                     {opCost.length > 0 ? (
                       <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={opCost} margin={{ top: 10, right: 10, left: 0, bottom: 0 }} layout="vertical">
-                          <CartesianGrid strokeDasharray="3 3" stroke="var(--border-default)" horizontal={false} />
-                          <XAxis type="number" tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={{ stroke: 'var(--border-default)' }} tickLine={false} />
-                          <YAxis dataKey="vehicle_name" type="category" width={80} tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} />
-                          <Tooltip contentStyle={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-default)', borderRadius: '8px' }} />
+                          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
+                          <XAxis type="number" tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} axisLine={{ stroke: 'hsl(var(--border))' }} tickLine={false} />
+                          <YAxis dataKey="vehicle_name" type="category" width={80} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} axisLine={false} tickLine={false} />
+                          <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }} />
                           <Legend />
                           <Bar dataKey="fuel_cost" fill={CHART_COLORS.primary} name="Fuel" stackId="a" />
                           <Bar dataKey="maintenance_cost" fill={CHART_COLORS.warning} name="Maintenance" stackId="a" />
@@ -273,10 +287,10 @@ export function Analytics() {
                               <stop offset="95%" stopColor={CHART_COLORS.primary} stopOpacity={0} />
                             </linearGradient>
                           </defs>
-                          <CartesianGrid strokeDasharray="3 3" stroke="var(--border-default)" vertical={false} />
-                          <XAxis dataKey="vehicle_name" tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={{ stroke: 'var(--border-default)' }} tickLine={false} />
-                          <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} />
-                          <Tooltip contentStyle={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-default)', borderRadius: '8px' }} />
+                          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                          <XAxis dataKey="vehicle_name" tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} axisLine={{ stroke: 'hsl(var(--border))' }} tickLine={false} />
+                          <YAxis tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} axisLine={false} tickLine={false} />
+                          <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }} />
                           <Area type="monotone" dataKey="total_cost" stroke={CHART_COLORS.primary} strokeWidth={2} fillOpacity={1} fill="url(#costGradient)" />
                         </AreaChart>
                       </ResponsiveContainer>
@@ -289,8 +303,8 @@ export function Analytics() {
             </div>
           )}
           
-          {/* Tables */}
-          <div className={`grid grid-cols-1 gap-4 sm:gap-6 ${canViewFinancial && canViewDriverPerf ? 'lg:grid-cols-2' : ''}`}>
+          {/* Tables - Always Stacked for Maximum Width */}
+          <div className="grid grid-cols-1 gap-4 sm:gap-6">
             {canViewFinancial && (
               <Card>
                 <CardHeader><CardTitle className="text-sm">Vehicle ROI</CardTitle></CardHeader>
@@ -298,7 +312,7 @@ export function Analytics() {
                   {roi.length > 0 ? (
                     <div className="overflow-x-auto max-h-[420px] overflow-y-auto">
                       <table className="w-full data-table text-sm">
-                        <thead className="sticky top-0 bg-[var(--bg-card)] z-10">
+                        <thead className="sticky top-0 bg-card z-10">
                           <tr>
                             <th className="px-4 py-2.5 text-left">Vehicle</th>
                             <th className="px-4 py-2.5 text-right">Acquisition</th>
@@ -309,12 +323,12 @@ export function Analytics() {
                         </thead>
                         <tbody>
                           {roi.slice(0, 10).map((r: any) => (
-                            <tr key={r.vehicle_id} className="border-t border-[var(--border-default)]/50 hover:bg-[var(--bg-hover)]/50 transition-colors">
+                            <tr key={r.vehicle_id} className="border-t border-border/50 hover:bg-muted/40 cursor-pointer transition-colors">
                               <td className="px-4 py-2.5 font-medium">{r.vehicle_name}</td>
                               <td className="px-4 py-2.5 text-right">{formatCurrency(r.acquisition_cost || 0)}</td>
-                              <td className="px-4 py-2.5 text-right" style={{ color: 'var(--status-available)' }}>{formatCurrency(r.revenue || 0)}</td>
-                              <td className="px-4 py-2.5 text-right" style={{ color: 'var(--status-critical)' }}>{formatCurrency((r.fuel_cost || 0) + (r.maintenance_cost || 0))}</td>
-                              <td className="px-4 py-2.5 text-right font-semibold" style={{ color: (r.roi || 0) >= 0 ? 'var(--status-available)' : 'var(--status-critical)' }}>
+                              <td className="px-4 py-2.5 text-right text-green-600 dark:text-green-400">{formatCurrency(r.revenue || 0)}</td>
+                              <td className="px-4 py-2.5 text-right text-red-600 dark:text-red-400">{formatCurrency((r.fuel_cost || 0) + (r.maintenance_cost || 0))}</td>
+                              <td className={`px-4 py-2.5 text-right font-semibold ${(r.roi || 0) >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                                 {(r.roi * 100).toFixed(1)}%
                               </td>
                             </tr>
@@ -322,7 +336,7 @@ export function Analytics() {
                         </tbody>
                       </table>
                       {roi.length > 10 && (
-                        <div className="px-4 py-2 text-xs text-[var(--text-muted)] border-t border-[var(--border-default)]/50">
+                        <div className="px-4 py-2 text-xs text-muted-foreground border-t border-border/50">
                           Showing 10 of {roi.length} vehicles
                         </div>
                       )}
@@ -341,7 +355,7 @@ export function Analytics() {
                   {driverPerf.length > 0 ? (
                     <div className="overflow-x-auto max-h-[420px] overflow-y-auto">
                       <table className="w-full data-table text-sm">
-                        <thead className="sticky top-0 bg-[var(--bg-card)] z-10">
+                        <thead className="sticky top-0 bg-card z-10">
                           <tr>
                             <th className="px-4 py-2.5 text-left">Driver</th>
                             <th className="px-4 py-2.5 text-center">Trips</th>
@@ -353,19 +367,19 @@ export function Analytics() {
                         </thead>
                         <tbody>
                           {driverPerf.slice(0, 10).map((d: any) => (
-                            <tr key={d.driver_id} className="border-t border-[var(--border-default)]/50 hover:bg-[var(--bg-hover)]/50 transition-colors">
+                            <tr key={d.driver_id} className="border-t border-border/50 hover:bg-muted/40 cursor-pointer transition-colors">
                               <td className="px-4 py-2.5 font-medium">{d.driver_name}</td>
                               <td className="px-4 py-2.5 text-center">{d.trips_completed}</td>
                               <td className="px-4 py-2.5 text-right">{d.total_distance_km?.toLocaleString()} km</td>
                               <td className="px-4 py-2.5 text-right">{d.avg_fuel_efficiency?.toFixed(1)} km/L</td>
-                              <td className="px-4 py-2.5 text-center">{d.safety_score?.toFixed(1)}</td>
-                              <td className="px-4 py-2.5 text-center font-medium" style={{ color: 'var(--status-available)' }}>{d.on_time_pct?.toFixed(1)}%</td>
+                              <td className="px-4 py-2.5 text-center">{Number(d.safety_score || 0).toFixed(1)}</td>
+                              <td className="px-4 py-2.5 text-center font-medium text-green-600 dark:text-green-400">{d.on_time_pct?.toFixed(1)}%</td>
                             </tr>
                           ))}
                         </tbody>
                       </table>
                       {driverPerf.length > 10 && (
-                        <div className="px-4 py-2 text-xs text-[var(--text-muted)] border-t border-[var(--border-default)]/50">
+                        <div className="px-4 py-2 text-xs text-muted-foreground border-t border-border/50">
                           Showing 10 of {driverPerf.length} drivers
                         </div>
                       )}

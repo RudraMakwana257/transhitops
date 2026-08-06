@@ -1,9 +1,9 @@
 import type { ReactNode } from 'react'
 import { X, Search, SlidersHorizontal } from 'lucide-react'
-import { Button } from './Button'
-import { Input } from './Input'
-import { Select } from './Select'
-import type { SelectOption } from './Select'
+import { Button } from './ButtonWrapper'
+import { Input } from './InputWrapper'
+import { Select } from './SelectWrapper'
+import type { SelectOption } from './SelectWrapper'
 import { clsx } from 'clsx'
 
 export interface FilterField {
@@ -71,7 +71,7 @@ export function FilterBar({
     )}>
       {searchField && (
         <div className="relative flex-1 min-w-[160px] sm:min-w-[200px] max-w-full sm:max-w-xs">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             placeholder={searchField.placeholder}
             value={searchField.value}
@@ -88,7 +88,7 @@ export function FilterBar({
 
           return (
             <div key={field.key} className={clsx(field.className || 'min-w-0')}>
-              {field.label && <label className="block text-xs text-[var(--text-muted)] mb-1 font-medium">{field.label}</label>}
+              {field.label && <label className="block text-xs text-muted-foreground mb-1 font-medium">{field.label}</label>}
               {field.type === 'select' && (
                 <Select
                   value={val}
@@ -141,7 +141,7 @@ export function FilterBar({
             <SlidersHorizontal className="w-4 h-4" />
             <span className="hidden sm:inline">Filters</span>
             {activeCount > 0 && (
-              <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-[var(--brand-primary)] text-white text-[10px] font-bold leading-none">
+              <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-primary text-white text-[10px] font-bold leading-none">
                 {activeCount}
               </span>
             )}
@@ -149,7 +149,7 @@ export function FilterBar({
         )}
 
         {onClear && hasActiveFilters && (
-          <Button variant="ghost" size="sm" onClick={onClear} className="gap-1 text-[var(--text-muted)]">
+          <Button variant="ghost" size="sm" onClick={onClear} className="gap-1 text-muted-foreground">
             <X className="w-4 h-4" />
             <span className="hidden sm:inline">Clear</span>
           </Button>
@@ -173,10 +173,10 @@ export function AdvancedFiltersPanel({ isOpen, onClose, onClear, title = 'Advanc
   if (!isOpen) return null
 
   return (
-    <div className="mb-6 p-4 sm:p-5 rounded-xl bg-[var(--bg-sidebar)] border border-[var(--border-default)] shadow-sm animate-slide-down">
+    <div className="mb-6 p-4 sm:p-5 rounded-xl bg-card border border-border/50 shadow-sm animate-slide-down">
       <div className="flex items-center justify-between mb-4">
-        <h4 className="font-semibold text-sm text-[var(--text-primary)]">{title}</h4>
-        <Button variant="ghost" size="sm" onClick={() => { onClear(); onClose(); }} className="text-[var(--text-muted)]">
+        <h4 className="font-semibold text-sm text-foreground">{title}</h4>
+        <Button variant="ghost" size="sm" onClick={() => { onClear(); onClose(); }} className="text-muted-foreground">
           <X className="w-4 h-4 mr-1" />
           Clear All
         </Button>
@@ -195,18 +195,18 @@ interface FilterChipProps {
 
 export function FilterChip({ label, value, onRemove, variant = 'default' }: FilterChipProps) {
   const variants = {
-    default: 'bg-[var(--bg-sidebar)] border border-[var(--border-default)] text-[var(--text-secondary)]',
-    primary: 'bg-[var(--brand-primary-light)] border border-[var(--brand-primary)] text-[var(--brand-primary)]',
-    danger: 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400'
+    default: 'bg-muted/50 border border-border text-muted-foreground',
+    primary: 'bg-primary/10 border border-primary/50 text-primary',
+    danger: 'bg-destructive/10 border border-destructive/50 text-destructive'
   }
 
   return (
-    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium ${variants[variant]}`}>
+    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-semibold ${variants[variant]}`}>
       <span className="opacity-70">{label}:</span>
       <span className="font-semibold">{value}</span>
       <button
         onClick={onRemove}
-        className="ml-0.5 p-0.5 rounded hover:bg-[var(--bg-hover)] transition-colors"
+        className="ml-0.5 p-0.5 rounded hover:hover:bg-accent hover:text-accent-foreground transition-colors"
         aria-label={`Remove ${label} filter`}
       >
         <X className="w-3 h-3" />

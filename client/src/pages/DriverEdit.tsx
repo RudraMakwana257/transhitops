@@ -2,10 +2,10 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useDriverStore } from '../stores/driverStore'
 import type { LicenseCategory } from '../types'
-import { Button } from '../components/ui/Button'
-import { Input } from '../components/ui/Input'
-import { Select } from '../components/ui/Select'
-import { Card, CardContent, CardFooter } from '../components/ui/Card'
+import { Button } from '../components/ui/ButtonWrapper'
+import { Input } from '../components/ui/InputWrapper'
+import { Select } from '../components/ui/SelectWrapper'
+import { Card, CardContent, CardFooter } from '../components/ui/CardWrapper'
 import { PageWrapper } from '../components/layout/PageWrapper'
 import { ArrowLeft, Save } from 'lucide-react'
 import { toast } from '../store/toastStore'
@@ -115,7 +115,7 @@ export function DriverEdit() {
     >
       <Card className="max-w-2xl">
         {loading ? (
-          <div className="p-8 flex justify-center text-[var(--text-muted)] animate-pulse">Loading driver data...</div>
+          <div className="p-8 flex justify-center text-muted-foreground animate-pulse">Loading driver data...</div>
         ) : error ? (
           <div className="p-6 text-red-500">{error}</div>
         ) : (

@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify, g
 from app import db
 from app.models.user import User
 from app.middleware import require_roles, require_company
+from app.utils.response import success_response, error_response
 
 from app.schemas import (
     UserSchema,
@@ -26,7 +27,7 @@ def list_users():
     if g.company_id is not None:
         query = query.filter_by(company_id=g.company_id)
     users = query.order_by(User.created_at.desc()).all()
-    return jsonify({"success": True, "data": [u.to_dict() for u in users]})
+    return success_response(data=[u.to_dict() for u in users])
 
 @bp.route('/users', methods=['POST'])
 @require_roles('fleet_manager')
@@ -35,9 +36,8 @@ def create_user():
     data = validate_request(CreateUserSchema)
     email = data['email']
     
-    # Check if email exists globally or per company (email is unique in DB, so check globally is standard)
     if User.query.filter_by(email=email).first():
-        return jsonify({"success": False, "message": "Email already in use"}), 409
+        return error_response(message="Email already in use", status_code=409)
     
     user = User(
         company_id=g.company_id,
@@ -50,7 +50,11 @@ def create_user():
     db.session.add(user)
     db.session.commit()
     
-    return jsonify({"success": True, "data": user.to_dict(), "message": "User created"}), 201
+    return success_response(
+        data=user.to_dict(),
+        message="User created",
+        status_code=201
+    )
 
 @bp.route('/users/<id>', methods=['PUT'])
 @require_roles('fleet_manager')
@@ -58,7 +62,7 @@ def create_user():
 def update_user(id):
     user = User.query.get_or_404(id)
     if g.company_id is not None and user.company_id != g.company_id:
-        return jsonify({"success": False, "message": "Resource not found"}), 404
+        return error_response(message="Resource not found", status_code=404)
         
     data = validate_request(UpdateUserSchema)
     
@@ -73,7 +77,7 @@ def update_user(id):
     if email is not None:
         existing = User.query.filter(User.email == email, User.id != id).first()
         if existing:
-            return jsonify({"success": False, "message": "Email already in use"}), 409
+            return error_response(message="Email already in use", status_code=409)
         user.email = email
     if password is not None:
         user.set_password(password)
@@ -83,7 +87,7 @@ def update_user(id):
         user.is_active = is_active
     
     db.session.commit()
-    return jsonify({"success": True, "data": user.to_dict(), "message": "User updated"})
+    return success_response(data=user.to_dict(), message="User updated")
 
 @bp.route('/users/<id>', methods=['DELETE'])
 @require_roles('fleet_manager')
@@ -91,7 +95,7 @@ def update_user(id):
 def deactivate_user(id):
     user = User.query.get_or_404(id)
     if g.company_id is not None and user.company_id != g.company_id:
-        return jsonify({"success": False, "message": "Resource not found"}), 404
+        return error_response(message="Resource not found", status_code=404)
     user.is_active = False
     db.session.commit()
-    return jsonify({"success": True, "message": "User deactivated"})
+    return success_response(message="User deactivated")

@@ -1,7 +1,9 @@
 from flask import Blueprint, request, jsonify, g
 from app import db
 from app.models.driver import Driver
+from app.models.trip import Trip
 from app.middleware import require_roles, require_company, require_feature
+from app.utils.response import success_response, error_response
 from sqlalchemy import or_, desc
 import uuid
 
@@ -46,23 +48,31 @@ def list_drivers():
     if category:
         query = query.filter_by(license_category=category)
     
-    if sort_order == 'desc':
-        query = query.order_by(desc(getattr(Driver, sort_by)))
+    if hasattr(Driver, sort_by):
+        if sort_order == 'desc':
+            query = query.order_by(desc(getattr(Driver, sort_by)))
+        else:
+            query = query.order_by(getattr(Driver, sort_by))
     else:
-        query = query.order_by(getattr(Driver, sort_by))
+        query = query.order_by(Driver.name)
     
     pagination = query.paginate(page=page, per_page=page_size, error_out=False)
     
-    return jsonify({
-        "success": True,
-        "data": {
-            "items": [d.to_dict() for d in pagination.items],
-            "total": pagination.total,
-            "page": page,
-            "page_size": page_size,
-            "total_pages": pagination.pages
-        }
+    return success_response(data={
+        "items": [d.to_dict() for d in pagination.items],
+        "total": pagination.total,
+        "page": page,
+        "page_size": page_size,
+        "total_pages": pagination.pages
     })
+
+@bp.route('/available', methods=['GET'])
+@require_roles('fleet_manager', 'dispatcher', 'safety_officer', 'financial_analyst')
+@require_company
+@require_feature('drivers')
+def available_drivers():
+    drivers = Driver.query.filter_by(company_id=g.company_id, is_active=True, status='Available').all()
+    return success_response(data=[d.to_dict() for d in drivers])
 
 @bp.route('/<id>', methods=['GET'])
 @require_roles('fleet_manager', 'dispatcher', 'safety_officer', 'financial_analyst')
@@ -70,17 +80,17 @@ def list_drivers():
 @require_feature('drivers')
 def get_driver(id):
     driver = Driver.query.filter_by(id=id, company_id=g.company_id).first_or_404()
-    return jsonify({"success": True, "data": driver.to_dict()})
+    return success_response(data=driver.to_dict())
 
 @bp.route('', methods=['POST'])
-@require_roles('fleet_manager', 'dispatcher')
+@require_roles('fleet_manager')
 @require_company
 @require_feature('drivers')
 def create_driver():
     data = validate_request(CreateDriverSchema)
     
     if Driver.query.filter_by(company_id=g.company_id, license_number=data['license_number']).first():
-        return jsonify({"success": False, "message": "License number already exists"}), 400
+        return error_response(message="License number already exists", status_code=400)
         
     driver = Driver(
         company_id=g.company_id,
@@ -97,14 +107,14 @@ def create_driver():
     db.session.add(driver)
     db.session.commit()
     
-    return jsonify({
-        "success": True, 
-        "data": driver.to_dict(),
-        "message": "Driver created successfully"
-    }), 201
+    return success_response(
+        data=driver.to_dict(),
+        message="Driver created successfully",
+        status_code=201
+    )
 
 @bp.route('/<id>', methods=['PUT'])
-@require_roles('fleet_manager', 'dispatcher')
+@require_roles('fleet_manager')
 @require_company
 @require_feature('drivers')
 def update_driver(id):
@@ -113,7 +123,7 @@ def update_driver(id):
     
     if 'license_number' in data and data['license_number'] != driver.license_number:
         if Driver.query.filter_by(company_id=g.company_id, license_number=data['license_number']).first():
-            return jsonify({"success": False, "message": "License number already exists"}), 400
+            return error_response(message="License number already exists", status_code=400)
             
     for field in ['name', 'license_number', 'license_category', 'license_expiry', 
                   'phone', 'safety_score', 'status', 'is_active']:
@@ -122,11 +132,10 @@ def update_driver(id):
             
     db.session.commit()
     
-    return jsonify({
-        "success": True, 
-        "data": driver.to_dict(),
-        "message": "Driver updated successfully"
-    })
+    return success_response(
+        data=driver.to_dict(),
+        message="Driver updated successfully"
+    )
 
 @bp.route('/<id>', methods=['DELETE'])
 @require_roles('fleet_manager')
@@ -137,7 +146,26 @@ def delete_driver(id):
     driver.is_active = False
     db.session.commit()
     
-    return jsonify({
-        "success": True, 
-        "message": "Driver deactivated successfully"
+    return success_response(
+        message="Driver deactivated successfully"
+    )
+
+@bp.route('/<id>/trips', methods=['GET'])
+@require_roles('fleet_manager', 'dispatcher', 'safety_officer', 'financial_analyst')
+@require_company
+@require_feature('drivers')
+def get_driver_trips(id):
+    driver = Driver.query.filter_by(id=id, company_id=g.company_id).first_or_404()
+    page = request.args.get('page', 1, type=int)
+    page_size = request.args.get('page_size', 10, type=int)
+    
+    query = Trip.query.filter_by(driver_id=driver.id, company_id=g.company_id).order_by(desc(Trip.created_at))
+    pagination = query.paginate(page=page, per_page=page_size, error_out=False)
+    
+    return success_response(data={
+        "items": [t.to_dict() for t in pagination.items],
+        "total": pagination.total,
+        "page": page,
+        "page_size": page_size,
+        "total_pages": pagination.pages
     })

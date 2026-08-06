@@ -237,3 +237,15 @@ dmypy.json
 cache/
 tmp/
 temp/
+
+# Environment files
+.env
+.env.local
+.env.production
+server/.env
+client/.env
+client/.env.production
+
+# Never commit real secrets
+*.key
+*.pem

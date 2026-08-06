@@ -2,10 +2,10 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { api } from '../api/client'
 import type { Vehicle, Trip, MaintenanceLog, FuelLog } from '../types'
-import { DataTable } from '../components/ui/DataTable'
-import { StatusBadge } from '../components/ui/Badge'
-import { Button } from '../components/ui/Button'
-import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card'
+import { DataTable } from '../components/ui/DataTableWrapper'
+import { StatusBadge } from '../components/ui/BadgeWrapper'
+import { Button } from '../components/ui/ButtonWrapper'
+import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/CardWrapper'
 import { PageWrapper } from '../components/layout/PageWrapper'
 import { Truck, MapPin, Wrench, Droplets, Settings, AlertCircle, Clock, DollarSign, CheckCircle } from 'lucide-react'
 import { format } from 'date-fns'
@@ -63,8 +63,8 @@ export function VehicleDetail() {
     }
   }
 
-  if (loading) return <div className="p-6 space-y-6 animate-pulse"><div className="h-8 bg-[var(--bg-sidebar)] rounded w-48" /><div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">{[1,2,3,4].map(i => <div key={i} className="h-24 bg-[var(--bg-sidebar)] rounded-lg" />)}</div><div className="h-64 bg-[var(--bg-sidebar)] rounded-lg" /></div>
-  if (!vehicle) return <div className="p-6 text-center text-[var(--text-secondary)]">Vehicle not found</div>
+  if (loading) return <div className="p-6 space-y-6 animate-pulse"><div className="h-8 bg-muted/50 rounded w-48" /><div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">{[1,2,3,4].map(i => <div key={i} className="h-24 bg-muted/50 rounded-xl" />)}</div><div className="h-64 bg-muted/50 rounded-xl" /></div>
+  if (!vehicle) return <div className="p-6 text-center text-muted-foreground">Vehicle not found</div>
 
   const tabs = [
     { id: 'overview', label: 'Overview', icon: Truck },
@@ -94,11 +94,11 @@ export function VehicleDetail() {
         <Card>
           <CardContent className="py-4">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-[var(--brand-primary-light)] flex items-center justify-center">
-                <Truck className="w-6 h-6 text-[var(--brand-primary)]" />
+              <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                <Truck className="w-6 h-6 text-primary" />
               </div>
               <div>
-                <p className="text-sm text-[var(--text-secondary)]">Status</p>
+                <p className="text-sm text-muted-foreground">Status</p>
                 <StatusBadge status={vehicle.status} type="vehicle" />
               </div>
             </div>
@@ -111,7 +111,7 @@ export function VehicleDetail() {
                 <CheckCircle className="w-6 h-6 text-green-600 dark:text-green-400" />
               </div>
               <div>
-                <p className="text-sm text-[var(--text-secondary)]">Health Score</p>
+                <p className="text-sm text-muted-foreground">Health Score</p>
                 <p className="text-xl sm:text-2xl font-bold text-green-600 dark:text-green-400">{vehicle.health_score || '—'}/100</p>
               </div>
             </div>
@@ -124,7 +124,7 @@ export function VehicleDetail() {
                 <Clock className="w-6 h-6 text-blue-600 dark:text-blue-400" />
               </div>
               <div>
-                <p className="text-sm text-[var(--text-secondary)]">Odometer</p>
+                <p className="text-sm text-muted-foreground">Odometer</p>
                 <p className="text-xl sm:text-2xl font-bold">{vehicle.odometer_km.toLocaleString()} km</p>
               </div>
             </div>
@@ -137,7 +137,7 @@ export function VehicleDetail() {
                 <DollarSign className="w-6 h-6 text-purple-600 dark:text-purple-400" />
               </div>
               <div>
-                <p className="text-sm text-[var(--text-secondary)]">Acquisition Cost</p>
+                <p className="text-sm text-muted-foreground">Acquisition Cost</p>
                 <p className="text-xl sm:text-2xl font-bold">₹{vehicle.acquisition_cost.toLocaleString()}</p>
               </div>
             </div>
@@ -145,15 +145,15 @@ export function VehicleDetail() {
         </Card>
       </div>
 
-      <div className="flex border-b border-[var(--border-default)] mb-6">
+      <div className="flex border-b border-border mb-6">
         {tabs.map(tab => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id as any)}
             className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
               activeTab === tab.id
-                ? 'border-[var(--brand-primary)] text-[var(--brand-primary)]'
-                : 'border-transparent text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-muted-foreground hover:text-foreground'
             }`}
           >
             <tab.icon className="w-4 h-4 inline mr-2" />
@@ -170,12 +170,12 @@ export function VehicleDetail() {
               <CardContent>
                 <dl className="space-y-3">
                   <div className="grid grid-cols-2 gap-3">
-                    <div><dt className="text-sm text-[var(--text-secondary)]">Registration</dt><dd className="font-medium">{vehicle.reg_number}</dd></div>
-                    <div><dt className="text-sm text-[var(--text-secondary)]">Type</dt><dd className="font-medium">{vehicle.type}</dd></div>
-                    <div><dt className="text-sm text-[var(--text-secondary)]">Capacity</dt><dd className="font-medium">{vehicle.capacity_kg.toLocaleString()} kg</dd></div>
-                    <div><dt className="text-sm text-[var(--text-secondary)]">Region</dt><dd className="font-medium">{vehicle.region || '—'}</dd></div>
-                    <div><dt className="text-sm text-[var(--text-secondary)]">Purchase Date</dt><dd className="font-medium">{vehicle.purchase_date ? format(new Date(vehicle.purchase_date), 'MMM d, yyyy') : '—'}</dd></div>
-                    <div><dt className="text-sm text-[var(--text-secondary)]">Acquisition Cost</dt><dd className="font-medium">₹{vehicle.acquisition_cost.toLocaleString()}</dd></div>
+                    <div><dt className="text-sm text-muted-foreground">Registration</dt><dd className="font-medium">{vehicle.reg_number}</dd></div>
+                    <div><dt className="text-sm text-muted-foreground">Type</dt><dd className="font-medium">{vehicle.type}</dd></div>
+                    <div><dt className="text-sm text-muted-foreground">Capacity</dt><dd className="font-medium">{vehicle.capacity_kg.toLocaleString()} kg</dd></div>
+                    <div><dt className="text-sm text-muted-foreground">Region</dt><dd className="font-medium">{vehicle.region || '—'}</dd></div>
+                    <div><dt className="text-sm text-muted-foreground">Purchase Date</dt><dd className="font-medium">{vehicle.purchase_date ? format(new Date(vehicle.purchase_date), 'MMM d, yyyy') : '—'}</dd></div>
+                    <div><dt className="text-sm text-muted-foreground">Acquisition Cost</dt><dd className="font-medium">₹{vehicle.acquisition_cost.toLocaleString()}</dd></div>
                   </div>
                 </dl>
               </CardContent>
@@ -193,17 +193,17 @@ export function VehicleDetail() {
                       { key: 'cost_score', label: 'Cost' },
                     ].map(item => (
                       <div key={item.key} className="flex items-center justify-between">
-                        <span className="text-sm text-[var(--text-secondary)]">{item.label}</span>
+                        <span className="text-sm text-muted-foreground">{item.label}</span>
                         <div className="flex items-center gap-2">
-                          <div className="flex-1 h-2 bg-[var(--border-default)] rounded-full overflow-hidden">
-                            <div className="h-full bg-[var(--brand-primary)] rounded-full" style={{ width: `${(vehicle as any).health[item.key] || 0}%` }} />
+                          <div className="flex-1 h-2 bg-border rounded-full overflow-hidden">
+                            <div className="h-full bg-primary rounded-full" style={{ width: `${(vehicle as any).health[item.key] || 0}%` }} />
                           </div>
                           <span className="text-sm font-medium w-12 text-right">{(vehicle as any).health[item.key] || 0}</span>
                         </div>
                       </div>
                     ))}
                   </div>
-                ) : (<p className="text-[var(--text-muted)]">Health data not available</p>)}
+                ) : (<p className="text-muted-foreground">Health data not available</p>)}
               </CardContent>
             </Card>
           </div>
@@ -215,7 +215,7 @@ export function VehicleDetail() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle>Recent Trips</CardTitle>
-              <Link to={`/trips?vehicle_id=${vehicle.id}`} className="text-sm text-[var(--brand-primary)] hover:underline">View All</Link>
+              <Link to={`/trips?vehicle_id=${vehicle.id}`} className="text-sm text-primary hover:underline">View All</Link>
             </div>
           </CardHeader>
           <CardContent>
@@ -241,7 +241,7 @@ export function VehicleDetail() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle>Maintenance History</CardTitle>
-              <Link to={`/maintenance?vehicle_id=${vehicle.id}`} className="text-sm text-[var(--brand-primary)] hover:underline">View All</Link>
+              <Link to={`/maintenance?vehicle_id=${vehicle.id}`} className="text-sm text-primary hover:underline">View All</Link>
             </div>
           </CardHeader>
           <CardContent>
@@ -266,7 +266,7 @@ export function VehicleDetail() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle>Fuel History</CardTitle>
-              <Link to={`/fuel?vehicle_id=${vehicle.id}`} className="text-sm text-[var(--brand-primary)] hover:underline">View All</Link>
+              <Link to={`/fuel?vehicle_id=${vehicle.id}`} className="text-sm text-primary hover:underline">View All</Link>
             </div>
           </CardHeader>
           <CardContent>

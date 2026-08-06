@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAdminStore } from '../../stores/adminStore'
 import { adminApi } from '../../api'
-import { Card } from '../../components/ui/Card'
-import { Button } from '../../components/ui/Button'
+import { Card } from '../../components/ui/CardWrapper'
+import { Button } from '../../components/ui/ButtonWrapper'
 import { Building2, Package, Settings, Ban, Trash2, CheckCircle } from 'lucide-react'
 
 // All valid features based on backend FEATURE_KEYS and seeding list
@@ -133,7 +133,7 @@ export function AdminCompanyDetail() {
             <h2 className="text-lg font-semibold text-slate-900">Subscription</h2>
           </div>
           
-          <div className="mb-6 p-4 bg-slate-50 rounded-lg border border-slate-200">
+          <div className="mb-6 p-4 bg-slate-50 rounded-xl border border-slate-200">
             <p className="text-sm font-medium text-slate-500">Current Plan</p>
             <p className="mt-1 text-xl font-bold text-slate-900">
               {selectedCompany.subscription?.plan?.name || 'Free / No Plan'}
@@ -150,7 +150,7 @@ export function AdminCompanyDetail() {
             <select 
               value={selectedPlanId} 
               onChange={(e) => setSelectedPlanId(e.target.value)}
-              className="w-full h-10 px-3 py-2 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full h-10 px-3 py-2 bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
             >
               <option value="">-- Select a Plan --</option>
               {plans.map(p => (

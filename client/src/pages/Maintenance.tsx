@@ -1,12 +1,12 @@
 import { useEffect, useState, useMemo } from 'react'
 import { api } from '../api/client'
 import type { MaintenanceLog, MaintenanceStatus, Vehicle } from '../types'
-import { DataTable } from '../components/ui/DataTable'
-import { StatusBadge } from '../components/ui/Badge'
-import { Button } from '../components/ui/Button'
-import { Input } from '../components/ui/Input'
-import { Select } from '../components/ui/Select'
-import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card'
+import { DataTable } from '../components/ui/DataTableWrapper'
+import { StatusBadge } from '../components/ui/BadgeWrapper'
+import { Button } from '../components/ui/ButtonWrapper'
+import { Input } from '../components/ui/InputWrapper'
+import { Select } from '../components/ui/SelectWrapper'
+import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/CardWrapper'
 import { PageWrapper } from '../components/layout/PageWrapper'
 import { FilterBar, FilterChip, type FilterField } from '../components/ui/FilterBar'
 import { Plus, CheckCircle } from 'lucide-react'
@@ -183,15 +183,15 @@ export function Maintenance() {
     >
       {/* Tabs + Stats */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
-        <div className="flex gap-1 bg-[var(--bg-sidebar)] rounded-lg p-1 border border-[var(--border-default)] w-fit">
+        <div className="flex gap-1 bg-muted/50 rounded-xl p-1 border border-border w-fit">
           {TABS.map(tab => (
             <button
               key={tab.key}
               onClick={() => { setActiveTab(tab.key); setPagination(prev => ({ ...prev, page: 1 })) }}
-              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+              className={`px-3 py-1.5 rounded-xl text-sm font-medium transition-colors ${
                 activeTab === tab.key
-                  ? 'bg-[var(--brand-primary)] text-white shadow-sm'
-                  : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+                  ? 'bg-primary text-white shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
               }`}
             >
               {tab.label}
@@ -199,16 +199,16 @@ export function Maintenance() {
           ))}
         </div>
         <div className="flex flex-wrap gap-2">
-          <span className="text-xs text-[var(--text-muted)] bg-[var(--bg-sidebar)] px-2 py-1 rounded-md border border-[var(--border-default)]">
+          <span className="text-xs text-muted-foreground bg-muted/50 px-2 py-1 rounded-xl border border-border">
             Total: {pagination.total}
           </span>
           {stats.open > 0 && (
-            <span className="text-xs text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded-md border border-amber-200 dark:border-amber-800 font-medium">
+            <span className="text-xs text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded-xl border border-amber-200 dark:border-amber-800 font-medium">
               {stats.open} open
             </span>
           )}
           {stats.inProgress > 0 && (
-            <span className="text-xs text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 px-2 py-1 rounded-md border border-blue-200 dark:border-blue-800 font-medium">
+            <span className="text-xs text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 px-2 py-1 rounded-xl border border-blue-200 dark:border-blue-800 font-medium">
               {stats.inProgress} in progress
             </span>
           )}
@@ -226,7 +226,7 @@ export function Maintenance() {
       
       {/* Create Form */}
       {showCreate && (
-        <Card className="mb-6 border-[var(--brand-primary-light)]">
+        <Card className="mb-6 border-primary/10">
           <CardHeader className="pb-3">
             <CardTitle className="text-base">Create Maintenance Record</CardTitle>
           </CardHeader>
@@ -245,7 +245,7 @@ export function Maintenance() {
               <Input {...{ value: formData.description, onChange: (e) => setFormData({...formData, description: e.target.value}) }} label="Description" className="md:col-span-2" placeholder="Work details..." />
               <Input {...{ value: formData.technician, onChange: (e) => setFormData({...formData, technician: e.target.value}) }} label="Technician" placeholder="Workshop name" />
               <Input type="date" {...{ value: formData.scheduled_date, onChange: (e) => setFormData({...formData, scheduled_date: e.target.value}) }} label="Scheduled Date *" required />
-              <div className="md:col-span-4 flex justify-end gap-2 pt-4 border-t border-[var(--border-default)]">
+              <div className="md:col-span-4 flex justify-end gap-2 pt-4 border-t border-border">
                 <Button type="button" variant="secondary" onClick={() => setShowCreate(false)}>Cancel</Button>
                 <Button type="submit" loading={submitting}><Plus className="w-4 h-4 sm:mr-2" /><span className="hidden sm:inline">Create</span></Button>
               </div>

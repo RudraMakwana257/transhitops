@@ -1,5 +1,6 @@
 import axios from 'axios'
 import type { InternalAxiosRequestConfig } from 'axios'
+import { useAuthStore } from '../store/authStore'
 
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || '/api',
@@ -10,7 +11,7 @@ export const api = axios.create({
 
 // Request Interceptor
 api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
-  const token = localStorage.getItem('token') // We'll assume the authStore persists token to localStorage or we can read it directly.
+  const token = useAuthStore.getState().token
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
   }
@@ -26,18 +27,20 @@ api.interceptors.response.use(
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true
       try {
-        // Attempt refresh
+        const refreshToken = useAuthStore.getState().refreshToken
+        if (!refreshToken) throw new Error('No refresh token')
         const { data } = await axios.post(`${api.defaults.baseURL}/auth/refresh`, {}, {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem('refresh_token')}`
+            Authorization: `Bearer ${refreshToken}`
           }
         })
-        localStorage.setItem('token', data.data.access_token)
-        originalRequest.headers.Authorization = `Bearer ${data.data.access_token}`
+        const newToken = data.data.access_token
+        useAuthStore.getState().setUser(useAuthStore.getState().user!, newToken)
+        originalRequest.headers.Authorization = `Bearer ${newToken}`
         return api(originalRequest)
       } catch (refreshError) {
-        localStorage.removeItem('token')
-        localStorage.removeItem('refresh_token')
+        localStorage.removeItem('auth-storage')
+        useAuthStore.getState().logout()
         window.location.href = '/login'
         return Promise.reject(refreshError)
       }

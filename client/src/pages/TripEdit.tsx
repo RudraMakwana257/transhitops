@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useTripStore } from '../stores/tripStore'
-import { Button } from '../components/ui/Button'
-import { Input } from '../components/ui/Input'
-import { Card, CardContent, CardFooter } from '../components/ui/Card'
+import { Button } from '../components/ui/ButtonWrapper'
+import { Input } from '../components/ui/InputWrapper'
+import { Card, CardContent, CardFooter } from '../components/ui/CardWrapper'
 import { PageWrapper } from '../components/layout/PageWrapper'
-import { StatusBadge } from '../components/ui/Badge'
+import { StatusBadge } from '../components/ui/BadgeWrapper'
 import { ArrowLeft, Save } from 'lucide-react'
 import { toast } from '../store/toastStore'
 
@@ -97,14 +97,14 @@ export function TripEdit() {
     >
       <Card className="max-w-2xl">
         {loading ? (
-          <div className="p-8 flex justify-center text-[var(--text-muted)] animate-pulse">Loading trip data...</div>
+          <div className="p-8 flex justify-center text-muted-foreground animate-pulse">Loading trip data...</div>
         ) : error ? (
           <div className="p-6 text-red-500">{error}</div>
         ) : selectedTrip ? (
           <form onSubmit={handleSubmit}>
             <CardContent className="space-y-4 pt-6">
               {!isDraft && (
-                <div className="mb-4 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg flex items-center justify-between">
+                <div className="mb-4 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl flex items-center justify-between">
                   <p className="text-amber-800 dark:text-amber-300 font-medium text-sm">This trip can no longer be edited</p>
                   <StatusBadge status={selectedTrip.status} type="trip" />
                 </div>
@@ -131,9 +131,9 @@ export function TripEdit() {
               
               <div className="grid grid-cols-1 gap-4">
                 <div className="space-y-1">
-                  <label className="block text-sm font-medium text-[var(--text-primary)]">Notes</label>
+                  <label className="block text-sm font-medium text-foreground">Notes</label>
                   <textarea 
-                    className="w-full px-3 py-2 border rounded-md bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] border-[var(--border-color)] text-[var(--text-primary)]"
+                    className="w-full px-3 py-2 border rounded-xl bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] border-border text-foreground"
                     rows={3} 
                     value={form.notes} 
                     onChange={set('notes')}

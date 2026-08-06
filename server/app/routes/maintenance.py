@@ -3,6 +3,7 @@ from app import db
 from app.models.maintenance_log import MaintenanceLog
 from app.models.vehicle import Vehicle
 from app.middleware import require_roles, require_company, require_feature
+from app.utils.response import success_response, error_response
 from sqlalchemy import desc
 from datetime import datetime
 from app.services.notification_service import create_notification
@@ -40,20 +41,17 @@ def list_logs():
     if status:
         query = query.filter_by(status=status)
     if service_type:
-        query = query.filter_by(service_type=service_type)
+        query = query.filter_by(type=service_type)
         
     query = query.order_by(desc(MaintenanceLog.scheduled_date))
     pagination = query.paginate(page=page, per_page=page_size, error_out=False)
     
-    return jsonify({
-        "success": True,
-        "data": {
-            "items": [log.to_dict() for log in pagination.items],
-            "total": pagination.total,
-            "page": page,
-            "page_size": page_size,
-            "total_pages": pagination.pages
-        }
+    return success_response(data={
+        "items": [log.to_dict() for log in pagination.items],
+        "total": pagination.total,
+        "page": page,
+        "page_size": page_size,
+        "total_pages": pagination.pages
     })
 
 @bp.route('/<id>', methods=['GET'])
@@ -62,10 +60,10 @@ def list_logs():
 @require_feature('maintenance')
 def get_log(id):
     log = MaintenanceLog.query.filter_by(id=id, company_id=g.company_id).first_or_404()
-    return jsonify({"success": True, "data": log.to_dict()})
+    return success_response(data=log.to_dict())
 
 @bp.route('', methods=['POST'])
-@require_roles('fleet_manager', 'safety_officer')
+@require_roles('fleet_manager')
 @require_company
 @require_feature('maintenance')
 def create_log():
@@ -104,14 +102,14 @@ def create_log():
         entity_id=str(log.id)
     )
     
-    return jsonify({
-        "success": True, 
-        "data": log.to_dict(),
-        "message": "Maintenance log created successfully"
-    }), 201
+    return success_response(
+        data=log.to_dict(),
+        message="Maintenance log created successfully",
+        status_code=201
+    )
 
 @bp.route('/<id>', methods=['PUT'])
-@require_roles('fleet_manager', 'safety_officer')
+@require_roles('fleet_manager')
 @require_company
 @require_feature('maintenance')
 def update_log(id):
@@ -131,21 +129,18 @@ def update_log(id):
         if vehicle:
             if data['status'] == 'In Progress':
                 vehicle.status = 'In Shop'
-            elif data['status'] == 'Completed' and old_status == 'In Progress':
-                # Only set to available if it's currently in shop
+            elif data['status'] == 'Completed' and old_status in ['In Progress', 'Open', 'Scheduled']:
                 if vehicle.status == 'In Shop':
                     vehicle.status = 'Available'
-                # If completed_date wasn't explicitly provided, set it now
                 if not log.completed_date:
                     log.completed_date = datetime.utcnow().date()
                     
     db.session.commit()
     
-    return jsonify({
-        "success": True, 
-        "data": log.to_dict(),
-        "message": "Maintenance log updated successfully"
-    })
+    return success_response(
+        data=log.to_dict(),
+        message="Maintenance log updated successfully"
+    )
 
 @bp.route('/<id>', methods=['DELETE'])
 @require_roles('fleet_manager')
@@ -155,12 +150,52 @@ def delete_log(id):
     log = MaintenanceLog.query.filter_by(id=id, company_id=g.company_id).first_or_404()
     
     if log.status == 'Completed':
-        return jsonify({"success": False, "message": "Cannot delete completed maintenance records"}), 400
+        return error_response(message="Cannot delete completed maintenance records", status_code=400)
         
     db.session.delete(log)
     db.session.commit()
     
-    return jsonify({
-        "success": True, 
-        "message": "Maintenance log deleted successfully"
-    })
+    return success_response(
+        message="Maintenance log deleted successfully"
+    )
+
+@bp.route('/<id>/complete', methods=['PUT'])
+@require_roles('fleet_manager')
+@require_company
+@require_feature('maintenance')
+def complete_maintenance(id):
+    log = MaintenanceLog.query.filter_by(id=id, company_id=g.company_id).first_or_404()
+    data = request.get_json() or {}
+    
+    log.status = 'Completed'
+    if hasattr(log, 'completed_date'):
+        log.completed_date = datetime.utcnow().date()
+        
+    if 'cost' in data and data['cost'] is not None:
+        log.cost = data['cost']
+    if 'notes' in data and data['notes'] is not None:
+        if log.description:
+            log.description = f"{log.description}\n{data['notes']}"
+        else:
+            log.description = data['notes']
+        
+    vehicle = Vehicle.query.filter_by(id=log.vehicle_id, company_id=g.company_id).first()
+    if vehicle and vehicle.status == 'In Shop':
+        vehicle.status = 'Available'
+        
+    db.session.commit()
+    
+    create_notification(
+        company_id=g.company_id,
+        user_id=g.user.id,
+        title="Maintenance Completed",
+        message=f"Maintenance for vehicle {vehicle.name if vehicle else ''} marked as completed",
+        notification_type='success',
+        entity_type='maintenance',
+        entity_id=str(log.id)
+    )
+    
+    return success_response(
+        data=log.to_dict(),
+        message="Maintenance log completed successfully"
+    )

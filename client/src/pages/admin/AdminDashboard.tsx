@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useAdminStore } from '../../stores/adminStore'
 import { Building2, Users, Truck, Activity } from 'lucide-react'
-import { Card } from '../../components/ui/Card'
+import { Card } from '../../components/ui/CardWrapper'
 
 export function AdminDashboard() {
   const { dashboardStats, loading, error, fetchDashboardStats, companies, fetchCompanies } = useAdminStore()

@@ -1,0 +1,1 @@
+from app.models.trip_event import TripEvent

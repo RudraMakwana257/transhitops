@@ -36,12 +36,14 @@ COPY . .
 
 # Set permissions
 RUN mkdir -p /tmp && chmod 777 /tmp
+RUN chmod +x entrypoint.sh
 RUN chown -R appuser:appgroup /app
 
 # Switch to non-root user
+ENV HOME=/app
 USER appuser
 
 EXPOSE 5000
 
-# Use gunicorn as entrypoint
-CMD ["gunicorn", "--config", "gunicorn.conf.py", "run:app"]
+# Use entrypoint
+CMD ["./entrypoint.sh"]

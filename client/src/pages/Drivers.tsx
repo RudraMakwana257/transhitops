@@ -2,8 +2,8 @@ import { useEffect, useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 // api removed
 import type { Driver, UserRole } from '../types'
-import { DataTable } from '../components/ui/DataTable'
-import { StatusBadge } from '../components/ui/Badge'
+import { DataTable } from '../components/ui/DataTableWrapper'
+import { StatusBadge } from '../components/ui/BadgeWrapper'
 import { PageWrapper } from '../components/layout/PageWrapper'
 import { TableSkeleton } from '../components/ui/TableSkeleton'
 import { EmptyState } from '../components/ui/EmptyState'
@@ -63,15 +63,15 @@ export function Drivers() {
           <p className="font-medium text-sm">{format(new Date(d.license_expiry), 'MMM d, yyyy')}</p>
           {days !== undefined && days < 0 && <span className="text-[11px] text-red-600 dark:text-red-400 font-medium">EXPIRED {Math.abs(days as number)}d ago</span>}
           {days !== undefined && days >= 0 && days <= 30 && <span className="text-[11px] text-amber-600 dark:text-amber-400 font-medium">Expires in {days}d</span>}
-          {days !== undefined && days > 30 && <span className="text-[11px] text-[var(--text-muted)]">{days}d left</span>}
+          {days !== undefined && days > 30 && <span className="text-[11px] text-muted-foreground">{days}d left</span>}
         </div>
       )
     }},
     { key: 'status', header: 'Status', render: (d: Driver) => <StatusBadge status={d.status} type="driver" /> },
     { key: 'safety_score', header: 'Safety', accessor: 'safety_score', sortable: true, align: 'center' as const, render: (d: Driver) => (
       <div className="flex items-center justify-center gap-1.5">
-        <Shield className="w-4 h-4 text-[var(--text-muted)]" />
-        <span className="font-semibold text-sm">{d.safety_score.toFixed(1)}</span>
+        <Shield className="w-4 h-4 text-muted-foreground" />
+        <span className="font-semibold text-sm">{Number(d.safety_score || 0).toFixed(1)}</span>
       </div>
     )},
     { key: 'phone', header: 'Phone', accessor: 'phone' },
@@ -125,28 +125,28 @@ export function Drivers() {
     >
       {/* Summary Stats */}
       <div className="flex flex-wrap gap-3 mb-5">
-        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[var(--bg-sidebar)] border border-[var(--border-default)]">
-          <Users className="w-4 h-4 text-[var(--text-muted)]" />
-          <span className="text-xs text-[var(--text-muted)]">Total:</span>
+        <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-muted/50 border border-border">
+          <Users className="w-4 h-4 text-muted-foreground" />
+          <span className="text-xs text-muted-foreground">Total:</span>
           <span className="font-semibold text-sm">{pagination.total}</span>
         </div>
-        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
+        <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
           <Users className="w-4 h-4 text-green-600 dark:text-green-400" />
           <span className="text-xs text-green-700 dark:text-green-400">Available:</span>
           <span className="font-semibold text-sm text-green-700 dark:text-green-400">{stats.available}</span>
         </div>
-        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+        <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
           <Truck className="w-4 h-4 text-blue-600 dark:text-blue-400" />
           <span className="text-xs text-blue-700 dark:text-blue-400">On Trip:</span>
           <span className="font-semibold text-sm text-blue-700 dark:text-blue-400">{stats.onTrip}</span>
         </div>
-        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+        <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
           <Clock className="w-4 h-4 text-amber-600 dark:text-amber-400" />
           <span className="text-xs text-amber-700 dark:text-amber-400">Off Duty:</span>
           <span className="font-semibold text-sm text-amber-700 dark:text-amber-400">{stats.offDuty}</span>
         </div>
         {stats.expiringSoon > 0 && (
-          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+          <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
             <Shield className="w-4 h-4 text-red-600 dark:text-red-400" />
             <span className="text-xs text-red-700 dark:text-red-400">License expiring:</span>
             <span className="font-semibold text-sm text-red-700 dark:text-red-400">{stats.expiringSoon}</span>
@@ -170,7 +170,7 @@ export function Drivers() {
         <EmptyState 
           title="No drivers yet." 
           description="Add your first driver."
-          action={<Link to="/drivers/new" className="inline-flex items-center justify-center px-4 py-2 bg-[var(--brand-primary)] text-white text-sm font-medium rounded-lg hover:bg-[var(--brand-primary-hover)]">Add Driver</Link>} 
+          action={<Link to="/drivers/new" className="inline-flex items-center justify-center px-4 py-2 bg-primary text-white text-sm font-medium rounded-xl hover:bg-primary/90">Add Driver</Link>} 
         />
       ) : (
         <DataTable

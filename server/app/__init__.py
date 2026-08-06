@@ -14,7 +14,14 @@ def create_app():
     validate_environment()
 
     app = Flask(__name__)
-    app.config.from_object(Config)
+    import os
+    flask_env = os.environ.get('FLASK_ENV', 'development')
+    if flask_env == 'production':
+        app.config.from_object('config.ProductionConfig')
+    elif flask_env == 'testing':
+        app.config.from_object('config.TestingConfig')
+    else:
+        app.config.from_object('config.DevelopmentConfig')
     
     db.init_app(app)
     jwt.init_app(app)
@@ -46,7 +53,18 @@ def create_app():
     app.register_blueprint(notifications.bp)
     app.register_blueprint(onboarding.bp)
 
-    CORS(app, origins=['http://localhost:5173', 'http://localhost:5174', 'http://127.0.0.1:5173', 'http://127.0.0.1:5174', 'http://192.168.1.12:5173', 'http://192.168.1.13:5173'], supports_credentials=True)
+    import os
+    cors_origins_raw = os.environ.get(
+        'CORS_ORIGINS', 
+        'http://localhost:5173,http://localhost:5174,http://localhost:80'
+    )
+    cors_origins = [o.strip() for o in cors_origins_raw.split(',')]
+
+    CORS(
+        app,
+        origins=cors_origins,
+        supports_credentials=True
+    )
 
     @app.errorhandler(400)
     def bad_request(e):

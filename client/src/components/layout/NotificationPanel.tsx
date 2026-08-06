@@ -72,28 +72,28 @@ export function NotificationPanel({ open, onClose, unreadCount, setUnreadCount }
   return (
     <>
       {open && <div className="fixed inset-0 z-40" onClick={onClose} />}
-      <div className={`fixed top-0 right-0 z-50 h-full w-96 bg-[var(--bg-card)] border-l border-[var(--border-default)] shadow-xl transition-transform duration-300 ${open ? 'translate-x-0' : 'translate-x-full'}`}>
-        <div className="flex items-center justify-between h-16 px-6 border-b border-[var(--border-default)]">
+      <div className={`fixed top-0 right-0 z-50 h-full w-96 bg-card border-l border-border shadow-xl transition-transform duration-300 ${open ? 'translate-x-0' : 'translate-x-full'}`}>
+        <div className="flex items-center justify-between h-16 px-6 border-b border-border">
           <div className="flex items-center gap-2">
-            <h2 className="font-semibold text-[var(--text-primary)]">Notifications</h2>
+            <h2 className="font-semibold text-foreground">Notifications</h2>
             {unreadCount > 0 && <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">{unreadCount}</span>}
           </div>
           <div className="flex items-center gap-2">
             {unreadCount > 0 && (
-              <button onClick={markAllRead} className="text-xs text-[var(--brand-primary)] hover:underline mr-2 font-medium">Mark all read</button>
+              <button onClick={markAllRead} className="text-xs text-primary hover:underline mr-2 font-medium">Mark all read</button>
             )}
-            <button onClick={onClose} className="p-2 rounded-lg hover:bg-[var(--bg-hover)]"><X className="w-5 h-5" /></button>
+            <button onClick={onClose} className="p-2 rounded-xl hover:hover:bg-accent hover:text-accent-foreground"><X className="w-5 h-5" /></button>
           </div>
         </div>
         <div className="overflow-y-auto h-[calc(100%-4rem)] p-4 space-y-4">
           {loading ? (
             <div className="space-y-3">
-              {[1, 2, 3].map(i => <div key={i} className="h-20 rounded-lg bg-[var(--bg-hover)] animate-pulse" />)}
+              {[1, 2, 3].map(i => <div key={i} className="h-20 rounded-xl hover:bg-accent hover:text-accent-foreground animate-pulse" />)}
             </div>
           ) : notifications.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-center text-[var(--text-muted)]">
+            <div className="flex flex-col items-center justify-center py-16 text-center text-muted-foreground">
               <Bell className="w-12 h-12 mb-4 opacity-50" />
-              <p className="font-medium text-[var(--text-primary)]">You're all caught up!</p>
+              <p className="font-medium text-foreground">You're all caught up!</p>
               <p className="text-sm mt-1">No pending alerts</p>
             </div>
           ) : (
@@ -101,15 +101,15 @@ export function NotificationPanel({ open, onClose, unreadCount, setUnreadCount }
               {notifications.map(n => (
                 <div 
                   key={n.id} 
-                  className={`p-3 rounded-lg border text-sm cursor-pointer transition-colors ${!n.is_read ? 'bg-blue-50/50 dark:bg-blue-900/10 border-blue-100 dark:border-blue-900/30' : 'bg-[var(--bg-page)] border-[var(--border-default)] opacity-75'}`}
+                  className={`p-3 rounded-xl border text-sm cursor-pointer transition-colors ${!n.is_read ? 'bg-blue-50/50 dark:bg-blue-900/10 border-blue-100 dark:border-blue-900/30' : 'bg-background border-border opacity-75'}`}
                   onClick={() => !n.is_read && markAsRead(n.id)}
                 >
                   <div className="flex justify-between items-start mb-1">
-                    <h4 className={`font-medium ${!n.is_read ? 'text-blue-900 dark:text-blue-400' : 'text-[var(--text-primary)]'}`}>{n.title}</h4>
+                    <h4 className={`font-medium ${!n.is_read ? 'text-blue-900 dark:text-blue-400' : 'text-foreground'}`}>{n.title}</h4>
                     {!n.is_read && <span className="w-2 h-2 rounded-full bg-blue-600 mt-1 flex-shrink-0" />}
                   </div>
-                  <p className="text-[var(--text-secondary)] mb-2 line-clamp-2">{n.message}</p>
-                  <p className="text-xs text-[var(--text-muted)]">{format(new Date(n.created_at), 'MMM d, h:mm a')}</p>
+                  <p className="text-muted-foreground mb-2 line-clamp-2">{n.message}</p>
+                  <p className="text-xs text-muted-foreground">{format(new Date(n.created_at), 'MMM d, h:mm a')}</p>
                 </div>
               ))}
             </div>

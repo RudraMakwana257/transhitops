@@ -8,15 +8,15 @@ interface DriverInfoCardProps {
 }
 
 export function DriverInfoCard({ driver }: DriverInfoCardProps) {
-  if (!driver) return <p className="text-[var(--text-muted)]">No driver assigned</p>
+  if (!driver) return <p className="text-muted-foreground">No driver assigned</p>
   return (
     <div className="space-y-2">
-      <div className="flex justify-between"><span className="text-[var(--text-secondary)]">Name</span><span className="font-medium">{driver.name}</span></div>
-      <div className="flex justify-between"><span className="text-[var(--text-secondary)]">License</span><span className="font-medium">{driver.license_number}</span></div>
-      <div className="flex justify-between"><span className="text-[var(--text-secondary)]">Category</span><span className="font-medium">{driver.license_category}</span></div>
-      <div className="flex justify-between"><span className="text-[var(--text-secondary)]">Expiry</span><span className="font-medium">{format(new Date(driver.license_expiry), 'MMM d, yyyy')}</span></div>
-      <div className="flex justify-between"><span className="text-[var(--text-secondary)]">Safety Score</span><span className="font-medium">{driver.safety_score.toFixed(1)}</span></div>
-      <div className="flex justify-between"><span className="text-[var(--text-secondary)]">Phone</span><span className="font-medium">{driver.phone}</span></div>
+      <div className="flex justify-between"><span className="text-muted-foreground">Name</span><span className="font-medium">{driver.name}</span></div>
+      <div className="flex justify-between"><span className="text-muted-foreground">License</span><span className="font-medium">{driver.license_number}</span></div>
+      <div className="flex justify-between"><span className="text-muted-foreground">Category</span><span className="font-medium">{driver.license_category}</span></div>
+      <div className="flex justify-between"><span className="text-muted-foreground">Expiry</span><span className="font-medium">{format(new Date(driver.license_expiry), 'MMM d, yyyy')}</span></div>
+      <div className="flex justify-between"><span className="text-muted-foreground">Safety Score</span><span className="font-medium">{Number(driver.safety_score || 0).toFixed(1)}</span></div>
+      <div className="flex justify-between"><span className="text-muted-foreground">Phone</span><span className="font-medium">{driver.phone}</span></div>
     </div>
   )
 }

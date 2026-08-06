@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Check, Truck, Users, MapPin, User, X, PartyPopper } from 'lucide-react'
-import { Button } from './ui/Button'
-import { Card, CardContent } from './ui/Card'
+import { Button } from './ui/ButtonWrapper'
+import { Card, CardContent } from './ui/CardWrapper'
 import { useAuth } from '../hooks/useAuth'
 import { api } from '../api/client'
 
@@ -82,27 +82,27 @@ export function OnboardingChecklist() {
   const completedCount = steps.filter(s => s.done).length
 
   return (
-    <Card className="mb-8 border-2 border-[var(--brand-primary)]/20 bg-gradient-to-r from-[var(--brand-primary)]/5 to-transparent relative overflow-hidden">
+    <Card className="mb-8 border-2 border-primary/20 bg-gradient-to-r from-[hsl(var(--primary))]/5 to-transparent relative overflow-hidden">
       <CardContent className="p-6 sm:p-8">
         <div className="absolute top-4 right-4">
-          <Button variant="ghost" size="sm" onClick={() => setDismissed(true)} className="text-[var(--text-muted)] hover:text-[var(--text-primary)]">
+          <Button variant="ghost" size="sm" onClick={() => setDismissed(true)} className="text-muted-foreground hover:text-foreground">
             <X className="w-4 h-4 mr-1.5" />
             Dismiss for now
           </Button>
         </div>
 
         <div className="max-w-4xl">
-          <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-2">Welcome to TransitOps, {user?.name}!</h2>
-          <p className="text-[var(--text-secondary)] mb-8">Let's get your fleet management center set up. You're almost there.</p>
+          <h2 className="text-2xl font-bold text-foreground mb-2">Welcome to TransitOps, {user?.name}!</h2>
+          <p className="text-muted-foreground mb-8">Let's get your fleet management center set up. You're almost there.</p>
 
           <div className="mb-8">
             <div className="flex justify-between text-sm font-medium mb-2">
-              <span className="text-[var(--text-primary)]">Setup Progress</span>
-              <span className="text-[var(--brand-primary)]">{completedCount} of 5 steps complete</span>
+              <span className="text-foreground">Setup Progress</span>
+              <span className="text-primary">{completedCount} of 5 steps complete</span>
             </div>
-            <div className="w-full bg-[var(--bg-hover)] rounded-full h-2.5 overflow-hidden border border-[var(--border-default)]">
+            <div className="w-full hover:bg-accent hover:text-accent-foreground rounded-full h-2.5 overflow-hidden border border-border">
               <div 
-                className="bg-[var(--brand-primary)] h-2.5 rounded-full transition-all duration-500 ease-out"
+                className="bg-primary h-2.5 rounded-full transition-all duration-500 ease-out"
                 style={{ width: `${status.completion_percentage}%` }}
               />
             </div>
@@ -114,22 +114,22 @@ export function OnboardingChecklist() {
               return (
                 <div key={s.key} className="relative">
                   {idx !== steps.length - 1 && (
-                    <div className="hidden md:block absolute top-6 left-[60%] right-[-40%] h-[2px] bg-[var(--border-default)] z-0" />
+                    <div className="hidden md:block absolute top-6 left-[60%] right-[-40%] h-[2px] bg-border z-0" />
                   )}
                   <div className="relative z-10 flex flex-col items-center text-center">
                     {s.link && !s.done ? (
-                      <button onClick={() => navigate(s.link)} className={`w-12 h-12 rounded-full flex items-center justify-center mb-3 transition-colors ${isCurrent ? 'bg-[var(--brand-primary)] text-white shadow-md cursor-pointer hover:bg-[#b57703]' : 'bg-[var(--bg-card)] border-2 border-[var(--border-default)] text-[var(--text-muted)] hover:border-[var(--brand-primary)]/50 cursor-pointer'}`}>
+                      <button onClick={() => navigate(s.link)} className={`w-12 h-12 rounded-full flex items-center justify-center mb-3 transition-colors ${isCurrent ? 'bg-primary text-white shadow-md cursor-pointer hover:bg-[#b57703]' : 'bg-card border-2 border-border text-muted-foreground hover:border-primary/50 cursor-pointer'}`}>
                         <s.icon className="w-5 h-5" />
                       </button>
                     ) : (
-                      <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-3 ${s.done ? 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-500' : 'bg-[var(--bg-card)] border-2 border-[var(--border-default)] text-[var(--text-muted)]'}`}>
+                      <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-3 ${s.done ? 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-500' : 'bg-card border-2 border-border text-muted-foreground'}`}>
                         {s.done ? <Check className="w-6 h-6" /> : <s.icon className="w-5 h-5" />}
                       </div>
                     )}
-                    <h3 className={`text-sm font-semibold mb-1 ${s.done ? 'text-[var(--text-primary)]' : isCurrent ? 'text-[var(--brand-primary)]' : 'text-[var(--text-secondary)]'}`}>
+                    <h3 className={`text-sm font-semibold mb-1 ${s.done ? 'text-foreground' : isCurrent ? 'text-primary' : 'text-muted-foreground'}`}>
                       {s.title}
                     </h3>
-                    <p className="text-xs text-[var(--text-muted)] hidden sm:block">
+                    <p className="text-xs text-muted-foreground hidden sm:block">
                       {s.desc}
                     </p>
                   </div>

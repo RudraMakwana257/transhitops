@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAdminStore } from '../../stores/adminStore'
-import { Card } from '../../components/ui/Card'
-import { Button } from '../../components/ui/Button'
+import { Card } from '../../components/ui/CardWrapper'
+import { Button } from '../../components/ui/ButtonWrapper'
 import { Plus, Search, Eye, Ban, CheckCircle } from 'lucide-react'
 
 export function AdminCompanies() {
@@ -42,7 +42,7 @@ export function AdminCompanies() {
             placeholder="Search by name, email or slug..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+            className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
           />
         </form>
         <div className="text-sm text-slate-500">

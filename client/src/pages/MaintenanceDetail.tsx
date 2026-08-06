@@ -2,14 +2,14 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { api } from '../api/client'
 import type { MaintenanceLog, MaintenanceStatus } from '../types'
-import { Button } from '../components/ui/Button'
-import { Input } from '../components/ui/Input'
-import { Select } from '../components/ui/Select'
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '../components/ui/Card'
+import { Button } from '../components/ui/ButtonWrapper'
+import { Input } from '../components/ui/InputWrapper'
+import { Select } from '../components/ui/SelectWrapper'
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '../components/ui/CardWrapper'
 import { PageWrapper } from '../components/layout/PageWrapper'
 import { ArrowLeft, Save, Edit, PenTool } from 'lucide-react'
 import { toast } from '../store/toastStore'
-import { StatusBadge } from '../components/ui/Badge'
+import { StatusBadge } from '../components/ui/BadgeWrapper'
 import { format } from 'date-fns'
 
 const STATUSES: { value: MaintenanceStatus; label: string }[] = [
@@ -120,55 +120,55 @@ export function MaintenanceDetail() {
         </CardHeader>
 
         {loading ? (
-          <div className="p-8 flex justify-center text-[var(--text-muted)] animate-pulse">Loading maintenance data...</div>
+          <div className="p-8 flex justify-center text-muted-foreground animate-pulse">Loading maintenance data...</div>
         ) : error ? (
           <div className="p-6 text-red-500">{error}</div>
         ) : log ? (
           <form onSubmit={handleSubmit}>
             <CardContent className="space-y-6">
               {/* Read-only sections */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4 pb-4 border-b border-[var(--border-color)]">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4 pb-4 border-b border-border">
                 <div>
-                  <p className="text-sm text-[var(--text-muted)] mb-1">Vehicle</p>
-                  <p className="font-medium text-[var(--text-primary)]">
+                  <p className="text-sm text-muted-foreground mb-1">Vehicle</p>
+                  <p className="font-medium text-foreground">
                     {log.vehicle?.name} ({log.vehicle?.reg_number})
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm text-[var(--text-muted)] mb-1">Service Type</p>
-                  <p className="font-medium text-[var(--text-primary)]">{log.type}</p>
+                  <p className="text-sm text-muted-foreground mb-1">Service Type</p>
+                  <p className="font-medium text-foreground">{log.type}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-[var(--text-muted)] mb-1">Scheduled Date</p>
-                  <p className="font-medium text-[var(--text-primary)]">
+                  <p className="text-sm text-muted-foreground mb-1">Scheduled Date</p>
+                  <p className="font-medium text-foreground">
                     {log.scheduled_date ? format(new Date(log.scheduled_date), 'MMM d, yyyy') : '—'}
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm text-[var(--text-muted)] mb-1">Created At</p>
-                  <p className="font-medium text-[var(--text-primary)]">
+                  <p className="text-sm text-muted-foreground mb-1">Created At</p>
+                  <p className="font-medium text-foreground">
                     {format(new Date(log.created_at), 'MMM d, yyyy HH:mm')}
                   </p>
                 </div>
                 {!isEditing && (
                   <>
                     <div>
-                      <p className="text-sm text-[var(--text-muted)] mb-1">Cost</p>
-                      <p className="font-medium text-[var(--text-primary)]">{formatCurrency(log.cost)}</p>
+                      <p className="text-sm text-muted-foreground mb-1">Cost</p>
+                      <p className="font-medium text-foreground">{formatCurrency(log.cost)}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-[var(--text-muted)] mb-1">Technician</p>
-                      <p className="font-medium text-[var(--text-primary)]">{log.technician || '—'}</p>
+                      <p className="text-sm text-muted-foreground mb-1">Technician</p>
+                      <p className="font-medium text-foreground">{log.technician || '—'}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-[var(--text-muted)] mb-1">Completed Date</p>
-                      <p className="font-medium text-[var(--text-primary)]">
+                      <p className="text-sm text-muted-foreground mb-1">Completed Date</p>
+                      <p className="font-medium text-foreground">
                         {log.completed_date ? format(new Date(log.completed_date), 'MMM d, yyyy') : '—'}
                       </p>
                     </div>
                     <div className="sm:col-span-2 mt-2">
-                      <p className="text-sm text-[var(--text-muted)] mb-1">Description</p>
-                      <p className="font-medium text-[var(--text-primary)] whitespace-pre-wrap">{log.description || '—'}</p>
+                      <p className="text-sm text-muted-foreground mb-1">Description</p>
+                      <p className="font-medium text-foreground whitespace-pre-wrap">{log.description || '—'}</p>
                     </div>
                   </>
                 )}
@@ -186,9 +186,9 @@ export function MaintenanceDetail() {
                     <Input label="Completed Date" type="date" value={form.completed_date} onChange={set('completed_date')} />
                   </div>
                   <div className="space-y-1">
-                    <label className="block text-sm font-medium text-[var(--text-primary)]">Description</label>
+                    <label className="block text-sm font-medium text-foreground">Description</label>
                     <textarea 
-                      className="w-full px-3 py-2 border rounded-md bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] border-[var(--border-color)] text-[var(--text-primary)]"
+                      className="w-full px-3 py-2 border rounded-xl bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] border-border text-foreground"
                       rows={4} 
                       value={form.description} 
                       onChange={set('description')}
@@ -199,7 +199,7 @@ export function MaintenanceDetail() {
             </CardContent>
 
             {isEditing && (
-              <CardFooter className="flex justify-end gap-3 bg-[var(--surface-color)] border-t border-[var(--border-color)] py-4 mt-2">
+              <CardFooter className="flex justify-end gap-3 bg-[var(--surface-color)] border-t border-border py-4 mt-2">
                 <Button variant="outline" type="button" onClick={() => setIsEditing(false)}>Cancel</Button>
                 <Button type="submit" loading={submitting}><Save className="w-4 h-4 mr-2" />Save Record</Button>
               </CardFooter>

@@ -2,8 +2,8 @@ import { useEffect, useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 // api removed
 import type { Vehicle } from '../types'
-import { DataTable } from '../components/ui/DataTable'
-import { StatusBadge } from '../components/ui/Badge'
+import { DataTable } from '../components/ui/DataTableWrapper'
+import { StatusBadge } from '../components/ui/BadgeWrapper'
 import { PageWrapper } from '../components/layout/PageWrapper'
 import { TableSkeleton } from '../components/ui/TableSkeleton'
 import { EmptyState } from '../components/ui/EmptyState'
@@ -137,28 +137,28 @@ export function Vehicles() {
     >
       {/* Summary Stats */}
       <div className="flex flex-wrap gap-3 mb-5">
-        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[var(--bg-sidebar)] border border-[var(--border-default)]">
-          <Truck className="w-4 h-4 text-[var(--text-muted)]" />
-          <span className="text-xs text-[var(--text-muted)]">Total:</span>
+        <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-muted/50 border border-border">
+          <Truck className="w-4 h-4 text-muted-foreground" />
+          <span className="text-xs text-muted-foreground">Total:</span>
           <span className="font-semibold text-sm">{pagination.total}</span>
         </div>
-        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
+        <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
           <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400" />
           <span className="text-xs text-green-700 dark:text-green-400">Available:</span>
           <span className="font-semibold text-sm text-green-700 dark:text-green-400">{stats.available}</span>
         </div>
-        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+        <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
           <Truck className="w-4 h-4 text-blue-600 dark:text-blue-400" />
           <span className="text-xs text-blue-700 dark:text-blue-400">On Trip:</span>
           <span className="font-semibold text-sm text-blue-700 dark:text-blue-400">{stats.onTrip}</span>
         </div>
-        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+        <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
           <Wrench className="w-4 h-4 text-amber-600 dark:text-amber-400" />
           <span className="text-xs text-amber-700 dark:text-amber-400">In Shop:</span>
           <span className="font-semibold text-sm text-amber-700 dark:text-amber-400">{stats.inShop}</span>
         </div>
         {stats.retired > 0 && (
-          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+          <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
             <Ban className="w-4 h-4 text-red-600 dark:text-red-400" />
             <span className="text-xs text-red-700 dark:text-red-400">Retired:</span>
             <span className="font-semibold text-sm text-red-700 dark:text-red-400">{stats.retired}</span>
@@ -182,7 +182,7 @@ export function Vehicles() {
         <EmptyState 
           title="No vehicles yet." 
           description="Add your first vehicle."
-          action={<Link to="/vehicles/new" className="inline-flex items-center justify-center px-4 py-2 bg-[var(--brand-primary)] text-white text-sm font-medium rounded-lg hover:bg-[var(--brand-primary-hover)]">Add Vehicle</Link>} 
+          action={<Link to="/vehicles/new" className="inline-flex items-center justify-center px-4 py-2 bg-primary text-white text-sm font-medium rounded-xl hover:bg-primary/90">Add Vehicle</Link>} 
         />
       ) : (
         <DataTable

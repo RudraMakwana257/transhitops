@@ -4,8 +4,8 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Truck, Eye, EyeOff, AlertCircle, Moon, Sun, ArrowLeft, Mail, Lock } from 'lucide-react'
-import { Button } from '../components/ui/Button'
-import { Input } from '../components/ui/Input'
+import { Button } from '../components/ui/ButtonWrapper'
+import { Input } from '../components/ui/InputWrapper'
 import { useAuth } from '../store/authStore'
 import { useUIStore } from '../store/uiStore'
 
@@ -44,7 +44,8 @@ export function Login() {
   })
 
   if (isAuthenticated) {
-    return <Navigate to="/dashboard" replace />
+    const role = useAuth.getState().user?.role
+    return <Navigate to={role === 'super_admin' ? '/admin/dashboard' : '/dashboard'} replace />
   }
 
   const onSubmit = async (data: LoginForm) => {
@@ -52,7 +53,8 @@ export function Login() {
     setError('')
     try {
       await login(data.email, data.password)
-      navigate('/dashboard')
+      const role = useAuth.getState().user?.role
+      navigate(role === 'super_admin' ? '/admin/dashboard' : '/dashboard')
     } catch (err: any) {
       setError(err.message || 'Login failed')
     } finally {
@@ -66,18 +68,18 @@ export function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--bg-page)] flex">
+    <div className="min-h-screen bg-background flex">
       {/* Left Panel — Brand Side */}
-      <div className="hidden lg:flex w-1/2 bg-[var(--bg-card)] border-r border-[var(--border-default)] items-center justify-center p-12 relative overflow-hidden">
-        <div className="absolute inset-0 bg-[var(--brand-primary)] opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(circle at 50% 50%, var(--brand-primary) 0%, transparent 60%)' }} />
+      <div className="hidden lg:flex w-1/2 bg-card border-r border-border items-center justify-center p-12 relative overflow-hidden">
+        <div className="absolute inset-0 bg-primary opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(circle at 50% 50%, hsl(var(--primary)) 0%, transparent 60%)' }} />
         <div className="relative max-w-md text-center">
-          <div className="w-20 h-20 rounded-2xl bg-[var(--brand-primary)] flex items-center justify-center mx-auto mb-8 shadow-lg">
+          <div className="w-20 h-20 rounded-2xl bg-primary flex items-center justify-center mx-auto mb-8 shadow-lg">
             <Truck className="w-11 h-11 text-white" />
           </div>
-          <h1 className="text-4xl font-bold text-[var(--text-primary)]">
-            From Dispatch<br />to <span className="text-[var(--brand-primary)]">Decisions</span>
+          <h1 className="text-4xl font-bold text-foreground">
+            From Dispatch<br />to <span className="text-primary">Decisions</span>
           </h1>
-          <p className="mt-6 text-lg text-[var(--text-secondary)] leading-relaxed">
+          <p className="mt-6 text-lg text-muted-foreground leading-relaxed">
             Intelligent fleet operations center. Manage vehicles, drivers, trips, and costs from a single command center.
           </p>
           <div className="mt-10 space-y-3 text-left">
@@ -87,8 +89,8 @@ export function Login() {
               'Driver safety scoring & compliance',
               'Comprehensive analytics & reporting',
             ].map(item => (
-              <div key={item} className="flex items-center gap-3 text-sm text-[var(--text-secondary)]">
-                <span className="w-1.5 h-1.5 rounded-full bg-[var(--brand-primary)] flex-shrink-0" />
+              <div key={item} className="flex items-center gap-3 text-sm text-muted-foreground">
+                <span className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" />
                 {item}
               </div>
             ))}
@@ -99,26 +101,26 @@ export function Login() {
       {/* Right Panel — Login Form */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-6">
         <div className="w-full">
-          <Link to="/" className="inline-flex items-center gap-2 text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] mb-6 transition-colors">
+          <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-6 transition-colors">
             <ArrowLeft className="w-4 h-4" /> Back to Home
           </Link>
 
           <div className="lg:hidden flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-xl bg-[var(--brand-primary)] flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
               <Truck className="w-5 h-5 text-white" />
             </div>
-            <span className="text-xl font-semibold text-[var(--text-primary)]">TransitOps</span>
+            <span className="text-xl font-semibold text-foreground">TransitOps</span>
           </div>
 
-          <div className="bg-[var(--bg-card)] border border-[var(--border-default)] rounded-xl" style={{ borderLeft: '3px solid var(--brand-primary)' }}>
+          <div className="bg-card border border-border rounded-xl" style={{ borderLeft: '3px solid hsl(var(--primary))' }}>
             <div className="p-6 pb-0">
-              <h2 className="text-xl font-bold text-[var(--text-primary)]">Welcome back</h2>
-              <p className="mt-1 text-sm text-[var(--text-secondary)]">Sign in to your operations center</p>
+              <h2 className="text-xl font-bold text-foreground">Welcome back</h2>
+              <p className="mt-1 text-sm text-muted-foreground">Sign in to your operations center</p>
             </div>
 
             <form onSubmit={handleSubmit(onSubmit)} className="p-6 pt-5 space-y-5">
               {error && (
-                <div className="px-3 py-2.5 rounded-lg flex items-start gap-2.5 text-sm bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400" role="alert">
+                <div className="px-3 py-2.5 rounded-xl flex items-start gap-2.5 text-sm bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400" role="alert">
                   <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
                   <span>{error}</span>
                 </div>
@@ -148,7 +150,7 @@ export function Login() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-[38px] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
+                  className="absolute right-3 top-[38px] text-muted-foreground hover:text-foreground transition-colors"
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
@@ -159,9 +161,9 @@ export function Login() {
                 <input
                   type="checkbox"
                   {...register('remember_me')}
-                  className="w-4 h-4 rounded border-[var(--border-default)] text-[var(--brand-primary)] focus:ring-[var(--brand-primary-light)] focus:ring-offset-0"
+                  className="w-4 h-4 rounded border-border text-primary focus:ring-primary/10 focus:ring-offset-0"
                 />
-                <span className="text-sm text-[var(--text-secondary)]">Remember me</span>
+                <span className="text-sm text-muted-foreground">Remember me</span>
               </label>
 
               <Button type="submit" className="w-full" loading={loading} loadingText="Signing in...">
@@ -172,7 +174,7 @@ export function Login() {
 
           {/* Demo Quick Fill */}
           <div className="mt-6">
-            <p className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider mb-3 text-center">Quick fill demo account</p>
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3 text-center">Quick fill demo account</p>
             <div className="grid grid-cols-2 gap-2">
               {demos.map((d, i) => {
                 const colors = ['#D98E04', '#3B82F6', '#22C55E', '#8B5CF6']
@@ -181,13 +183,13 @@ export function Login() {
                     key={d.email}
                     type="button"
                     onClick={() => fillDemo(d.email)}
-                    className="text-left px-3 py-2.5 rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] hover:bg-[var(--bg-hover)] hover:border-[var(--border-strong)] transition-all cursor-pointer group"
+                    className="text-left px-3 py-2.5 rounded-xl border border-border bg-card hover:hover:bg-accent hover:text-accent-foreground hover:border-border transition-all cursor-pointer group"
                   >
                     <div className="flex items-center gap-2">
                       <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: colors[i] }} />
-                      <p className="text-xs font-medium text-[var(--text-primary)] truncate">{d.role}</p>
+                      <p className="text-xs font-medium text-foreground truncate">{d.role}</p>
                     </div>
-                    <p className="text-[10px] text-[var(--text-muted)] truncate mt-0.5 pl-4">{d.email}</p>
+                    <p className="text-[10px] text-muted-foreground truncate mt-0.5 pl-4">{d.email}</p>
                   </button>
                 )
               })}

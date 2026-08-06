@@ -3,13 +3,13 @@ import { Link, useNavigate } from 'react-router-dom'
 import type { Trip, TripStatus, Vehicle, Driver } from '../types'
 import { useVehicleStore } from '../stores/vehicleStore'
 import { useDriverStore } from '../stores/driverStore'
-import { DataTable, type Column } from '../components/ui/DataTable'
-import { Button } from '../components/ui/Button'
+import { DataTable, type Column } from '../components/ui/DataTableWrapper'
+import { Button } from '../components/ui/ButtonWrapper'
 import { PageWrapper } from '../components/layout/PageWrapper'
 import { TableSkeleton } from '../components/ui/TableSkeleton'
 import { EmptyState } from '../components/ui/EmptyState'
-import { Input } from '../components/ui/Input'
-import { Select } from '../components/ui/Select'
+import { Input } from '../components/ui/InputWrapper'
+import { Select } from '../components/ui/SelectWrapper'
 import { FilterBar, AdvancedFiltersPanel, FilterChip, type FilterField } from '../components/ui/FilterBar'
 import { Plus, Truck, MapPin, Calendar, Eye, CheckCircle, XCircle } from 'lucide-react'
 import { format } from 'date-fns'
@@ -142,16 +142,16 @@ export function Trips() {
       render: (t: Trip) => (
         <div>
           <div className="flex items-center gap-2 font-medium text-sm">
-            <MapPin className="w-4 h-4 text-[var(--text-muted)] flex-shrink-0" />
+            <MapPin className="w-4 h-4 text-muted-foreground flex-shrink-0" />
             <span className="truncate">{t.source}</span>
-            <span className="text-[var(--text-muted)] flex-shrink-0">→</span>
+            <span className="text-muted-foreground flex-shrink-0">→</span>
             <span className="truncate">{t.destination}</span>
           </div>
           {t.vehicle && (
-            <div className="flex items-center gap-1.5 mt-1 text-xs text-[var(--text-muted)]">
+            <div className="flex items-center gap-1.5 mt-1 text-xs text-muted-foreground">
               <Truck className="w-3 h-3 flex-shrink-0" />
               <span className="truncate">{t.vehicle.name}</span>
-              <span className="text-[var(--border-default)]">•</span>
+              <span className="text-border">•</span>
               <span className="font-mono">{t.vehicle.reg_number}</span>
             </div>
           )}
@@ -164,13 +164,13 @@ export function Trips() {
       width: '160px',
       render: (t: Trip) => t.driver ? (
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-full bg-[var(--brand-primary-light)] flex items-center justify-center text-[var(--brand-primary)] text-xs font-medium flex-shrink-0">
+          <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-medium flex-shrink-0">
             {t.driver.name.charAt(0)}
           </div>
           <span className="font-medium text-sm truncate">{t.driver.name}</span>
         </div>
       ) : (
-        <span className="text-[var(--text-muted)] text-sm">—</span>
+        <span className="text-muted-foreground text-sm">—</span>
       )
     },
     { 
@@ -202,7 +202,7 @@ export function Trips() {
       render: (t: Trip) => (
         <div className="text-sm">
           <div>{format(new Date(t.created_at), 'MMM d, yyyy')}</div>
-          <div className="text-xs text-[var(--text-muted)]">{format(new Date(t.created_at), 'HH:mm')}</div>
+          <div className="text-xs text-muted-foreground">{format(new Date(t.created_at), 'HH:mm')}</div>
         </div>
       )
     },
@@ -297,7 +297,7 @@ export function Trips() {
                 className="w-32 sm:w-36" 
                 title="From date"
               />
-              <span className="text-[var(--text-muted)] text-xs">—</span>
+              <span className="text-muted-foreground text-xs">—</span>
               <Input 
                 type="date" 
                 value={filters.to_date} 
@@ -346,23 +346,23 @@ export function Trips() {
     >
       {/* Quick Stats Bar */}
       <div className="flex flex-wrap gap-2 sm:gap-3 mb-5">
-        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[var(--bg-sidebar)] border border-[var(--border-default)]">
-          <span className="text-xs text-[var(--text-muted)]">Total:</span>
+        <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-muted/50 border border-border">
+          <span className="text-xs text-muted-foreground">Total:</span>
           <span className="font-semibold text-sm">{pagination.total}</span>
         </div>
-        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+        <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
           <span className="text-xs text-blue-700 dark:text-blue-400">Draft:</span>
           <span className="font-semibold text-sm text-blue-700 dark:text-blue-400">{stats.draft}</span>
         </div>
-        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800">
+        <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800">
           <span className="text-xs text-purple-700 dark:text-purple-400">Dispatched:</span>
           <span className="font-semibold text-sm text-purple-700 dark:text-purple-400">{stats.dispatched}</span>
         </div>
-        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
+        <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
           <span className="text-xs text-green-700 dark:text-green-400">Completed:</span>
           <span className="font-semibold text-sm text-green-700 dark:text-green-400">{stats.completed}</span>
         </div>
-        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+        <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
           <span className="text-xs text-red-700 dark:text-red-400">Cancelled:</span>
           <span className="font-semibold text-sm text-red-700 dark:text-red-400">{stats.cancelled}</span>
         </div>
@@ -384,7 +384,7 @@ export function Trips() {
         <EmptyState 
           title="No trips yet." 
           description="Create your first trip."
-          action={<Link to="/trips/new" className="inline-flex items-center justify-center px-4 py-2 bg-[var(--brand-primary)] text-white text-sm font-medium rounded-lg hover:bg-[var(--brand-primary-hover)]">Create Trip</Link>} 
+          action={<Link to="/trips/new" className="inline-flex items-center justify-center px-4 py-2 bg-primary text-white text-sm font-medium rounded-xl hover:bg-primary/90">Create Trip</Link>} 
         />
       ) : (
         <DataTable
@@ -408,7 +408,7 @@ export function Trips() {
         }}
         emptyMessage="No trips found"
         emptyAction={canManage && <Link to="/trips/new" className="btn-primary inline-flex items-center gap-2"><Plus className="w-4 h-4" /> Create Trip</Link>}
-        rowClassName={(t: Trip) => `cursor-pointer hover:bg-[var(--bg-hover)] transition-colors ${
+        rowClassName={(t: Trip) => `cursor-pointer hover:hover:bg-accent hover:text-accent-foreground transition-colors ${
           t.status === 'Draft' ? 'border-l-4 border-l-blue-500' :
           t.status === 'Dispatched' ? 'border-l-4 border-l-purple-500' :
           t.status === 'Completed' ? 'border-l-4 border-l-green-500' :

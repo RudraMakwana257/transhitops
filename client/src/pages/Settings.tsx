@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react'
 import { api } from '../api/client'
 import type { User } from '../types'
-import { Input } from '../components/ui/Input'
-import { Button } from '../components/ui/Button'
-import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card'
+import { Input } from '../components/ui/InputWrapper'
+import { Button } from '../components/ui/ButtonWrapper'
+import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/CardWrapper'
 import { PageWrapper } from '../components/layout/PageWrapper'
-import { DataTable } from '../components/ui/DataTable'
-import { StatusBadge } from '../components/ui/Badge'
-import { Select } from '../components/ui/Select'
+import { DataTable } from '../components/ui/DataTableWrapper'
+import { StatusBadge } from '../components/ui/BadgeWrapper'
+import { Select } from '../components/ui/SelectWrapper'
 import { Plus, AlertCircle } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 import { toast } from '../store/toastStore'
@@ -93,7 +93,7 @@ export function Settings() {
   if (!canManage) {
     return (
       <PageWrapper title="Settings" description="Manage users and system configuration">
-        <div className="p-6 text-center text-[var(--text-secondary)]">Access denied</div>
+        <div className="p-6 text-center text-muted-foreground">Access denied</div>
       </PageWrapper>
     )
   }
@@ -101,9 +101,9 @@ export function Settings() {
   const columns = [
     { key: 'name', header: 'Name', accessor: 'name', sortable: true },
     { key: 'email', header: 'Email', accessor: 'email', sortable: true },
-    { key: 'role', header: 'Role', accessor: 'role', sortable: true, render: (r: string) => r.replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase()) },
+    { key: 'role', header: 'Role', accessor: 'role', sortable: true, render: (u: User) => u.role.replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase()) },
     { key: 'is_active', header: 'Status', render: (u: User) => u.is_active ? <StatusBadge status="Available" type="vehicle" /> : <StatusBadge status="Retired" type="vehicle" /> },
-    { key: 'created_at', header: 'Created', accessor: 'created_at', sortable: true, render: (d: string) => format(new Date(d), 'MMM d, yyyy') },
+    { key: 'created_at', header: 'Created', accessor: 'created_at', sortable: true, render: (u: User) => format(new Date(u.created_at), 'MMM d, yyyy') },
   ]
   
   return (
@@ -133,11 +133,11 @@ export function Settings() {
               ]} required />
               <div className="md:col-span-2 flex items-center gap-3">
                 <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" {...form.register('is_active')} className="w-4 h-4 rounded border-[var(--border-default)] text-[var(--brand-primary)] focus:ring-[var(--brand-primary-light)]" />
-                  <span className="text-sm text-[var(--text-primary)]">Active</span>
+                  <input type="checkbox" {...form.register('is_active')} className="w-4 h-4 rounded border-border text-primary focus:ring-primary/10" />
+                  <span className="text-sm text-foreground">Active</span>
                 </label>
               </div>
-              <div className="md:col-span-2 flex justify-end gap-2 pt-4 border-t border-[var(--border-default)]">
+              <div className="md:col-span-2 flex justify-end gap-2 pt-4 border-t border-border">
                 <Button type="button" variant="secondary" onClick={() => { setShowCreate(false); setEditingUser(null); form.reset({ name: '', email: '', password: '', role: 'dispatcher', is_active: true }); }}>Cancel</Button>
                 <Button type="submit" loading={submitting}>{editingUser ? 'Update' : 'Create'} User</Button>
               </div>

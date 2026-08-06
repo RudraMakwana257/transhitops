@@ -28,6 +28,13 @@ class Vehicle(db.Model):
     def health(self):
         return self.health_record
     
+    @property
+    def health_score(self):
+        if self.health_record and self.health_record.health_score is not None:
+            return float(self.health_record.health_score)
+        return 80.0
+
+    
     def to_dict(self, include_relations=False):
         data = {
             'id': str(self.id),

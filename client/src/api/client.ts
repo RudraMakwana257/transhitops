@@ -2,7 +2,7 @@ import axios from 'axios'
 import { useAuthStore } from '../store/authStore'
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api',
+  baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
   timeout: 10000,
   withCredentials: true,
 })
@@ -24,18 +24,23 @@ api.interceptors.response.use(
       originalRequest._retry = true
       
       try {
+        const refreshToken = useAuthStore.getState().refreshToken
+        if (!refreshToken) throw new Error('No refresh token')
         const res = await axios.post(
           `${import.meta.env.VITE_API_BASE_URL}/auth/refresh`,
           {},
-          { withCredentials: true }
+          { headers: { Authorization: `Bearer ${refreshToken}` } }
         )
-        
+
         const newToken = res.data.data.access_token
         useAuthStore.getState().setUser(useAuthStore.getState().user!, newToken)
         originalRequest.headers.Authorization = `Bearer ${newToken}`
-        
+
         return api(originalRequest)
       } catch (refreshError) {
+        // Clear persisted auth state BEFORE navigating, so Zustand's persist
+        // middleware doesn't re-hydrate stale isAuthenticated=true on reload
+        try { localStorage.removeItem('auth-storage') } catch (_) {}
         useAuthStore.getState().logout()
         window.location.href = '/login'
         return Promise.reject(refreshError)

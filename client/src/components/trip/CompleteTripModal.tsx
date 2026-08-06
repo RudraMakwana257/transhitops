@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react'
 import { api } from '../../api/client'
-import { Input } from '../ui/Input'
-import { Modal } from '../ui/Modal'
-import { Button } from '../ui/Button'
+import { Input } from '../ui/InputWrapper'
+import { Modal } from '../ui/ModalWrapper'
+import { Button } from '../ui/ButtonWrapper'
 import { toast } from '../../store/toastStore'
 
 interface CompleteTripModalProps {
@@ -50,7 +50,7 @@ export function CompleteTripModal({ isOpen, onClose, onComplete, startOdometer, 
           <Input {...{ value: form.revenue, onChange: (e) => setForm({...form, revenue: e.target.value}) }} label="Revenue (₹)" type="number" min="0" step="1" />
         </div>
         <Input {...{ value: form.notes, onChange: (e) => setForm({...form, notes: e.target.value}) }} label="Notes" placeholder="Additional notes..." />
-        <div className="flex justify-end gap-2 pt-4 border-t border-[var(--border-default)]">
+        <div className="flex justify-end gap-2 pt-4 border-t border-border">
           <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
           <Button type="submit" loading={submitting}>Complete Trip</Button>
         </div>

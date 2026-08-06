@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify
+from flask import Blueprint
 from app import db
 from app.models.user import User
 from app.models.company import Company
@@ -6,6 +6,7 @@ from app.models.vehicle import Vehicle
 from app.models.driver import Driver
 from app.models.trip import Trip
 from flask_jwt_extended import get_jwt_identity, jwt_required
+from app.utils.response import success_response, error_response
 
 bp = Blueprint('onboarding', __name__, url_prefix='/api/onboarding')
 
@@ -16,9 +17,21 @@ def get_onboarding_status():
     user = User.query.get(current_user_id)
     
     if not user:
-        return jsonify({"success": False, "message": "User not found"}), 404
+        return error_response(message="User not found", status_code=404)
         
     company = Company.query.get(user.company_id)
+    if not company:
+        return success_response(data={
+            "completed": False,
+            "steps": {
+                "account_created": True,
+                "vehicle_added": False,
+                "driver_added": False,
+                "trip_created": False,
+                "profile_completed": False
+            },
+            "completion_percentage": 20
+        })
     
     has_vehicle = Vehicle.query.filter_by(company_id=company.id).count() > 0
     has_driver = Driver.query.filter_by(company_id=company.id).count() > 0
@@ -39,8 +52,7 @@ def get_onboarding_status():
     
     is_completed = (completed_steps == total_steps) or user.onboarding_completed
     
-    return jsonify({
-        "success": True,
+    return success_response(data={
         "completed": is_completed,
         "steps": steps,
         "completion_percentage": completion_percentage
@@ -53,9 +65,9 @@ def complete_onboarding():
     user = User.query.get(current_user_id)
     
     if not user:
-        return jsonify({"success": False, "message": "User not found"}), 404
+        return error_response(message="User not found", status_code=404)
         
     user.onboarding_completed = True
     db.session.commit()
     
-    return jsonify({"success": True, "message": "Onboarding completed"})
+    return success_response(message="Onboarding completed")

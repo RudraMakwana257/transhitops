@@ -2,10 +2,12 @@ from flask import Blueprint, request, jsonify, g
 from app import db
 from app.models.trip import Trip
 from app.models.trip_event import TripEvent
+from app.models.vehicle import Vehicle
 from app.models.audit_log import AuditLog
 from app.services.trip_service import TripService
 from app.services.notification_service import create_notification
 from app.middleware import require_roles, require_company, require_feature
+from app.utils.response import success_response, error_response
 from sqlalchemy import or_, desc
 import uuid
 
@@ -38,7 +40,7 @@ def list_trips():
     
     if search:
         query = query.filter(or_(
-            Trip.origin.ilike(f'%{search}%'),
+            Trip.source.ilike(f'%{search}%'),
             Trip.destination.ilike(f'%{search}%'),
             Trip.id.cast(db.String).ilike(f'%{search}%')
         ))
@@ -48,16 +50,53 @@ def list_trips():
     query = query.order_by(desc(Trip.created_at))
     pagination = query.paginate(page=page, per_page=page_size, error_out=False)
     
-    return jsonify({
-        "success": True,
-        "data": {
-            "items": [t.to_dict() for t in pagination.items],
-            "total": pagination.total,
-            "page": page,
-            "page_size": page_size,
-            "total_pages": pagination.pages
-        }
+    return success_response(data={
+        "items": [t.to_dict() for t in pagination.items],
+        "total": pagination.total,
+        "page": page,
+        "page_size": page_size,
+        "total_pages": pagination.pages
     })
+
+@bp.route('/recommend-vehicle', methods=['GET'])
+@require_roles('fleet_manager', 'dispatcher')
+@require_company
+@require_feature('trips')
+def recommend_vehicle():
+    cargo_weight = request.args.get('cargo_weight', type=float) or request.args.get('cargo_weight_kg', type=float) or 0.0
+    
+    query = Vehicle.query.filter_by(company_id=g.company_id, is_active=True, status='Available')
+    if cargo_weight > 0:
+        query = query.filter(Vehicle.capacity_kg >= cargo_weight)
+        
+    vehicles = query.all()
+    
+    recommendations = []
+    for v in vehicles:
+        cap = float(v.capacity_kg) if v.capacity_kg else 1.0
+        utilization = (cargo_weight / cap) if (cargo_weight > 0 and cap > 0) else 0.5
+        utilization = min(utilization, 1.0)
+        
+        capacity_score = utilization * 50.0
+        health_val = float(v.health_score) if (hasattr(v, 'health_score') and v.health_score is not None) else 80.0
+        health_score = (health_val / 100.0) * 50.0
+        
+        total_score = round(capacity_score + health_score, 1)
+        
+        reasons = []
+        if cargo_weight > 0:
+            reasons.append(f"Capacity utilization: {round(utilization * 100, 1)}%")
+        reasons.append(f"Health score: {health_val}/100")
+        
+        recommendations.append({
+            "vehicle": v.to_dict(),
+            "score": total_score,
+            "match_reasons": reasons
+        })
+        
+    recommendations.sort(key=lambda x: x["score"], reverse=True)
+    
+    return success_response(data=recommendations)
 
 @bp.route('/<id>', methods=['GET'])
 @require_roles('fleet_manager', 'dispatcher', 'safety_officer', 'financial_analyst')
@@ -65,7 +104,7 @@ def list_trips():
 @require_feature('trips')
 def get_trip(id):
     trip = Trip.query.filter_by(id=id, company_id=g.company_id).first_or_404()
-    return jsonify({"success": True, "data": trip.to_dict()})
+    return success_response(data=trip.to_dict())
 
 @bp.route('', methods=['POST'])
 @require_roles('fleet_manager', 'dispatcher')
@@ -78,7 +117,7 @@ def create_trip():
         company_id=g.company_id,
         vehicle_id=data['vehicle_id'],
         driver_id=data['driver_id'],
-        source=data['source'],
+        source=data.get('source') or data.get('origin'),
         destination=data['destination'],
         cargo_weight_kg=data['cargo_weight_kg'],
         planned_distance_km=data.get('planned_distance_km'),
@@ -86,11 +125,11 @@ def create_trip():
         user_id=g.user.id
     )
     
-    return jsonify({
-        "success": True, 
-        "data": trip.to_dict(),
-        "message": "Trip created successfully"
-    }), 201
+    return success_response(
+        data=trip.to_dict(),
+        message="Trip created successfully",
+        status_code=201
+    )
 
 @bp.route('/<id>', methods=['PUT'])
 @require_roles('fleet_manager', 'dispatcher')
@@ -101,24 +140,29 @@ def update_trip(id):
     data = validate_request(UpdateTripSchema)
     
     if trip.status not in ['Draft', 'Dispatched']:
-        return jsonify({"success": False, "message": f"Cannot edit trip in {trip.status} status"}), 400
+        return error_response(message=f"Cannot edit trip in {trip.status} status", status_code=400)
         
-    for field in ['vehicle_id', 'driver_id', 'origin', 'destination', 
-                  'planned_start_time', 'planned_distance_km', 'notes']:
+    updatable_fields = [
+        'vehicle_id', 'driver_id', 'source', 'destination', 
+        'cargo_weight_kg', 'planned_distance_km', 'actual_distance_km',
+        'status', 'start_odometer', 'end_odometer', 'fuel_consumed_l',
+        'revenue', 'notes', 'dispatched_at', 'completed_at', 'cancelled_at'
+    ]
+    for field in updatable_fields:
         if field in data and data[field] is not None:
             setattr(trip, field, data[field])
             
-    # TODO: Add notification trigger here if assigned driver changes
+    if 'origin' in data and data['origin'] is not None and not data.get('source'):
+        trip.source = data['origin']
             
     db.session.commit()
     
-    return jsonify({
-        "success": True, 
-        "data": trip.to_dict(),
-        "message": "Trip updated successfully"
-    })
+    return success_response(
+        data=trip.to_dict(),
+        message="Trip updated successfully"
+    )
 
-@bp.route('/<id>/dispatch', methods=['POST'])
+@bp.route('/<id>/dispatch', methods=['POST', 'PUT'])
 @require_roles('fleet_manager', 'dispatcher')
 @require_company
 @require_feature('trips')
@@ -137,15 +181,14 @@ def dispatch_trip(id):
                 entity_type='trip',
                 entity_id=str(trip.id)
             )
-        return jsonify({
-            "success": True, 
-            "data": trip.to_dict(),
-            "message": "Trip dispatched successfully"
-        })
+        return success_response(
+            data=trip.to_dict(),
+            message="Trip dispatched successfully"
+        )
     except ValueError as e:
-        return jsonify({"success": False, "message": str(e)}), 400
+        return error_response(message=str(e), status_code=400)
 
-@bp.route('/<id>/complete', methods=['POST'])
+@bp.route('/<id>/complete', methods=['POST', 'PUT'])
 @require_roles('fleet_manager', 'dispatcher')
 @require_company
 @require_feature('trips')
@@ -166,15 +209,14 @@ def complete_trip(id):
             entity_type='trip',
             entity_id=str(trip.id)
         )
-        return jsonify({
-            "success": True, 
-            "data": trip.to_dict(),
-            "message": "Trip completed successfully"
-        })
+        return success_response(
+            data=trip.to_dict(),
+            message="Trip completed successfully"
+        )
     except ValueError as e:
-        return jsonify({"success": False, "message": str(e)}), 400
+        return error_response(message=str(e), status_code=400)
 
-@bp.route('/<id>/cancel', methods=['POST'])
+@bp.route('/<id>/cancel', methods=['POST', 'PUT'])
 @require_roles('fleet_manager', 'dispatcher')
 @require_company
 @require_feature('trips')
@@ -196,13 +238,12 @@ def cancel_trip(id):
                 entity_type='trip',
                 entity_id=str(trip.id)
             )
-        return jsonify({
-            "success": True, 
-            "data": trip.to_dict(),
-            "message": "Trip cancelled successfully"
-        })
+        return success_response(
+            data=trip.to_dict(),
+            message="Trip cancelled successfully"
+        )
     except ValueError as e:
-        return jsonify({"success": False, "message": str(e)}), 400
+        return error_response(message=str(e), status_code=400)
 
 @bp.route('/<id>/events', methods=['GET'])
 @require_roles('fleet_manager', 'dispatcher', 'safety_officer')
@@ -212,10 +253,7 @@ def get_trip_events(id):
     trip = Trip.query.filter_by(id=id, company_id=g.company_id).first_or_404()
     events = TripEvent.query.filter_by(trip_id=trip.id, company_id=g.company_id).order_by(desc(TripEvent.event_time)).all()
     
-    return jsonify({
-        "success": True,
-        "data": [e.to_dict() for e in events]
-    })
+    return success_response(data=[e.to_dict() for e in events])
 
 @bp.route('/<id>/events', methods=['POST'])
 @require_roles('fleet_manager', 'dispatcher')
@@ -250,8 +288,8 @@ def add_trip_event(id):
             entity_id=str(trip.id)
         )
     
-    return jsonify({
-        "success": True, 
-        "data": event.to_dict(),
-        "message": "Trip event added successfully"
-    }), 201
+    return success_response(
+        data=event.to_dict(),
+        message="Trip event added successfully",
+        status_code=201
+    )

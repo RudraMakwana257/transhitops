@@ -1,0 +1,1 @@
+"""System setting model placeholder."""
