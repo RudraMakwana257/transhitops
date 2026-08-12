@@ -59,13 +59,33 @@ def app():
         db.session.remove()
         db.drop_all()
 
+@pytest.fixture(autouse=True)
+def auto_session_teardown():
+    yield
+    try:
+        db.session.rollback()
+    except Exception:
+        pass
+
 @pytest.fixture
 def client(app):
     return app.test_client()
 
+from app.models.subscription_plan import SubscriptionPlan
+from app.models.company_subscription import CompanySubscription
+
 @pytest.fixture(scope='session')
 def seed_data(app):
     with app.app_context():
+        # Subscription Plans
+        plan_free = SubscriptionPlan(name='Free', slug='free', price_monthly=0, limits={'user_limit': 2, 'vehicle_limit': 3, 'driver_limit': 3, 'active_trip_limit': 5})
+        plan_starter = SubscriptionPlan(name='Starter', slug='starter', price_monthly=49, limits={'user_limit': 5, 'vehicle_limit': 10, 'driver_limit': 10, 'active_trip_limit': 20})
+        plan_growth = SubscriptionPlan(name='Growth', slug='growth', price_monthly=199, limits={'user_limit': 15, 'vehicle_limit': 50, 'driver_limit': 50, 'active_trip_limit': 100})
+        plan_business = SubscriptionPlan(name='Business', slug='business', price_monthly=499, limits={'user_limit': 50, 'vehicle_limit': 200, 'driver_limit': 200, 'active_trip_limit': 500})
+        plan_ent = SubscriptionPlan(name='Enterprise', slug='enterprise', price_monthly=999, limits={'user_limit': -1, 'vehicle_limit': -1, 'driver_limit': -1, 'active_trip_limit': -1})
+        db.session.add_all([plan_free, plan_starter, plan_growth, plan_business, plan_ent])
+        db.session.flush()
+
         # Super Admin
         super_admin = User(name='Super Admin', email='super@transitops.com', role='super_admin', is_active=True)
         super_admin.set_password('Admin@123')
@@ -77,8 +97,13 @@ def seed_data(app):
         db.session.add_all([company_a, company_b])
         db.session.flush()
 
+        # Subscriptions
+        sub_a = CompanySubscription(company_id=company_a.id, plan_id=plan_growth.id, status='active')
+        sub_b = CompanySubscription(company_id=company_b.id, plan_id=plan_starter.id, status='active')
+        db.session.add_all([sub_a, sub_b])
+
         # Company Features
-        for feature in ['vehicles', 'drivers', 'trips', 'maintenance', 'fuel', 'expenses', 'dashboard', 'analytics', 'ai_chat']:
+        for feature in ['vehicles', 'drivers', 'trips', 'maintenance', 'fuel', 'expenses', 'dashboard', 'analytics', 'ai_chat', 'exceptions']:
             db.session.add(CompanyFeature(company_id=company_a.id, feature_key=feature, is_enabled=True))
             db.session.add(CompanyFeature(company_id=company_b.id, feature_key=feature, is_enabled=True))
 
@@ -123,3 +148,7 @@ def company_a_id(seed_data):
 @pytest.fixture
 def company_b_id(seed_data):
     return seed_data['company_b_id']
+
+@pytest.fixture
+def super_admin_user_id(seed_data):
+    return seed_data['super_admin_id']

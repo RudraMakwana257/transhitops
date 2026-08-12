@@ -27,6 +27,14 @@ def create_app():
     jwt.init_app(app)
     migrate.init_app(app, db)
 
+    @app.teardown_request
+    def teardown_request(exception=None):
+        if exception:
+            try:
+                db.session.rollback()
+            except Exception:
+                pass
+
     from app.middleware.security_headers import init_security_headers
     from app.middleware.request_logger import init_request_logger
     from app.middleware.rate_limiter import limiter
