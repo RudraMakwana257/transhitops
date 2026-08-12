@@ -15,6 +15,8 @@ api.interceptors.request.use((config) => {
   return config
 })
 
+import { toast } from '../store/toastStore'
+
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -27,7 +29,7 @@ api.interceptors.response.use(
         const refreshToken = useAuthStore.getState().refreshToken
         if (!refreshToken) throw new Error('No refresh token')
         const res = await axios.post(
-          `${import.meta.env.VITE_API_BASE_URL}/auth/refresh`,
+          `${import.meta.env.VITE_API_BASE_URL || '/api'}/auth/refresh`,
           {},
           { headers: { Authorization: `Bearer ${refreshToken}` } }
         )
@@ -38,8 +40,7 @@ api.interceptors.response.use(
 
         return api(originalRequest)
       } catch (refreshError) {
-        // Clear persisted auth state BEFORE navigating, so Zustand's persist
-        // middleware doesn't re-hydrate stale isAuthenticated=true on reload
+        // Clear persisted auth state BEFORE navigating
         try { localStorage.removeItem('auth-storage') } catch (_) {}
         useAuthStore.getState().logout()
         window.location.href = '/login'
@@ -48,6 +49,27 @@ api.interceptors.response.use(
     }
     
     if (error.response?.status === 403) {
+      toast('You do not have permission to perform this action.', 'error')
+      return Promise.reject(error)
+    }
+
+    if (error.response?.status === 429) {
+      toast('Too many requests. Please wait a moment before trying again.', 'error')
+      return Promise.reject(error)
+    }
+
+    if (error.response?.status >= 500) {
+      toast('Server error encountered. Please try again later.', 'error')
+      return Promise.reject(error)
+    }
+
+    if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
+      toast('Request timed out. Please check your network connection.', 'error')
+      return Promise.reject(error)
+    }
+
+    if (!error.response && error.request) {
+      toast('Network connection failed. Please check your connection.', 'error')
       return Promise.reject(error)
     }
     
@@ -96,6 +118,21 @@ declare module 'axios' {
       markRead: (id: string) => Promise<any>
       markAllRead: () => Promise<any>
     }
+    exceptions: {
+      list: (params?: Record<string, unknown>) => Promise<any>
+      getSummary: () => Promise<any>
+      getById: (id: string) => Promise<any>
+      triggerDetect: () => Promise<any>
+      acknowledge: (id: string) => Promise<any>
+      resolve: (id: string, note?: string) => Promise<any>
+      dismiss: (id: string, note?: string) => Promise<any>
+    }
+    subscription: {
+      getUsage: () => Promise<any>
+      getEntitlements: () => Promise<any>
+      listPlans: () => Promise<any>
+      changePlan: (planIdentifier: string) => Promise<any>
+    }
   }
 }
 
@@ -127,14 +164,29 @@ Object.assign(api, {
     getFuelTrends: async (params?: Record<string, unknown>) => (await api.get('/analytics/fuel', { params })).data
   },
   settings: {
-    getUsers: async (params?: Record<string, unknown>) => (await api.get('/users', { params })).data,
-    createUser: async (data: Record<string, unknown>) => (await api.post('/users', data)).data,
-    updateUser: async (id: string, data: Record<string, unknown>) => (await api.put(`/users/${id}`, data)).data,
-    deleteUser: async (id: string) => (await api.delete(`/users/${id}`)).data
+    getUsers: async (params?: Record<string, unknown>) => (await api.get('/settings/users', { params })).data,
+    createUser: async (data: Record<string, unknown>) => (await api.post('/settings/users', data)).data,
+    updateUser: async (id: string, data: Record<string, unknown>) => (await api.put(`/settings/users/${id}`, data)).data,
+    deleteUser: async (id: string) => (await api.delete(`/settings/users/${id}`)).data
   },
   notifications: {
     list: async () => (await api.get('/notifications')).data,
     markRead: async (id: string) => (await api.patch(`/notifications/${id}/read`)).data,
     markAllRead: async () => (await api.patch('/notifications/read-all')).data
+  },
+  exceptions: {
+    list: async (params?: Record<string, unknown>) => (await api.get('/exceptions', { params })).data,
+    getSummary: async () => (await api.get('/exceptions/summary')).data,
+    getById: async (id: string) => (await api.get(`/exceptions/${id}`)).data,
+    triggerDetect: async () => (await api.post('/exceptions/detect')).data,
+    acknowledge: async (id: string) => (await api.post(`/exceptions/${id}/acknowledge`)).data,
+    resolve: async (id: string, note?: string) => (await api.post(`/exceptions/${id}/resolve`, { resolution_note: note })).data,
+    dismiss: async (id: string, note?: string) => (await api.post(`/exceptions/${id}/dismiss`, { resolution_note: note })).data,
+  },
+  subscription: {
+    getUsage: async () => (await api.get('/subscription/usage')).data,
+    getEntitlements: async () => (await api.get('/subscription/entitlements')).data,
+    listPlans: async () => (await api.get('/subscription/plans')).data,
+    changePlan: async (planIdentifier: string) => (await api.post('/subscription/change-plan', { plan_slug: planIdentifier })).data,
   }
 });

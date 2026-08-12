@@ -26,6 +26,8 @@ const userSchema = z.object({
 
 type UserForm = z.infer<typeof userSchema>
 
+import { SubscriptionUsageCard } from '../components/settings/SubscriptionUsageCard'
+
 export function Settings() {
   const { hasRole } = useAuth()
   const [users, setUsers] = useState<User[]>([])
@@ -145,6 +147,8 @@ export function Settings() {
           </CardContent>
         </Card>
       )}
+
+      <SubscriptionUsageCard />
       
       <DataTable
         columns={columns as any}

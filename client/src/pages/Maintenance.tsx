@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { api } from '../api/client'
 import type { MaintenanceLog, MaintenanceStatus, Vehicle } from '../types'
 import { DataTable } from '../components/ui/DataTableWrapper'
@@ -22,6 +23,7 @@ const TABS: { key: MaintenanceStatus; label: string }[] = [
 ]
 
 export function Maintenance() {
+  const navigate = useNavigate()
   const { hasRole } = useAuth()
   const [logs, setLogs] = useState<MaintenanceLog[]>([])
   const [vehicles, setVehicles] = useState<Vehicle[]>([])
@@ -98,19 +100,8 @@ export function Maintenance() {
     }
   }
   
-  const completeMaintenance = async (id: string) => {
-    if (!confirm('Mark this maintenance as completed?')) return
-    try {
-      await api.put(`/maintenance/${id}/complete`, { 
-        actual_cost: 0, 
-        completed_date: format(new Date(), 'yyyy-MM-dd'),
-        technician_notes: ''
-      })
-      toast('Maintenance marked as completed', 'success')
-      fetchLogs()
-    } catch (err: any) {
-      toast(err.response?.data?.message || 'Failed to complete', 'error')
-    }
+  const completeMaintenance = (id: string) => {
+    navigate(`/maintenance/${id}`)
   }
   
   const stats = useMemo(() => {

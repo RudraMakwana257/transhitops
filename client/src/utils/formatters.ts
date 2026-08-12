@@ -1,18 +1,22 @@
-export const formatCurrency = (value: number): string => {
-  return new Intl.NumberFormat('en-IN', {
-    style: 'currency',
-    currency: 'INR',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(value)
+export const formatCurrency = (value: number, currency: string = 'USD', locale: string = 'en-US'): string => {
+  try {
+    return new Intl.NumberFormat(locale, {
+      style: 'currency',
+      currency: currency || 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
+    }).format(value)
+  } catch (e) {
+    return `${currency || '$'} ${value.toLocaleString()}`
+  }
 }
 
-export const formatNumber = (value: number): string => {
-  return new Intl.NumberFormat('en-IN').format(value)
+export const formatNumber = (value: number, locale: string = 'en-US'): string => {
+  return new Intl.NumberFormat(locale).format(value)
 }
 
-export const formatDate = (date: string | Date, options?: Intl.DateTimeFormatOptions): string => {
-  return new Intl.DateTimeFormat('en-IN', {
+export const formatDate = (date: string | Date, options?: Intl.DateTimeFormatOptions, locale: string = 'en-US'): string => {
+  return new Intl.DateTimeFormat(locale, {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
@@ -20,8 +24,8 @@ export const formatDate = (date: string | Date, options?: Intl.DateTimeFormatOpt
   }).format(new Date(date))
 }
 
-export const formatDateTime = (date: string | Date): string => {
-  return new Intl.DateTimeFormat('en-IN', {
+export const formatDateTime = (date: string | Date, locale: string = 'en-US'): string => {
+  return new Intl.DateTimeFormat(locale, {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
@@ -30,16 +34,16 @@ export const formatDateTime = (date: string | Date): string => {
   }).format(new Date(date))
 }
 
-export const formatDistance = (km: number): string => {
-  return `${formatNumber(km)} km`
+export const formatDistance = (val: number, unit: string = 'km'): string => {
+  return `${formatNumber(val)} ${unit}`
 }
 
 export const formatWeight = (kg: number): string => {
   return `${formatNumber(kg)} kg`
 }
 
-export const formatFuelEfficiency = (kmpl: number): string => {
-  return `${kmpl.toFixed(1)} km/L`
+export const formatFuelEfficiency = (val: number, unit: string = 'km/L'): string => {
+  return `${val.toFixed(1)} ${unit}`
 }
 
 export const formatPercentage = (value: number): string => {

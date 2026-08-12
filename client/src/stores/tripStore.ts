@@ -95,7 +95,6 @@ export const useTripStore = create<TripState>((set, get) => ({
       const res = await api.get<ApiResponse<Trip>>(`/trips/${id}`)
       if (res.data.success) {
         set({ selectedTrip: res.data.data, loading: false })
-        toast('Trip updated successfully', 'success')
       }
     } catch (err) {
       set({ error: (err as any).response?.data?.message || 'Failed to fetch trip', loading: false })
@@ -122,6 +121,7 @@ export const useTripStore = create<TripState>((set, get) => ({
       const res = await api.put<ApiResponse<Trip>>(`/trips/${id}`, data)
       if (res.data.success) {
         set({ selectedTrip: res.data.data, loading: false })
+        toast('Trip updated successfully', 'success')
       }
     } catch (err) {
       set({ error: (err as any).response?.data?.message || 'Failed to update trip', loading: false })
@@ -136,7 +136,7 @@ export const useTripStore = create<TripState>((set, get) => ({
       if (res.data.success) {
         set({ selectedTrip: res.data.data, loading: false })
         get().fetchTrips({ page: get().pagination.page })
-      toast('Trip deleted', 'success')
+        toast('Trip dispatched successfully', 'success')
       }
     } catch (err) {
       set({ error: (err as any).response?.data?.message || 'Failed to dispatch trip', loading: false })
@@ -151,6 +151,7 @@ export const useTripStore = create<TripState>((set, get) => ({
       if (res.data.success) {
         set({ selectedTrip: res.data.data, loading: false })
         get().fetchTrips({ page: get().pagination.page })
+        toast('Trip completed successfully', 'success')
       }
     } catch (err) {
       set({ error: (err as any).response?.data?.message || 'Failed to complete trip', loading: false })

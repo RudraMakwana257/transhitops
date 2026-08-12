@@ -30,7 +30,7 @@ import { useTripStore } from '../stores/tripStore'
 export function Trips() {
   const { hasRole } = useAuth()
   const navigate = useNavigate()
-  const { trips, loading, pagination: storePagination, fetchTrips, dispatchTrip, completeTrip, cancelTrip } = useTripStore()
+  const { trips, loading, pagination: storePagination, fetchTrips, dispatchTrip, cancelTrip } = useTripStore()
   
   const [vehicles, setVehicles] = useState<Vehicle[]>([])
   const [drivers, setDrivers] = useState<Driver[]>([])
@@ -93,14 +93,11 @@ export function Trips() {
     try {
       if (action === 'dispatch') {
         await dispatchTrip(trip.id)
-        toast('Trip dispatched successfully', 'success')
       } else if (action === 'complete') {
-        // Assume default complete params for the list view action
-        await completeTrip(trip.id, { actual_distance_km: trip.planned_distance_km || 0, end_odometer: 0 })
-        toast('Trip completed successfully', 'success')
+        navigate(`/trips/${trip.id}`)
+        return
       } else if (action === 'cancel') {
         await cancelTrip(trip.id, 'Cancelled from list')
-        toast('Trip cancelled successfully', 'success')
       }
     } catch (err: any) {
       toast(err.response?.data?.message || `Failed to ${action} trip`, 'error')

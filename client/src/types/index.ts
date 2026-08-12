@@ -10,6 +10,32 @@ export type TripStatus = 'Draft' | 'Dispatched' | 'In Transit' | 'Completed' | '
 export type MaintenanceStatus = 'Open' | 'In Progress' | 'Completed' | 'Cancelled'
 export type ExpenseType = 'Fuel' | 'Repair' | 'Tyre' | 'Insurance' | 'Permit' | 'Fine' | 'Toll' | 'Other'
 export type HealthGrade = 'Excellent' | 'Good' | 'Fair' | 'Poor' | 'Critical'
+export type ExceptionSeverity = 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW'
+export type ExceptionStatus = 'ACTIVE' | 'ACKNOWLEDGED' | 'RESOLVED' | 'DISMISSED'
+
+export interface OperationalException {
+  id: string
+  company_id: string
+  type: string
+  severity: ExceptionSeverity
+  status: ExceptionStatus
+  title: string
+  description: string
+  entity_type: 'driver' | 'vehicle' | 'maintenance' | 'trip'
+  entity_id: string
+  detected_at: string
+  due_at?: string
+  resolved_at?: string
+  resolved_by?: string
+  resolution_note?: string
+  meta_data?: {
+    recommended_action?: string
+    [key: string]: any
+  }
+  entity_details?: any
+  created_at: string
+  updated_at: string
+}
 
 export interface User {
   id: string

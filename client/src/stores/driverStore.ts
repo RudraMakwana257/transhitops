@@ -81,7 +81,6 @@ export const useDriverStore = create<DriverState>((set, get) => ({
       const res = await api.get<ApiResponse<Driver>>(`/drivers/${id}`)
       if (res.data.success) {
         set({ selectedDriver: res.data.data, loading: false })
-        toast('Driver updated successfully', 'success')
       }
     } catch (err) {
       set({ error: (err as any).response?.data?.message || 'Failed to fetch driver', loading: false })
@@ -108,6 +107,7 @@ export const useDriverStore = create<DriverState>((set, get) => ({
       const res = await api.put<ApiResponse<Driver>>(`/drivers/${id}`, data)
       if (res.data.success) {
         set({ selectedDriver: res.data.data, loading: false })
+        toast('Driver updated successfully', 'success')
       }
     } catch (err) {
       set({ error: (err as any).response?.data?.message || 'Failed to update driver', loading: false })

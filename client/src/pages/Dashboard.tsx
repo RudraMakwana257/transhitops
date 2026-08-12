@@ -10,6 +10,7 @@ import { LicenseExpiryAlerts } from '../components/dashboard/LicenseExpiryAlerts
 import { RecentTripsTable } from '../components/dashboard/RecentTripsTable'
 import { UpcomingMaintenance } from '../components/dashboard/UpcomingMaintenance'
 import { FuelTrendChart } from '../components/dashboard/FuelTrendChart'
+import { OperationsExceptionsWidget } from '../components/dashboard/OperationsExceptionsWidget'
 import { Button } from '../components/ui/ButtonWrapper'
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/CardWrapper'
 import { PageWrapper } from '../components/layout/PageWrapper'
@@ -139,6 +140,7 @@ export function Dashboard() {
         </div>
         
         <div className="xl:col-span-1 space-y-6 sm:space-y-8">
+          <OperationsExceptionsWidget />
           <FleetStatusChart data={fleetStatus} />
           
           <Card className="flex flex-col border-destructive/20 shadow-sm hover:shadow-md transition-shadow">

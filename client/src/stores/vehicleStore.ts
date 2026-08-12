@@ -83,7 +83,6 @@ export const useVehicleStore = create<VehicleState>((set, get) => ({
       const res = await api.get<ApiResponse<Vehicle>>(`/vehicles/${id}`)
       if (res.data.success) {
         set({ selectedVehicle: res.data.data, loading: false })
-        toast('Vehicle updated successfully', 'success')
       }
     } catch (err) {
       set({ error: (err as any).response?.data?.message || 'Failed to fetch vehicle', loading: false })
@@ -111,6 +110,7 @@ export const useVehicleStore = create<VehicleState>((set, get) => ({
       const res = await api.put<ApiResponse<Vehicle>>(`/vehicles/${id}`, data)
       if (res.data.success) {
         set({ selectedVehicle: res.data.data, loading: false })
+        toast('Vehicle updated successfully', 'success')
       }
     } catch (err) {
       set({ error: (err as any).response?.data?.message || 'Failed to update vehicle', loading: false })
