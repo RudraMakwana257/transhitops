@@ -38,7 +38,7 @@ def create_app():
     from app.routes.admin import bp as admin_bp
     app.register_blueprint(admin_bp)
 
-    from app.routes import auth, vehicles, drivers, trips, maintenance, fuel, expenses, dashboard, analytics, ai_chat, settings, notifications, onboarding
+    from app.routes import auth, vehicles, drivers, trips, maintenance, fuel, expenses, dashboard, analytics, ai_chat, settings, notifications, onboarding, exceptions, subscription, customers, shipments, attachments, driver_portal
     app.register_blueprint(auth.bp)
     app.register_blueprint(vehicles.bp)
     app.register_blueprint(drivers.bp)
@@ -52,13 +52,25 @@ def create_app():
     app.register_blueprint(settings.bp)
     app.register_blueprint(notifications.bp)
     app.register_blueprint(onboarding.bp)
+    app.register_blueprint(exceptions.bp)
+    app.register_blueprint(subscription.bp)
+    app.register_blueprint(customers.bp)
+    app.register_blueprint(shipments.bp)
+    app.register_blueprint(attachments.bp)
+    app.register_blueprint(driver_portal.bp)
 
     import os
-    cors_origins_raw = os.environ.get(
-        'CORS_ORIGINS', 
-        'http://localhost:5173,http://localhost:5174,http://localhost:80'
-    )
-    cors_origins = [o.strip() for o in cors_origins_raw.split(',')]
+    env = os.environ.get('FLASK_ENV', 'development').lower()
+    cors_origins_raw = os.environ.get('CORS_ORIGINS')
+    if env == 'production':
+        if not cors_origins_raw:
+            raise RuntimeError("CRITICAL CONFIGURATION ERROR: CORS_ORIGINS environment variable is required in production.")
+        cors_origins = [o.strip() for o in cors_origins_raw.split(',') if o.strip()]
+    else:
+        if cors_origins_raw:
+            cors_origins = [o.strip() for o in cors_origins_raw.split(',') if o.strip()]
+        else:
+            cors_origins = ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:80']
 
     CORS(
         app,
@@ -114,6 +126,21 @@ def create_app():
             "errors": e.messages
         }), 422
 
+    from app.services.quota_service import QuotaExceededException
+    @app.errorhandler(QuotaExceededException)
+    def handle_quota_exceeded(e):
+        return jsonify({
+            "success": False,
+            "error": {
+                "code": "QUOTA_EXCEEDED",
+                "resource": e.resource,
+                "used": e.used,
+                "limit": e.limit,
+                "message": e.message
+            },
+            "message": e.message
+        }), 403
+
     @app.route('/api/health')
     def health():
         import os
@@ -155,6 +182,27 @@ def create_app():
             return jsonify({"ready": True}), 200
         except Exception:
             return jsonify({"ready": False}), 503
+
+    @app.route('/metrics')
+    def prometheus_metrics():
+        from flask import Response
+        from sqlalchemy import text
+        
+        try:
+            db.session.execute(text('SELECT 1'))
+            db_up = 1
+        except Exception:
+            db_up = 0
+
+        metrics = (
+            f"# HELP transitops_up TransitOps service status\n"
+            f"# TYPE transitops_up gauge\n"
+            f"transitops_up 1\n"
+            f"# HELP transitops_db_up Database connection status\n"
+            f"# TYPE transitops_db_up gauge\n"
+            f"transitops_db_up {db_up}\n"
+        )
+        return Response(metrics, mimetype='text/plain; version=0.0.4; charset=utf-8')
 
     from app.commands.seed_demo import register_commands
     register_commands(app)

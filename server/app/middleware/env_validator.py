@@ -36,16 +36,25 @@ def validate_environment():
         else:
             logger.warning(msg)
 
-    # Warn on obvious defaults
+    # Warn or raise on obvious defaults
     secret_key = os.environ.get('SECRET_KEY', '')
     jwt_secret = os.environ.get('JWT_SECRET_KEY', '')
     pg_password = os.environ.get('POSTGRES_PASSWORD', '')
 
-    if 'change-this' in secret_key.lower():
-        logger.warning('WARNING: SECRET_KEY contains "change-this". This is insecure!')
-        
-    if 'change-this' in jwt_secret.lower():
-        logger.warning('WARNING: JWT_SECRET_KEY contains "change-this". This is insecure!')
-        
-    if pg_password == 'changeme':
-        logger.warning('WARNING: POSTGRES_PASSWORD is "changeme". This is insecure!')
+    insecure_patterns = ['change-this', 'dev-secret-key', 'dev-jwt-key', 'changeme']
+
+    for pattern in insecure_patterns:
+        if pattern in secret_key.lower() or secret_key == 'dev-secret-key':
+            msg = 'CRITICAL SECURITY ERROR: SECRET_KEY is set to an insecure default value!'
+            if is_production:
+                raise RuntimeError(msg)
+            logger.warning(msg)
+            
+        if pattern in jwt_secret.lower() or jwt_secret == 'dev-jwt-key':
+            msg = 'CRITICAL SECURITY ERROR: JWT_SECRET_KEY is set to an insecure default value!'
+            if is_production:
+                raise RuntimeError(msg)
+            logger.warning(msg)
+            
+        if pattern in pg_password.lower() and is_production:
+            logger.warning('WARNING: POSTGRES_PASSWORD uses an insecure default in production!')
