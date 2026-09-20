@@ -41,7 +41,9 @@ api.interceptors.response.use(
       } catch (refreshError) {
         localStorage.removeItem('auth-storage')
         useAuthStore.getState().logout()
-        window.location.href = '/login'
+        if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
+          window.location.href = '/login'
+        }
         return Promise.reject(refreshError)
       }
     }
@@ -133,8 +135,240 @@ export const adminApi = {
   },
 
   // Users
+  getUsers: async (params?: { page?: number; page_size?: number; search?: string; company_id?: string; role?: string; is_active?: string }) => {
+    const res = await api.get<ApiResponse<PaginatedData<any>>>('/admin/users', { params })
+    return res.data
+  },
+  getUser: async (id: string) => {
+    const res = await api.get<ApiResponse<any>>(`/admin/users/${id}`)
+    return res.data
+  },
+  createUser: async (data: any) => {
+    const res = await api.post<ApiResponse<any>>('/admin/users', data)
+    return res.data
+  },
+  updateUser: async (id: string, data: any) => {
+    const res = await api.put<ApiResponse<any>>(`/admin/users/${id}`, data)
+    return res.data
+  },
+  deleteUser: async (id: string) => {
+    const res = await api.delete<ApiResponse<any>>(`/admin/users/${id}`)
+    return res.data
+  },
+  resetUserPassword: async (id: string, data?: { password?: string }) => {
+    const res = await api.post<ApiResponse<any>>(`/admin/users/${id}/reset-password`, data || {})
+    return res.data
+  },
   createCompanyUser: async (companyId: string, data: any) => {
     const res = await api.post<ApiResponse<any>>(`/admin/companies/${companyId}/users`, data)
+    return res.data
+  },
+
+  // Vehicles
+  getVehicles: async (params?: { page?: number; page_size?: number; search?: string; company_id?: string; status?: string; type?: string; region?: string }) => {
+    const res = await api.get<ApiResponse<PaginatedData<any>>>('/admin/vehicles', { params })
+    return res.data
+  },
+  getVehicle: async (id: string) => {
+    const res = await api.get<ApiResponse<any>>(`/admin/vehicles/${id}`)
+    return res.data
+  },
+  createVehicle: async (data: any) => {
+    const res = await api.post<ApiResponse<any>>('/admin/vehicles', data)
+    return res.data
+  },
+  updateVehicle: async (id: string, data: any) => {
+    const res = await api.put<ApiResponse<any>>(`/admin/vehicles/${id}`, data)
+    return res.data
+  },
+  deleteVehicle: async (id: string) => {
+    const res = await api.delete<ApiResponse<any>>(`/admin/vehicles/${id}`)
+    return res.data
+  },
+
+  // Drivers
+  getDrivers: async (params?: { page?: number; page_size?: number; search?: string; company_id?: string; status?: string; category?: string }) => {
+    const res = await api.get<ApiResponse<PaginatedData<any>>>('/admin/drivers', { params })
+    return res.data
+  },
+  getDriver: async (id: string) => {
+    const res = await api.get<ApiResponse<any>>(`/admin/drivers/${id}`)
+    return res.data
+  },
+  createDriver: async (data: any) => {
+    const res = await api.post<ApiResponse<any>>('/admin/drivers', data)
+    return res.data
+  },
+  updateDriver: async (id: string, data: any) => {
+    const res = await api.put<ApiResponse<any>>(`/admin/drivers/${id}`, data)
+    return res.data
+  },
+  deleteDriver: async (id: string) => {
+    const res = await api.delete<ApiResponse<any>>(`/admin/drivers/${id}`)
+    return res.data
+  },
+
+  // Trips
+  getTrips: async (params?: { page?: number; page_size?: number; search?: string; company_id?: string; status?: string }) => {
+    const res = await api.get<ApiResponse<PaginatedData<any>>>('/admin/trips', { params })
+    return res.data
+  },
+  getTrip: async (id: string) => {
+    const res = await api.get<ApiResponse<any>>(`/admin/trips/${id}`)
+    return res.data
+  },
+  createTrip: async (data: any) => {
+    const res = await api.post<ApiResponse<any>>('/admin/trips', data)
+    return res.data
+  },
+  updateTrip: async (id: string, data: any) => {
+    const res = await api.put<ApiResponse<any>>(`/admin/trips/${id}`, data)
+    return res.data
+  },
+  deleteTrip: async (id: string) => {
+    const res = await api.delete<ApiResponse<any>>(`/admin/trips/${id}`)
+    return res.data
+  },
+
+  // Maintenance
+  getMaintenanceLogs: async (params?: { page?: number; page_size?: number; search?: string; company_id?: string; status?: string; type?: string }) => {
+    const res = await api.get<ApiResponse<PaginatedData<any>>>('/admin/maintenance', { params })
+    return res.data
+  },
+  getMaintenanceLog: async (id: string) => {
+    const res = await api.get<ApiResponse<any>>(`/admin/maintenance/${id}`)
+    return res.data
+  },
+  createMaintenanceLog: async (data: any) => {
+    const res = await api.post<ApiResponse<any>>('/admin/maintenance', data)
+    return res.data
+  },
+  updateMaintenanceLog: async (id: string, data: any) => {
+    const res = await api.put<ApiResponse<any>>(`/admin/maintenance/${id}`, data)
+    return res.data
+  },
+  deleteMaintenanceLog: async (id: string) => {
+    const res = await api.delete<ApiResponse<any>>(`/admin/maintenance/${id}`)
+    return res.data
+  },
+
+  // Fuel
+  getFuelLogs: async (params?: { page?: number; page_size?: number; search?: string; company_id?: string }) => {
+    const res = await api.get<ApiResponse<PaginatedData<any>>>('/admin/fuel', { params })
+    return res.data
+  },
+  getFuelLog: async (id: string) => {
+    const res = await api.get<ApiResponse<any>>(`/admin/fuel/${id}`)
+    return res.data
+  },
+  createFuelLog: async (data: any) => {
+    const res = await api.post<ApiResponse<any>>('/admin/fuel', data)
+    return res.data
+  },
+  updateFuelLog: async (id: string, data: any) => {
+    const res = await api.put<ApiResponse<any>>(`/admin/fuel/${id}`, data)
+    return res.data
+  },
+  deleteFuelLog: async (id: string) => {
+    const res = await api.delete<ApiResponse<any>>(`/admin/fuel/${id}`)
+    return res.data
+  },
+
+  // Expenses
+  getExpenses: async (params?: { page?: number; page_size?: number; search?: string; company_id?: string; type?: string }) => {
+    const res = await api.get<ApiResponse<PaginatedData<any>>>('/admin/expenses', { params })
+    return res.data
+  },
+  getExpense: async (id: string) => {
+    const res = await api.get<ApiResponse<any>>(`/admin/expenses/${id}`)
+    return res.data
+  },
+  createExpense: async (data: any) => {
+    const res = await api.post<ApiResponse<any>>('/admin/expenses', data)
+    return res.data
+  },
+  updateExpense: async (id: string, data: any) => {
+    const res = await api.put<ApiResponse<any>>(`/admin/expenses/${id}`, data)
+    return res.data
+  },
+  deleteExpense: async (id: string) => {
+    const res = await api.delete<ApiResponse<any>>(`/admin/expenses/${id}`)
+    return res.data
+  },
+
+  // Payments & Manual Billing
+  getPayments: async (params?: { company_id?: string; status?: string; payment_method?: string; page?: number; per_page?: number }) => {
+    const res = await api.get<ApiResponse<any>>('/admin/payments', { params })
+    return res.data
+  },
+  recordPayment: async (data: any) => {
+    const res = await api.post<ApiResponse<any>>('/admin/payments', data)
+    return res.data
+  },
+  reversePayment: async (id: string, reason?: string) => {
+    const res = await api.post<ApiResponse<any>>(`/admin/payments/${id}/reverse`, { reason })
+    return res.data
+  },
+
+  // Audit Logs & Diagnostics
+  getAuditLogs: async (params?: { page?: number; page_size?: number; company_id?: string; action?: string; entity_type?: string }) => {
+    const res = await api.get<ApiResponse<PaginatedData<any>>>('/admin/audit-logs', { params })
+    return res.data
+  },
+  getLoginAttempts: async (params?: { page?: number; page_size?: number; email?: string }) => {
+    const res = await api.get<ApiResponse<PaginatedData<any>>>('/admin/login-attempts', { params })
+    return res.data
+  },
+  getExceptions: async (params?: { page?: number; page_size?: number; company_id?: string }) => {
+    const res = await api.get<ApiResponse<PaginatedData<any>>>('/admin/exceptions', { params })
+    return res.data
+  },
+  getDatabaseStats: async () => {
+    const res = await api.get<ApiResponse<any>>('/admin/system/database-stats')
+    return res.data
+  },
+
+  // Impersonation
+  impersonate: async (data: { company_id?: string; user_id?: string }) => {
+    const res = await api.post<ApiResponse<any>>('/admin/impersonate', data)
+    return res.data
+  },
+  stopImpersonation: async () => {
+    const res = await api.post<ApiResponse<any>>('/admin/stop-impersonation')
+    return res.data
+  },
+
+  // Announcements
+  getAnnouncements: async () => {
+    const res = await api.get<ApiResponse<any[]>>('/admin/announcements')
+    return res.data
+  },
+  createAnnouncement: async (data: any) => {
+    const res = await api.post<ApiResponse<any>>('/admin/announcements', data)
+    return res.data
+  },
+  deleteAnnouncement: async (id: string) => {
+    const res = await api.delete<ApiResponse<any>>(`/admin/announcements/${id}`)
+    return res.data
+  },
+
+  // Global Feature Flags
+  getFeatureFlags: async () => {
+    const res = await api.get<ApiResponse<any>>('/admin/feature-flags')
+    return res.data
+  },
+  updateFeatureFlag: async (key: string, data: any) => {
+    const res = await api.put<ApiResponse<any>>(`/admin/feature-flags/${key}`, data)
+    return res.data
+  },
+
+  // Platform Settings
+  getPlatformSettings: async () => {
+    const res = await api.get<ApiResponse<any>>('/admin/platform-settings')
+    return res.data
+  },
+  updatePlatformSettings: async (data: any) => {
+    const res = await api.put<ApiResponse<any>>('/admin/platform-settings', data)
     return res.data
   },
 

@@ -10,7 +10,7 @@ UpdateUserSchema        PUT  /api/settings/users/<id> — partial update, all op
 
 from marshmallow import Schema, fields, validate, validates, ValidationError, EXCLUDE
 
-_USER_ROLES = ['super_admin', 'fleet_manager', 'dispatcher', 'driver']
+_TENANT_USER_ROLES = ['fleet_manager', 'dispatcher', 'safety_officer', 'financial_analyst', 'driver']
 
 
 class UserSchema(Schema):
@@ -73,7 +73,7 @@ class CreateUserSchema(Schema):
     )
     role = fields.String(
         required=True,
-        validate=validate.OneOf(_USER_ROLES, error=f'Role must be one of: {", ".join(_USER_ROLES)}'),
+        validate=validate.OneOf(_TENANT_USER_ROLES, error=f'Role must be one of: {", ".join(_TENANT_USER_ROLES)}'),
         error_messages={'required': 'Role is required.'}
     )
     is_active = fields.Boolean(load_default=True)
@@ -121,7 +121,7 @@ class UpdateUserSchema(Schema):
     )
     role = fields.String(
         load_default=None,
-        validate=validate.OneOf(_USER_ROLES, error=f'Role must be one of: {", ".join(_USER_ROLES)}')
+        validate=validate.OneOf(_TENANT_USER_ROLES, error=f'Role must be one of: {", ".join(_TENANT_USER_ROLES)}')
     )
     is_active = fields.Boolean(load_default=None)
 

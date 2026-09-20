@@ -85,7 +85,7 @@ export function Dashboard() {
   const kpiSkeleton = (count: number) => (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       {Array.from({ length: count }).map((_, i) => (
-        <KPICard key={i} title="..." value="—" icon={<Truck />} loading />
+        <KPICard key={`kpi-skel-${i}`} title="..." value="—" icon={<Truck />} loading />
       ))}
     </div>
   )
@@ -268,10 +268,10 @@ export function Dashboard() {
             <CardContent>
               {financialKpis?.cost_by_type?.length ? (
                 <div className="space-y-3">
-                  {financialKpis.cost_by_type.map((item: any) => (
-                    <div key={item.type} className="flex items-center justify-between p-3 rounded-xl bg-muted/50">
+                  {financialKpis.cost_by_type.map((item: any, idx: number) => (
+                    <div key={item.type || `cost-type-${idx}`} className="flex items-center justify-between p-3 rounded-xl bg-muted/50">
                       <span className="font-medium">{item.type}</span>
-                      <span className="text-sm font-bold">{formatCurrency(item.total)}</span>
+                      <span className="text-sm font-bold">{formatCurrency(item.total || item.amount)}</span>
                     </div>
                   ))}
                 </div>
@@ -296,12 +296,12 @@ export function Dashboard() {
                   </tr>
                 </thead>
                 <tbody>
-                  {financialKpis.top_vehicles.map((v: any) => (
-                    <tr key={v.id} className="border-t border-border/50 hover:bg-muted/40 cursor-pointer transition-colors">
-                      <td className="data-table td font-medium">{v.name}</td>
-                      <td className="data-table td font-mono text-muted-foreground">{v.reg_number}</td>
-                      <td className="data-table td text-right">{formatCurrency(v.fuel)}</td>
-                      <td className="data-table td text-right">{formatCurrency(v.maintenance)}</td>
+                  {financialKpis.top_vehicles.map((v: any, idx: number) => (
+                    <tr key={v.vehicle_id || v.id || `top-veh-${idx}`} className="border-t border-border/50 hover:bg-muted/40 cursor-pointer transition-colors">
+                      <td className="data-table td font-medium">{v.name || v.vehicle_name}</td>
+                      <td className="data-table td font-mono text-muted-foreground">{v.reg_number || '—'}</td>
+                      <td className="data-table td text-right">{formatCurrency(v.fuel || 0)}</td>
+                      <td className="data-table td text-right">{formatCurrency(v.maintenance || 0)}</td>
                       <td className="data-table td text-right font-bold">{formatCurrency(v.total_cost)}</td>
                     </tr>
                   ))}

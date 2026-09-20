@@ -19,11 +19,13 @@ def get_smtp_config():
 
 def send_email(to_email: str, subject: str, text_content: str, html_content: str = None) -> bool:
     config = get_smtp_config()
+    env = os.environ.get('FLASK_ENV', 'development').lower()
     
     if not config['host']:
-        print(f"[EMAIL SIMULATION] To: {to_email}")
-        print(f"[EMAIL SIMULATION] Subject: {subject}")
-        print(f"[EMAIL SIMULATION] Body: {text_content}")
+        if env == 'production':
+            logger.error(f"Cannot send email to {to_email}: SMTP_HOST is not configured in production environment.")
+            return False
+        logger.warning(f"[EMAIL SIMULATION] To: {to_email} | Subject: {subject} | Body: {text_content}")
         return True
 
     try:

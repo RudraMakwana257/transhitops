@@ -24,7 +24,11 @@ def validate_environment():
     if is_production:
         required_vars.extend([
             'GROQ_API_KEY',
-            'CORS_ORIGINS'
+            'CORS_ORIGINS',
+            'SMTP_HOST',
+            'SMTP_USERNAME',
+            'SMTP_PASSWORD',
+            'EMAIL_FROM'
         ])
 
     missing_vars = [var for var in required_vars if not os.environ.get(var)]
@@ -35,6 +39,10 @@ def validate_environment():
             raise RuntimeError(msg)
         else:
             logger.warning(msg)
+
+    cors_val = os.environ.get('CORS_ORIGINS', '')
+    if is_production and cors_val and any(p in cors_val.lower() for p in ['<replace', 'replace-with', 'changeme']):
+        raise RuntimeError("CRITICAL CONFIGURATION ERROR: CORS_ORIGINS is set to a placeholder value in production.")
 
     # Warn or raise on obvious defaults
     secret_key = os.environ.get('SECRET_KEY', '')

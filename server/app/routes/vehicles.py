@@ -29,6 +29,39 @@ def general_limit():
 @require_company
 @require_feature('vehicles')
 def list_vehicles():
+    """List fleet vehicles with pagination, search, and filtering.
+    ---
+    tags:
+      - Vehicles
+    security:
+      - Bearer: []
+    parameters:
+      - name: page
+        in: query
+        type: integer
+        default: 1
+        description: Page number
+      - name: page_size
+        in: query
+        type: integer
+        default: 20
+        description: Items per page
+      - name: status
+        in: query
+        type: string
+        description: Filter by status (e.g. Available, On Trip, In Shop)
+      - name: search
+        in: query
+        type: string
+        description: Search by name or registration number
+    responses:
+      200:
+        description: Paginated list of vehicles
+      401:
+        description: Unauthorized
+      403:
+        description: Forbidden
+    """
     page = request.args.get('page', 1, type=int)
     page_size = request.args.get('page_size', 20, type=int)
     search = request.args.get('search', '')
@@ -86,11 +119,54 @@ def get_vehicle(id):
     vehicle = Vehicle.query.filter_by(id=id, company_id=g.company_id).first_or_404()
     return success_response(data=vehicle.to_dict())
 
+from app.services.quota_service import QuotaService
+
 @bp.route('', methods=['POST'])
 @require_roles('fleet_manager')
 @require_company
 @require_feature('vehicles')
 def create_vehicle():
+    """Register a new vehicle into the fleet.
+    ---
+    tags:
+      - Vehicles
+    security:
+      - Bearer: []
+    parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          required:
+            - reg_number
+            - name
+            - type
+          properties:
+            reg_number:
+              type: string
+              example: MH-01-AB-1234
+            name:
+              type: string
+              example: Delivery Van Alpha
+            type:
+              type: string
+              example: Van
+            capacity_kg:
+              type: number
+              example: 1500
+            acquisition_cost:
+              type: number
+              example: 25000
+    responses:
+      201:
+        description: Vehicle created successfully
+      400:
+        description: Validation error or registration number already exists
+      403:
+        description: Quota exceeded or forbidden
+    """
+    QuotaService.enforce_quota(g.company_id, 'vehicles')
     data = validate_request(CreateVehicleSchema)
     
     if Vehicle.query.filter_by(company_id=g.company_id, reg_number=data['reg_number']).first():

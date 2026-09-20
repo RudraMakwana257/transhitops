@@ -16,6 +16,7 @@ FEATURE_KEYS = [
     'documents',
     'public_api',
     'white_label',
+    'exceptions',
 ]
 
 

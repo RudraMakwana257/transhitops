@@ -63,3 +63,68 @@ def test_smoke_agent_runtime_execution(app, seed_data):
         )
         assert res.response != ""
         assert res.execution_time_ms > 0.0
+
+
+def test_ai_chat_service_unavailable_on_unset_key(client, company_a_token, monkeypatch):
+    """Verify /api/ai/chat returns 503 AI_SERVICE_UNAVAILABLE when GROQ_API_KEY is unset (development/test mode only)."""
+    monkeypatch.delenv("GROQ_API_KEY", raising=False)
+    res = client.post(
+        "/api/ai/chat",
+        headers={"Authorization": f"Bearer {company_a_token}"},
+        json={"message": "How many vehicles do we have?"}
+    )
+    assert res.status_code == 503
+    payload = res.get_json()
+    assert payload["error"] == "AI_SERVICE_UNAVAILABLE"
+    assert "temporarily unavailable" in payload["message"].lower() or "not configured" in payload["message"].lower()
+
+
+def test_groq_key_required_in_production(monkeypatch):
+    """Confirm the app refuses to boot in production without GROQ_API_KEY."""
+    monkeypatch.setenv("FLASK_ENV", "production")
+    monkeypatch.setenv("SECRET_KEY", "a-real-looking-secret-1234567890")
+    monkeypatch.setenv("JWT_SECRET_KEY", "another-real-looking-secret-0987654321")
+    monkeypatch.setenv("DATABASE_URL", "postgresql://user:pass@localhost/db")
+    monkeypatch.setenv("CORS_ORIGINS", "https://app.transitops.com")
+    monkeypatch.setenv("SMTP_HOST", "smtp.sendgrid.net")
+    monkeypatch.setenv("SMTP_USERNAME", "apikey")
+    monkeypatch.setenv("SMTP_PASSWORD", "secret-password")
+    monkeypatch.setenv("EMAIL_FROM", "noreply@transitops.com")
+    monkeypatch.delenv("GROQ_API_KEY", raising=False)
+    from app.middleware.env_validator import validate_environment
+    import pytest as _pytest
+    with _pytest.raises(RuntimeError, match="GROQ_API_KEY"):
+        validate_environment()
+
+
+def test_smtp_host_required_in_production(monkeypatch):
+    """Confirm the app refuses to boot in production without SMTP_HOST."""
+    monkeypatch.setenv("FLASK_ENV", "production")
+    monkeypatch.setenv("SECRET_KEY", "a-real-looking-secret-1234567890")
+    monkeypatch.setenv("JWT_SECRET_KEY", "another-real-looking-secret-0987654321")
+    monkeypatch.setenv("DATABASE_URL", "postgresql://user:pass@localhost/db")
+    monkeypatch.setenv("CORS_ORIGINS", "https://app.transitops.com")
+    monkeypatch.setenv("GROQ_API_KEY", "gsk-mock-production-key")
+    monkeypatch.setenv("SMTP_USERNAME", "apikey")
+    monkeypatch.setenv("SMTP_PASSWORD", "secret-password")
+    monkeypatch.setenv("EMAIL_FROM", "noreply@transitops.com")
+    monkeypatch.delenv("SMTP_HOST", raising=False)
+    from app.middleware.env_validator import validate_environment
+    import pytest as _pytest
+    with _pytest.raises(RuntimeError, match="SMTP_HOST"):
+        validate_environment()
+
+
+def test_opentelemetry_wiring(monkeypatch):
+    """Confirm app boots with and without OPENTELEMETRY_EXPORTER_ENDPOINT."""
+    from app import create_app
+    monkeypatch.delenv("OPENTELEMETRY_EXPORTER_ENDPOINT", raising=False)
+    app_without_otel = create_app()
+    assert app_without_otel is not None
+
+    monkeypatch.setenv("OPENTELEMETRY_EXPORTER_ENDPOINT", "http://localhost:4317")
+    app_with_otel = create_app()
+    assert app_with_otel is not None
+
+
+

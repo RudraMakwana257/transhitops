@@ -32,6 +32,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           <ShadcnInput
             ref={ref}
             id={inputId}
+            type={props.type || 'text'}
             className={clsx(
               leftIcon && 'pl-10',
               error && 'border-destructive focus-visible:ring-destructive',

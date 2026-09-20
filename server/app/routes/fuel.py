@@ -3,6 +3,7 @@ from app import db
 from app.models.fuel_log import FuelLog
 from app.models.vehicle import Vehicle
 from app.models.driver import Driver
+from app.models.trip import Trip
 from app.middleware import require_roles, require_company, require_feature
 from app.utils.response import success_response, error_response
 from sqlalchemy import desc
@@ -22,6 +23,8 @@ from app.middleware.rate_limiter import limiter, GENERAL_LIMIT
 def general_limit():
     pass
 
+from sqlalchemy.orm import joinedload
+
 @bp.route('', methods=['GET'])
 @require_roles('fleet_manager', 'dispatcher', 'financial_analyst')
 @require_company
@@ -32,7 +35,7 @@ def list_logs():
     vehicle_id = request.args.get('vehicle_id')
     driver_id = request.args.get('driver_id')
     
-    query = FuelLog.query.filter_by(company_id=g.company_id, deleted_at=None)
+    query = FuelLog.query.options(joinedload(FuelLog.vehicle), joinedload(FuelLog.driver)).filter_by(company_id=g.company_id, deleted_at=None)
     
     if vehicle_id:
         query = query.filter_by(vehicle_id=vehicle_id)
@@ -65,10 +68,12 @@ def get_log(id):
 def create_log():
     data = validate_request(CreateFuelLogSchema)
     
-    # Ensure vehicle and driver belong to company
+    # Ensure vehicle, driver, and trip belong to company
     vehicle = Vehicle.query.filter_by(id=data['vehicle_id'], company_id=g.company_id).first_or_404()
     if 'driver_id' in data and data['driver_id']:
         driver = Driver.query.filter_by(id=data['driver_id'], company_id=g.company_id).first_or_404()
+    if 'trip_id' in data and data['trip_id']:
+        Trip.query.filter_by(id=data['trip_id'], company_id=g.company_id).first_or_404()
     
     liters = float(data['liters'])
     price_per_liter = float(data['price_per_liter'])
@@ -86,8 +91,7 @@ def create_log():
         price_per_liter=price_per_liter,
         total_cost=total_cost,
         odometer_reading=odometer_reading,
-        fuel_station=fuel_station,
-        created_by=g.user.id
+        fuel_station=fuel_station
     )
     
     # Update vehicle odometer if this is higher than current
@@ -112,10 +116,12 @@ def update_log(id):
     log = FuelLog.query.filter_by(id=id, company_id=g.company_id, deleted_at=None).first_or_404()
     data = request.get_json() or {}
     
-    if 'vehicle_id' in data and data['vehicle_id'] != str(log.vehicle_id):
+    if 'vehicle_id' in data and data['vehicle_id'] and data['vehicle_id'] != str(log.vehicle_id):
         Vehicle.query.filter_by(id=data['vehicle_id'], company_id=g.company_id).first_or_404()
     if 'driver_id' in data and data['driver_id'] and data['driver_id'] != str(log.driver_id):
         Driver.query.filter_by(id=data['driver_id'], company_id=g.company_id).first_or_404()
+    if 'trip_id' in data and data['trip_id'] and data['trip_id'] != str(log.trip_id):
+        Trip.query.filter_by(id=data['trip_id'], company_id=g.company_id).first_or_404()
             
     if 'cost' in data or 'total_cost' in data:
         log.total_cost = data.get('total_cost') or data.get('cost')

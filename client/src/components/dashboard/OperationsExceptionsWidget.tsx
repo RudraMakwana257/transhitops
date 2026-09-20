@@ -155,16 +155,16 @@ export function OperationsExceptionsWidget() {
         {/* Severity Summary Bar */}
         <div className="grid grid-cols-3 gap-2 mb-4">
           <div className="p-2.5 rounded-lg bg-red-500/10 border border-red-500/20 text-center">
-            <div className="text-xl font-bold text-red-500">{summary.CRITICAL}</div>
-            <div className="text-xs font-medium text-red-400">Critical</div>
+            <div className="text-xl font-bold text-red-600 dark:text-red-400">{summary.CRITICAL}</div>
+            <div className="text-xs font-semibold text-red-700 dark:text-red-400">Critical</div>
           </div>
           <div className="p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-center">
-            <div className="text-xl font-bold text-amber-500">{summary.HIGH}</div>
-            <div className="text-xs font-medium text-amber-400">High</div>
+            <div className="text-xl font-bold text-amber-600 dark:text-amber-400">{summary.HIGH}</div>
+            <div className="text-xs font-semibold text-amber-700 dark:text-amber-400">High</div>
           </div>
-          <div className="p-2.5 rounded-lg bg-yellow-500/10 border border-yellow-500/20 text-center">
-            <div className="text-xl font-bold text-yellow-500">{summary.MEDIUM}</div>
-            <div className="text-xs font-medium text-yellow-400">Medium</div>
+          <div className="p-2.5 rounded-lg bg-blue-500/10 border border-blue-500/20 text-center">
+            <div className="text-xl font-bold text-blue-600 dark:text-blue-400">{summary.MEDIUM}</div>
+            <div className="text-xs font-semibold text-blue-700 dark:text-blue-400">Medium</div>
           </div>
         </div>
 

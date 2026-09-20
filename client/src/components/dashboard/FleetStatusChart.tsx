@@ -53,9 +53,9 @@ export function FleetStatusChart({ data }: FleetStatusChartProps) {
         </ResponsiveContainer>
         
         {/* Center Text */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none pb-[40px]">
+        <div className="absolute top-[42%] left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center justify-center pointer-events-none">
           <span className="text-3xl font-black text-foreground">{total}</span>
-          <span className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Total</span>
+          <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Total</span>
         </div>
       </div>
     </div>

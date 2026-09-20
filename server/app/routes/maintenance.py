@@ -23,8 +23,10 @@ from app.middleware.rate_limiter import limiter, GENERAL_LIMIT
 def general_limit():
     pass
 
+from sqlalchemy.orm import joinedload
+
 @bp.route('', methods=['GET'])
-@require_roles('fleet_manager', 'safety_officer', 'financial_analyst')
+@require_roles('fleet_manager', 'dispatcher', 'safety_officer', 'financial_analyst')
 @require_company
 @require_feature('maintenance')
 def list_logs():
@@ -34,7 +36,7 @@ def list_logs():
     status = request.args.get('status')
     service_type = request.args.get('service_type')
     
-    query = MaintenanceLog.query.filter_by(company_id=g.company_id)
+    query = MaintenanceLog.query.options(joinedload(MaintenanceLog.vehicle)).filter_by(company_id=g.company_id)
     
     if vehicle_id:
         query = query.filter_by(vehicle_id=vehicle_id)
@@ -55,7 +57,7 @@ def list_logs():
     })
 
 @bp.route('/<id>', methods=['GET'])
-@require_roles('fleet_manager', 'safety_officer', 'financial_analyst')
+@require_roles('fleet_manager', 'dispatcher', 'safety_officer', 'financial_analyst')
 @require_company
 @require_feature('maintenance')
 def get_log(id):

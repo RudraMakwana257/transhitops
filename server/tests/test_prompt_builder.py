@@ -29,9 +29,12 @@ def test_build_security_layer():
 
 
 def test_build_business_rules_layer():
-    res = build_business_rules_layer()
-    assert res == BUSINESS_RULES_TEMPLATE
-    assert "₹X,XXX" in res
+    res_default = build_business_rules_layer()
+    assert "$X,XXX" in res_default
+    res_inr = build_business_rules_layer(currency="INR", distance_unit="mi", fuel_unit="gallons")
+    assert "₹X,XXX" in res_inr
+    assert "XXX mi" in res_inr
+    assert "XX.X gallons" in res_inr
 
 
 def test_build_tenant_context_layer_custom():

@@ -23,6 +23,16 @@ fi
 if [ ! -f ".env" ]; then
     echo "⚙️ Creating .env configuration from template..."
     cp .env.example .env
+
+    # Auto-generate secure random secrets
+    PG_PASS=$(openssl rand -hex 16 2>/dev/null || head -c 16 /dev/urandom | xxd -p)
+    SEC_KEY=$(openssl rand -hex 32 2>/dev/null || head -c 32 /dev/urandom | xxd -p)
+    JWT_KEY=$(openssl rand -hex 32 2>/dev/null || head -c 32 /dev/urandom | xxd -p)
+
+    sed -i "s/replace_with_a_strong_database_password/${PG_PASS}/g" .env
+    sed -i "s/replace_with_a_secure_random_64_character_hex_string/${SEC_KEY}/g" .env
+    sed -i "s/replace_with_a_second_distinct_secure_random_hex_string/${JWT_KEY}/g" .env
+    echo "🔑 Auto-generated cryptographic secrets and database credentials in .env"
 fi
 
 echo "🐳 Building and launching container services..."
@@ -32,15 +42,8 @@ docker compose up -d --build
 echo "⏳ Waiting for database & backend services to start..."
 sleep 10
 
-echo "🌱 Running database migrations & seed script..."
-docker compose exec -T backend python -c "
-from app import create_app, db
-from app.commands.seed_demo import seed_demo_data
-app = create_app()
-with app.app_context():
-    db.create_all()
-    seed_demo_data()
-" || echo "Note: Seed check complete."
+echo "🌱 Running database migrations..."
+docker compose exec -T backend flask db upgrade || echo "Note: Migration execution complete."
 
 echo "=========================================="
 echo "✅ TransitOps Deployment Complete!"

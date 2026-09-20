@@ -71,22 +71,22 @@ def test_notification_safety(client, company_a_token):
     # We will test this by doing a mock in the test wrapper script
     pass
 
-def test_email_simulation(client, capsys):
+def test_email_simulation(client, caplog, capsys):
     # 11. forgot-password email simulation
     res = client.post('/api/auth/forgot-password', json={'email': 'super@transitops.com'})
     assert res.status_code == 200
     captured = capsys.readouterr()
-    assert "[EMAIL SIMULATION]" in captured.out
+    assert "[EMAIL SIMULATION]" in caplog.text or "[EMAIL SIMULATION]" in captured.out
     
-def test_welcome_email(client, super_admin_token, company_a_id, capsys):
+def test_welcome_email(client, super_admin_token, company_a_id, caplog, capsys):
     # 12. welcome email simulation
     res = client.post(f'/api/admin/companies/{company_a_id}/users', headers={'Authorization': f'Bearer {super_admin_token}'}, json={
         'name': 'New User', 'email': 'new@transitops.com'
     })
     assert res.status_code == 201
     captured = capsys.readouterr()
-    assert "[EMAIL SIMULATION]" in captured.out
-    assert "new@transitops.com" in captured.out
+    assert "[EMAIL SIMULATION]" in caplog.text or "[EMAIL SIMULATION]" in captured.out
+    assert "new@transitops.com" in caplog.text or "new@transitops.com" in captured.out
 
 def test_password_reset_flow(client):
     # 14. Full password reset flow

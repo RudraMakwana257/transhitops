@@ -19,8 +19,8 @@ export function LicenseExpiryAlerts({
   expired: LicenseAlert[] 
 }) {
   const allAlerts = [
-    ...expiring.map(a => ({ ...a, severity: 'warning' as const })),
-    ...expired.map(a => ({ ...a, severity: 'danger' as const }))
+    ...expiring.map((a: any) => ({ ...a, days_remaining: a.days_remaining ?? a.days_left ?? 0, severity: 'warning' as const, status: 'expiring' as const })),
+    ...expired.map((a: any) => ({ ...a, days_remaining: a.days_remaining ?? (a.days_overdue ? -a.days_overdue : 0), severity: 'danger' as const, status: 'expired' as const }))
   ].sort((a, b) => a.days_remaining - b.days_remaining)
   
   if (!allAlerts.length) {
@@ -34,9 +34,9 @@ export function LicenseExpiryAlerts({
   
   return (
     <div className="space-y-3 max-h-96 overflow-y-auto">
-      {allAlerts.slice(0, 5).map(alert => (
+      {allAlerts.slice(0, 5).map((alert: any, idx: number) => (
         <div 
-          key={alert.driver_id} 
+          key={alert.id || alert.driver_id || `${alert.license_number}-${idx}`} 
           className={`flex items-start gap-3 p-3 rounded-xl border ${
             alert.severity === 'danger' 
               ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800' 

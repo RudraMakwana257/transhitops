@@ -7,12 +7,13 @@ class Driver(db.Model):
     
     id = db.Column(db.UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     company_id = db.Column(db.UUID(as_uuid=True), db.ForeignKey('companies.id'), index=True)
+    user_id = db.Column(db.UUID(as_uuid=True), db.ForeignKey('users.id'), nullable=True, index=True)
     name = db.Column(db.String(100), nullable=False)
     license_number = db.Column(db.String(50), unique=True, nullable=False)
     license_category = db.Column(db.String(10), nullable=False)
     license_expiry = db.Column(db.Date, nullable=False)
     phone = db.Column(db.String(20), nullable=False)
-    safety_score = db.Column(db.Numeric(4, 2), default=100.00)
+    safety_score = db.Column(db.Numeric(5, 2), default=100.00)
     status = db.Column(db.String(20), default='Available')
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -33,6 +34,7 @@ class Driver(db.Model):
     def to_dict(self):
         return {
             'id': str(self.id),
+            'user_id': str(self.user_id) if self.user_id else None,
             'name': self.name,
             'license_number': self.license_number,
             'license_category': self.license_category,

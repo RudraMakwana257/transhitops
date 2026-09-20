@@ -19,13 +19,14 @@ def recalculate_health_score(company_id, vehicle_id):
     age_score = calculate_age_score(vehicle)
     cost_score = calculate_cost_score(company_id, vehicle)
     
-    final_score = (
+    raw_final = (
         fuel_score * 0.30 +
         maintenance_score * 0.25 +
         utilization_score * 0.20 +
         age_score * 0.15 +
         cost_score * 0.10
     )
+    final_score = max(0.0, min(100.0, raw_final))
     
     health = VehicleHealth.query.filter_by(vehicle_id=vehicle_id, company_id=company_id).first()
     if not health:
@@ -33,11 +34,11 @@ def recalculate_health_score(company_id, vehicle_id):
         db.session.add(health)
     
     health.health_score = round(final_score, 1)
-    health.fuel_efficiency_score = fuel_score
-    health.maintenance_score = maintenance_score
-    health.utilization_score = utilization_score
-    health.age_score = age_score
-    health.cost_score = cost_score
+    health.fuel_efficiency_score = round(max(0.0, min(100.0, fuel_score)), 1)
+    health.maintenance_score = round(max(0.0, min(100.0, maintenance_score)), 1)
+    health.utilization_score = round(max(0.0, min(100.0, utilization_score)), 1)
+    health.age_score = round(max(0.0, min(100.0, age_score)), 1)
+    health.cost_score = round(max(0.0, min(100.0, cost_score)), 1)
     health.last_calculated = datetime.utcnow()
     
     db.session.commit()
@@ -74,9 +75,9 @@ def calculate_fuel_efficiency_score(company_id, vehicle):
     fleet_avg = float(fleet_distance) / float(fleet_fuel) if fleet_fuel > 0 else 1
     
     if fleet_avg == 0:
-        return 100
+        return 100.0
     
-    score = min(100, (vehicle_avg / fleet_avg) * 100)
+    score = max(0.0, min(100.0, (vehicle_avg / fleet_avg) * 100.0))
     return round(score, 1)
 
 def calculate_maintenance_score(company_id, vehicle):
@@ -89,15 +90,15 @@ def calculate_maintenance_score(company_id, vehicle):
     ).count()
     
     if maint_count == 0:
-        return 100
+        return 100.0
     elif maint_count <= 2:
-        return 80
+        return 80.0
     elif maint_count <= 4:
-        return 60
+        return 60.0
     elif maint_count <= 6:
-        return 40
+        return 40.0
     else:
-        return 20
+        return 20.0
 
 def calculate_utilization_score(company_id, vehicle):
     thirty_days_ago = date.today() - timedelta(days=30)
@@ -117,23 +118,22 @@ def calculate_utilization_score(company_id, vehicle):
     ).count()
     
     total_active_days = trips_on_trip + completed_trips
-    utilization_pct = min(100, (total_active_days / 30) * 100)
+    utilization_pct = max(0.0, min(100.0, (total_active_days / 30.0) * 100.0))
     
     return round(utilization_pct, 1)
 
 def calculate_age_score(vehicle):
     if not vehicle.purchase_date:
-        return 100
+        return 100.0
     
-    age_years = (date.today() - vehicle.purchase_date).days / 365
-    score = max(0, 100 - (age_years * 10))
+    age_years = (date.today() - vehicle.purchase_date).days / 365.0
+    score = max(0.0, min(100.0, 100.0 - (age_years * 10.0)))
     return round(score, 1)
 
 def calculate_cost_score(company_id, vehicle):
     thirty_days_ago = date.today() - timedelta(days=30)
     
-    # Notice: FuelLog model has `cost`, not `total_cost`
-    vehicle_fuel_cost = db.session.query(func.sum(FuelLog.cost)).filter(
+    vehicle_fuel_cost = db.session.query(func.sum(FuelLog.total_cost)).filter(
         FuelLog.company_id == company_id,
         FuelLog.vehicle_id == vehicle.id,
         FuelLog.date >= thirty_days_ago
@@ -147,7 +147,7 @@ def calculate_cost_score(company_id, vehicle):
     
     vehicle_monthly = float(vehicle_fuel_cost) + float(vehicle_maint_cost)
     
-    fleet_fuel = db.session.query(func.sum(FuelLog.cost)).filter(
+    fleet_fuel = db.session.query(func.sum(FuelLog.total_cost)).filter(
         FuelLog.company_id == company_id,
         FuelLog.date >= thirty_days_ago
     ).scalar() or 0
@@ -159,11 +159,11 @@ def calculate_cost_score(company_id, vehicle):
     
     fleet_monthly = float(fleet_fuel) + float(fleet_maint)
     active_count = Vehicle.query.filter_by(company_id=company_id, is_active=True).count()
-    fleet_avg = fleet_monthly / active_count if active_count > 0 else 1
+    fleet_avg = fleet_monthly / active_count if active_count > 0 else 1.0
     
     if fleet_avg == 0:
-        return 100
+        return 100.0
     
     ratio = vehicle_monthly / fleet_avg
-    score = max(0, 100 - ((ratio - 1) * 100))
+    score = max(0.0, min(100.0, 100.0 - ((ratio - 1.0) * 100.0)))
     return round(score, 1)

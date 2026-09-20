@@ -14,11 +14,7 @@ ADMIN_LIMIT = "200 per minute"
 EXPORT_LIMIT = "10 per hour"
 
 def get_client_ip():
-    """Extract true client IP, respecting X-Forwarded-For if behind a proxy."""
-    # Nginx/proxies set this header with a comma-separated list of IPs.
-    # The first IP in the list is the original client IP.
-    if 'X-Forwarded-For' in request.headers:
-        return request.headers['X-Forwarded-For'].split(',')[0].strip()
+    """Extract true client IP normalized via ProxyFix reverse proxy configuration."""
     return get_remote_address()
 
 # Attempt to configure Redis, fallback to in-memory silently if unavailable or fails

@@ -75,7 +75,7 @@ export function DataTable<T extends { id?: string }>({
   stickyHeader = true,
 }: DataTableProps<T>) {
   const [hoveredId, setHoveredId] = useState<string | null>(null)
-  const getRowId = (row: T) => row.id || JSON.stringify(row)
+  const getRowId = (row: T, index?: number) => row.id || (row as any).trip_number || (row as any).vehicle_id || (row as any).driver_id || (index !== undefined ? `row-${index}` : JSON.stringify(row))
   
   const sortedData = useMemo(() => {
     if (!sorting) return data
@@ -111,7 +111,7 @@ export function DataTable<T extends { id?: string }>({
           </TableHeader>
           <TableBody>
             {Array.from({ length: 5 }).map((_, i) => (
-              <TableRow key={i}>
+              <TableRow key={`loading-row-${i}`}>
                 {columns.map(col => (
                   <TableCell key={col.key}>
                     <div className="h-5 bg-muted animate-pulse rounded w-3/4" />
@@ -143,7 +143,7 @@ export function DataTable<T extends { id?: string }>({
   return (
     <div className={tableWrapperClass}>
       <ShadcnTable className="w-full caption-bottom text-sm border-collapse">
-        <TableHeader className={clsx(stickyHeader && 'sticky top-0 z-10 bg-muted/60 backdrop-blur-md border-b border-border/50', 'text-muted-foreground')}>
+        <TableHeader className={clsx(stickyHeader && 'sticky top-0 z-10 bg-muted border-b border-border/50', 'text-muted-foreground')}>
           <TableRow className="border-b-0 hover:bg-transparent">
             {selection && (
               <TableHead className="w-12 px-4 py-3.5" style={{ width: '3rem', minWidth: '3rem', maxWidth: '3rem' }}>
@@ -197,7 +197,7 @@ export function DataTable<T extends { id?: string }>({
         </TableHeader>
         <TableBody>
           {sortedData.map((row, index) => {
-            const rowId = getRowId(row)
+            const rowId = getRowId(row, index)
             const isSelected = selection?.selectedIds.includes(rowId)
             const isHovered = hoveredId === rowId
             

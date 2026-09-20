@@ -127,11 +127,15 @@ export function TripCreate() {
         driver_id: step3Data.driver_id,
       })
       if (res.data.success) {
-        const tripId = res.data.data.trip.id
-        if (dispatch) {
+        const tripId = res.data.data?.id || res.data.data?.trip?.id
+        if (dispatch && tripId) {
           await api.put(`/trips/${tripId}/dispatch`, { confirm: true })
         }
-        navigate(`/trips/${tripId}`)
+        if (tripId) {
+          navigate(`/trips/${tripId}`)
+        } else {
+          navigate('/trips')
+        }
       }
     } catch (err: any) {
       toast(err.response?.data?.message || 'Failed to create trip', 'error')

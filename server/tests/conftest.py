@@ -59,13 +59,60 @@ def app():
         db.session.remove()
         db.drop_all()
 
+from sqlalchemy.orm import scoped_session, sessionmaker
+
 @pytest.fixture(autouse=True)
-def auto_session_teardown():
-    yield
-    try:
-        db.session.rollback()
-    except Exception:
-        pass
+def db_session_isolation(app, seed_data, request):
+    if 'sqlite' in os.environ.get('DATABASE_URL', ''):
+        yield
+        try:
+            db.session.rollback()
+        except Exception:
+            pass
+        try:
+            db.session.remove()
+        except Exception:
+            pass
+        return
+
+    if 'concurrent' in request.node.name:
+        yield
+        with app.app_context():
+            try:
+                from app.models.operational_exception import OperationalException
+                from app.models.driver import Driver
+                OperationalException.query.filter(
+                    OperationalException.title.ilike('%expired%') | OperationalException.type.ilike('%expired%')
+                ).delete(synchronize_session=False)
+                Driver.query.filter_by(name="Concurrent Expired Driver").delete(synchronize_session=False)
+                db.session.commit()
+            except Exception:
+                db.session.rollback()
+            finally:
+                db.session.remove()
+        return
+
+    with app.app_context():
+        conn = db.engine.connect()
+        trans = conn.begin()
+        orig_session = db.session
+        db.session = scoped_session(
+            sessionmaker(bind=conn, join_transaction_mode='create_savepoint')
+        )
+        yield
+        try:
+            db.session.remove()
+        except Exception:
+            pass
+        try:
+            trans.rollback()
+        except Exception:
+            pass
+        try:
+            conn.close()
+        except Exception:
+            pass
+        db.session = orig_session
 
 @pytest.fixture
 def client(app):

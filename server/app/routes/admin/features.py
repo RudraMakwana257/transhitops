@@ -47,11 +47,89 @@ def update_company_features(id):
             
     db.session.commit()
     
-    features = CompanyFeature.query.filter_by(company_id=company.id).all()
-    updated_data = {f.feature_key: f.is_enabled for f in features}
-    
+    updated_features = CompanyFeature.query.filter_by(company_id=company.id).all()
     return jsonify({
-        "success": True, 
-        "data": updated_data,
-        "message": "Company features updated successfully"
+        "success": True,
+        "message": "Company features updated successfully",
+        "data": {f.feature_key: f.is_enabled for f in updated_features}
     })
+    
+# Global Feature Flag catalog with rollout targets
+_GLOBAL_FEATURE_FLAGS = {
+    "exception_engine": {
+        "name": "Exception Engine",
+        "description": "Autonomous detection of route deviations, fuel anomalies, and maintenance alerts",
+        "rollout": "ALL", # ALL, PLAN_BASED, BETA
+        "enabled": True,
+        "plans": ["free", "starter", "growth", "enterprise"]
+    },
+    "advanced_analytics": {
+        "name": "Advanced Analytics & Forecasting",
+        "description": "Historical fuel efficiency trends, vehicle ROI, and cost-per-km metrics",
+        "rollout": "PLAN_BASED",
+        "enabled": True,
+        "plans": ["growth", "enterprise"]
+    },
+    "gps_live_tracking": {
+        "name": "Live GPS Telemetry",
+        "description": "Real-time simulated and hardware GPS tracking with map visualization",
+        "rollout": "ALL",
+        "enabled": True,
+        "plans": ["free", "starter", "growth", "enterprise"]
+    },
+    "predictive_maintenance": {
+        "name": "Predictive Maintenance",
+        "description": "AI-driven component degradation analysis and breakdown prevention",
+        "rollout": "PLAN_BASED",
+        "enabled": False,
+        "plans": ["enterprise"]
+    },
+    "ai_assistant": {
+        "name": "AI Fleet Copilot",
+        "description": "Natural language assistant with tool execution across fleet queries",
+        "rollout": "ALL",
+        "enabled": True,
+        "plans": ["starter", "growth", "enterprise"]
+    },
+    "driver_mobile_app": {
+        "name": "Driver Companion App",
+        "description": "Mobile driver interface for dispatches, proof of delivery, and fuel receipts",
+        "rollout": "PLAN_BASED",
+        "enabled": True,
+        "plans": ["growth", "enterprise"]
+    },
+    "automated_dispatch": {
+        "name": "Automated Dispatch Optimization",
+        "description": "Automated vehicle & driver matching based on eligibility and capacity",
+        "rollout": "BETA",
+        "enabled": True,
+        "plans": ["enterprise"]
+    }
+}
+
+@bp.route('/feature-flags', methods=['GET'])
+@require_roles('super_admin')
+def get_global_feature_flags():
+    return jsonify({
+        "success": True,
+        "data": _GLOBAL_FEATURE_FLAGS
+    })
+
+@bp.route('/feature-flags/<key>', methods=['PUT'])
+@require_roles('super_admin')
+def update_global_feature_flag(key):
+    global _GLOBAL_FEATURE_FLAGS
+    if key not in _GLOBAL_FEATURE_FLAGS:
+        return jsonify({"success": False, "message": "Feature flag not found"}), 404
+        
+    data = request.get_json() or {}
+    for field in ['enabled', 'rollout', 'plans', 'name', 'description']:
+        if field in data:
+            _GLOBAL_FEATURE_FLAGS[key][field] = data[field]
+            
+    return jsonify({
+        "success": True,
+        "data": _GLOBAL_FEATURE_FLAGS[key],
+        "message": f"Feature flag '{key}' updated successfully"
+    })
+

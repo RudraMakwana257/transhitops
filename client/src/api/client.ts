@@ -43,7 +43,9 @@ api.interceptors.response.use(
         // Clear persisted auth state BEFORE navigating
         try { localStorage.removeItem('auth-storage') } catch (_) {}
         useAuthStore.getState().logout()
-        window.location.href = '/login'
+        if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
+          window.location.href = '/login'
+        }
         return Promise.reject(refreshError)
       }
     }
@@ -189,4 +191,6 @@ Object.assign(api, {
     listPlans: async () => (await api.get('/subscription/plans')).data,
     changePlan: async (planIdentifier: string) => (await api.post('/subscription/change-plan', { plan_slug: planIdentifier })).data,
   }
-});
+})
+
+export default api

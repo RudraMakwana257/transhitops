@@ -7,6 +7,21 @@ logger = logging.getLogger(__name__)
 
 def create_notification(company_id: str, user_id: str, title: str, message: str, notification_type: str, entity_type: str = None, entity_id: str = None) -> Notification:
     try:
+        # Check for unread duplicate notification created in last 1 hour
+        if entity_type and entity_id:
+            existing = Notification.query.filter_by(
+                company_id=company_id,
+                user_id=user_id,
+                title=title,
+                entity_type=entity_type,
+                entity_id=entity_id,
+                is_read=False
+            ).first()
+            if existing:
+                existing.message = message
+                db.session.commit()
+                return existing
+
         notification = Notification(
             company_id=company_id,
             user_id=user_id,

@@ -27,6 +27,43 @@ def general_limit():
 @require_company
 @require_feature('drivers')
 def list_drivers():
+    """List fleet drivers with pagination, search, and category filtering.
+    ---
+    tags:
+      - Drivers
+    security:
+      - Bearer: []
+    parameters:
+      - name: page
+        in: query
+        type: integer
+        default: 1
+        description: Page number
+      - name: page_size
+        in: query
+        type: integer
+        default: 20
+        description: Items per page
+      - name: status
+        in: query
+        type: string
+        description: Filter by status (Available, On Trip, Suspended, Off Duty)
+      - name: category
+        in: query
+        type: string
+        description: Filter by license category (e.g. LMV, HMV)
+      - name: search
+        in: query
+        type: string
+        description: Search by name, license number, or phone
+    responses:
+      200:
+        description: Paginated drivers list
+      401:
+        description: Unauthorized
+      403:
+        description: Forbidden
+    """
     page = request.args.get('page', 1, type=int)
     page_size = request.args.get('page_size', 20, type=int)
     search = request.args.get('search', '')
@@ -82,11 +119,55 @@ def get_driver(id):
     driver = Driver.query.filter_by(id=id, company_id=g.company_id).first_or_404()
     return success_response(data=driver.to_dict())
 
+from app.services.quota_service import QuotaService
+
 @bp.route('', methods=['POST'])
 @require_roles('fleet_manager')
 @require_company
 @require_feature('drivers')
 def create_driver():
+    """Register a new driver into the system.
+    ---
+    tags:
+      - Drivers
+    security:
+      - Bearer: []
+    parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          required:
+            - name
+            - license_number
+            - license_category
+            - phone
+          properties:
+            name:
+              type: string
+              example: John Driver
+            license_number:
+              type: string
+              example: DL-1234567890
+            license_category:
+              type: string
+              example: HMV
+            phone:
+              type: string
+              example: "+919876543210"
+            safety_score:
+              type: number
+              example: 95.0
+    responses:
+      201:
+        description: Driver registered successfully
+      400:
+        description: Validation error or license number already exists
+      403:
+        description: Driver quota exceeded or forbidden
+    """
+    QuotaService.enforce_quota(g.company_id, 'drivers')
     data = validate_request(CreateDriverSchema)
     
     if Driver.query.filter_by(company_id=g.company_id, license_number=data['license_number']).first():

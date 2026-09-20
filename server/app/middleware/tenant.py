@@ -136,6 +136,20 @@ def require_company(fn):
         g.company_id = cid              # UUID object
         g.company    = company          # ORM instance — cached for this request
 
+        # ── Subscription Status Access Control ────────────────────────────────
+        from flask import request
+        if request.method in ['POST', 'PUT', 'PATCH', 'DELETE']:
+            exempt_prefixes = ('/api/subscription/checkout', '/api/subscription/change-plan', '/api/auth/')
+            if not request.path.startswith(exempt_prefixes):
+                from app.models.company_subscription import CompanySubscription
+                sub = CompanySubscription.query.filter_by(company_id=cid).first()
+                if sub and sub.status in ['past_due', 'canceled', 'expired']:
+                    return jsonify({
+                        'success': False,
+                        'message': f'Subscription is {sub.status}. Please update billing to perform state-changing operations.',
+                        'error': {'code': 'SUBSCRIPTION_INACTIVE', 'status': sub.status}
+                    }), 402
+
         return fn(*args, **kwargs)
     return wrapper
 
@@ -184,12 +198,8 @@ def require_feature(feature_key: str):
                 except ValueError:
                     cid = company_id
             
-            feature = CompanyFeature.query.filter_by(
-                company_id=cid,
-                feature_key=feature_key,
-            ).first()
-
-            if not feature or not feature.is_enabled:
+            from app.services.quota_service import QuotaService
+            if not QuotaService.is_feature_enabled(cid, feature_key):
                 return jsonify({
                     'success': False,
                     'message': 'This feature is not available on your current plan.',

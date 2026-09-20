@@ -29,12 +29,18 @@ def list_users():
     users = query.order_by(User.created_at.desc()).all()
     return success_response(data=[u.to_dict() for u in users])
 
+from app.services.quota_service import QuotaService
+
 @bp.route('/users', methods=['POST'])
 @require_roles('fleet_manager')
 @require_company
 def create_user():
+    QuotaService.enforce_quota(g.company_id, 'users')
     data = validate_request(CreateUserSchema)
     email = data['email']
+    
+    if data.get('role') == 'super_admin':
+        return error_response(message="Forbidden: Cannot assign super_admin role", status_code=403)
     
     if User.query.filter_by(email=email).first():
         return error_response(message="Email already in use", status_code=409)
@@ -65,6 +71,9 @@ def update_user(id):
         return error_response(message="Resource not found", status_code=404)
         
     data = validate_request(UpdateUserSchema)
+    
+    if data.get('role') == 'super_admin':
+        return error_response(message="Forbidden: Cannot assign super_admin role", status_code=403)
     
     name = data.get('name')
     email = data.get('email')

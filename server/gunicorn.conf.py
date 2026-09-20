@@ -1,8 +1,10 @@
+import os
 import multiprocessing
 
-workers = multiprocessing.cpu_count() * 2 + 1
-worker_class = "sync"
-bind = "0.0.0.0:5000"
+port = os.environ.get("PORT", "5000")
+bind = f"0.0.0.0:{port}"
+workers = min(multiprocessing.cpu_count() * 2 + 1, 4)
+
 timeout = 120
 keepalive = 5
 max_requests = 1000
@@ -11,4 +13,5 @@ accesslog = "-"
 errorlog = "-"
 loglevel = "info"
 capture_output = True
-preload_app = True
+preload_app = False
+

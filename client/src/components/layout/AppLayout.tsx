@@ -19,6 +19,8 @@ const navItems = [
   { label: 'Settings', icon: Settings, path: '/settings', roles: ['fleet_manager'] },
 ]
 
+import { ImpersonationBanner } from './ImpersonationBanner'
+
 export function AppLayout() {
   const { user, logout } = useAuth()
   const { sidebarOpen, setSidebarOpen, toggleSidebar } = useUIStore()
@@ -31,9 +33,11 @@ export function AppLayout() {
   const filteredNav = navItems.filter(item => item.roles.includes(user?.role || ''))
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex overflow-hidden">
-      {/* Sidebar */}
-      <aside className={`fixed inset-y-0 left-0 z-40 w-64 bg-card border-r border-border transition-all duration-300 ease-in-out ${sidebarOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'} lg:translate-x-0 lg:shadow-none flex flex-col`}>
+    <div className="min-h-screen bg-background text-foreground flex flex-col">
+      <ImpersonationBanner />
+      <div className="flex-1 flex overflow-hidden pt-[var(--banner-offset,0px)]">
+        {/* Sidebar */}
+        <aside className={`fixed top-0 bottom-0 left-0 z-40 w-64 bg-card border-r border-border transition-all duration-300 ease-in-out ${sidebarOpen ? 'translate-x-0 shadow-xl' : '-translate-x-full'} lg:translate-x-0 lg:shadow-none flex flex-col`}>
         {/* Logo */}
         <div className="flex items-center gap-3 h-16 px-6 border-b border-border bg-card/50 backdrop-blur-sm">
           <div className="w-8 h-8 bg-primary rounded-xl flex items-center justify-center shadow-sm shadow-primary/20">
@@ -139,7 +143,7 @@ export function AppLayout() {
             >
               <Bell className="w-5 h-5" />
               {unreadCount > 0 && (
-                <span className="absolute 2 top-1.5 right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[9px] font-bold text-destructive-foreground border-2 border-background animate-pulse">
+                <span className="absolute top-1.5 right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[9px] font-bold text-destructive-foreground border-2 border-background animate-pulse">
                   {unreadCount > 99 ? '99+' : unreadCount}
                 </span>
               )}
@@ -168,6 +172,8 @@ export function AppLayout() {
 
       <NotificationPanel open={showNotifications} onClose={() => setShowNotifications(false)} unreadCount={unreadCount} setUnreadCount={setUnreadCount} />
       <AIChatPanel open={showAIChat} onClose={() => setShowAIChat(false)} />
+      </div>
     </div>
   )
 }
+

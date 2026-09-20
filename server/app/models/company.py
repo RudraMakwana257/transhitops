@@ -17,7 +17,9 @@ class Company(db.Model):
     email = db.Column(db.String(150))
     timezone = db.Column(db.String(50))
     language = db.Column(db.String(20))
-    currency = db.Column(db.String(10))
+    currency = db.Column(db.String(10), default='USD')
+    distance_unit = db.Column(db.String(10), default='km')
+    fuel_unit = db.Column(db.String(10), default='liters')
     is_active = db.Column(db.Boolean, default=True)
     trial_ends_at = db.Column(db.DateTime)
     vehicle_limit = db.Column(db.Integer, default=0)
@@ -54,7 +56,9 @@ class Company(db.Model):
             'email': self.email,
             'timezone': self.timezone,
             'language': self.language,
-            'currency': self.currency,
+            'currency': self.currency or 'USD',
+            'distance_unit': self.distance_unit or 'km',
+            'fuel_unit': self.fuel_unit or 'liters',
             'is_active': self.is_active,
             'trial_ends_at': self.trial_ends_at.isoformat() if self.trial_ends_at else None,
             'vehicle_limit': self.vehicle_limit,

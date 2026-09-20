@@ -21,6 +21,8 @@ class Trip(db.Model):
     fuel_consumed_l = db.Column(db.Numeric(10, 2))
     revenue = db.Column(db.Numeric(12, 2), default=0)
     notes = db.Column(db.Text)
+    waypoints = db.Column(db.JSON, default=list)
+    pod_details = db.Column(db.JSON, default=dict)
     dispatched_at = db.Column(db.DateTime)
     completed_at = db.Column(db.DateTime)
     cancelled_at = db.Column(db.DateTime)
@@ -49,6 +51,8 @@ class Trip(db.Model):
             'fuel_consumed_l': float(self.fuel_consumed_l) if self.fuel_consumed_l else None,
             'revenue': float(self.revenue) if self.revenue else 0,
             'notes': self.notes,
+            'waypoints': self.waypoints or [],
+            'pod_details': self.pod_details or {},
             'dispatched_at': self.dispatched_at.isoformat() if self.dispatched_at else None,
             'completed_at': self.completed_at.isoformat() if self.completed_at else None,
             'cancelled_at': self.cancelled_at.isoformat() if self.cancelled_at else None,

@@ -19,7 +19,7 @@ interface OnboardingStatus {
 }
 
 export function OnboardingChecklist() {
-  const { user } = useAuth()
+  const { user, token, isAuthenticated } = useAuth()
   const navigate = useNavigate()
   const [status, setStatus] = useState<OnboardingStatus | null>(null)
   const [dismissed, setDismissed] = useState(false)
@@ -29,15 +29,15 @@ export function OnboardingChecklist() {
   const isSuperAdmin = user?.role === 'super_admin'
 
   useEffect(() => {
-    if (isSuperAdmin || dismissed) return
+    if (!isAuthenticated || !token || !user || isSuperAdmin || dismissed) return
     
     let isMounted = true
 
     const fetchStatus = async () => {
       try {
         const res = await api.get('/onboarding/status')
-        const data = res.data
-        if (!isMounted) return
+        const data = res.data?.data || res.data
+        if (!isMounted || !data) return
 
         setStatus(data)
 
@@ -46,20 +46,22 @@ export function OnboardingChecklist() {
           setTimeout(() => {
             setShowCelebration(false)
             setDismissed(true)
-            api.patch('/onboarding/complete')
+            api.patch('/onboarding/complete').catch(() => {})
           }, 3000)
         }
-      } catch (error) {
-        console.error('Failed to fetch onboarding status:', error)
+      } catch (error: any) {
+        if (error?.response?.status !== 401) {
+          console.warn('Failed to fetch onboarding status:', error?.message || error)
+        }
       }
     }
     
     fetchStatus()
 
     return () => { isMounted = false }
-  }, [isSuperAdmin, dismissed])
+  }, [isAuthenticated, token, user, isSuperAdmin, dismissed])
 
-  if (isSuperAdmin || dismissed || !status || status.completed) return null
+  if (isSuperAdmin || dismissed || !status || !status.steps || status.completed) return null
 
   if (showCelebration) {
     return (
@@ -72,11 +74,11 @@ export function OnboardingChecklist() {
   }
 
   const steps = [
-    { key: 'account_created', icon: User, title: 'Account created', desc: 'Welcome aboard!', link: null, done: status.steps.account_created },
-    { key: 'vehicle_added', icon: Truck, title: 'Add your first vehicle', desc: 'Add a truck or van to your fleet.', link: '/vehicles', done: status.steps.vehicle_added },
-    { key: 'driver_added', icon: Users, title: 'Add your first driver', desc: 'Add driver details and license.', link: '/drivers', done: status.steps.driver_added },
-    { key: 'trip_created', icon: MapPin, title: 'Create your first trip', desc: 'Dispatch your first active trip.', link: '/trips', done: status.steps.trip_created },
-    { key: 'profile_completed', icon: User, title: 'Complete your profile', desc: 'Add company address and phone.', link: '/settings', done: status.steps.profile_completed },
+    { key: 'account_created', icon: User, title: 'Account created', desc: 'Welcome aboard!', link: null, done: Boolean(status?.steps?.account_created) },
+    { key: 'vehicle_added', icon: Truck, title: 'Add your first vehicle', desc: 'Add a truck or van to your fleet.', link: '/vehicles', done: Boolean(status?.steps?.vehicle_added) },
+    { key: 'driver_added', icon: Users, title: 'Add your first driver', desc: 'Add driver details and license.', link: '/drivers', done: Boolean(status?.steps?.driver_added) },
+    { key: 'trip_created', icon: MapPin, title: 'Create your first trip', desc: 'Dispatch your first active trip.', link: '/trips', done: Boolean(status?.steps?.trip_created) },
+    { key: 'profile_completed', icon: User, title: 'Complete your profile', desc: 'Add company address and phone.', link: '/settings', done: Boolean(status?.steps?.profile_completed) },
   ]
 
   const completedCount = steps.filter(s => s.done).length
@@ -100,7 +102,7 @@ export function OnboardingChecklist() {
               <span className="text-foreground">Setup Progress</span>
               <span className="text-primary">{completedCount} of 5 steps complete</span>
             </div>
-            <div className="w-full hover:bg-accent hover:text-accent-foreground rounded-full h-2.5 overflow-hidden border border-border">
+            <div className="w-full bg-muted rounded-full h-2.5 overflow-hidden border border-border">
               <div 
                 className="bg-primary h-2.5 rounded-full transition-all duration-500 ease-out"
                 style={{ width: `${status.completion_percentage}%` }}

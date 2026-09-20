@@ -10,18 +10,19 @@ import { useAuth } from '../store/authStore'
 import { useUIStore } from '../store/uiStore'
 
 const loginSchema = z.object({
-  email: z.string().email('Invalid email address'),
-  password: z.string().min(8, 'Password must be at least 8 characters'),
+  email: z.string().min(1, 'Email or username is required'),
+  password: z.string().min(1, 'Password is required'),
   remember_me: z.boolean().optional(),
 })
 
 type LoginForm = z.infer<typeof loginSchema>
 
 const demos = [
-  { role: 'Fleet Manager', email: 'manager@transitops.com' },
-  { role: 'Dispatcher', email: 'dispatcher@transitops.com' },
-  { role: 'Safety Officer', email: 'safety@transitops.com' },
-  { role: 'Financial Analyst', email: 'finance@transitops.com' },
+  { role: 'Super Admin', email: 'admin@transitops.com', password: 'SuperAdmin@123', color: '#EF4444' },
+  { role: 'Fleet Manager', email: 'manager@transitops.com', password: 'Admin@123', color: '#D98E04' },
+  { role: 'Dispatcher', email: 'dispatcher@transitops.com', password: 'Admin@123', color: '#3B82F6' },
+  { role: 'Safety Officer', email: 'safety@transitops.com', password: 'Admin@123', color: '#22C55E' },
+  { role: 'Financial Analyst', email: 'finance@transitops.com', password: 'Admin@123', color: '#8B5CF6' },
 ]
 
 export function Login() {
@@ -62,9 +63,9 @@ export function Login() {
     }
   }
 
-  const fillDemo = (email: string) => {
+  const fillDemo = (email: string, password?: string) => {
     setValue('email', email)
-    setValue('password', 'Admin@123')
+    setValue('password', password || 'Admin@123')
   }
 
   return (
@@ -169,32 +170,40 @@ export function Login() {
               <Button type="submit" className="w-full" loading={loading} loadingText="Signing in...">
                 Sign In
               </Button>
+
+              <div className="text-center mt-3 text-xs text-muted-foreground">
+                Don't have an account?{' '}
+                <Link to="/register" className="font-medium text-amber-500 hover:text-amber-600 transition-colors">
+                  Create Organization
+                </Link>
+              </div>
             </form>
           </div>
 
-          {/* Demo Quick Fill */}
-          <div className="mt-6">
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3 text-center">Quick fill demo account</p>
-            <div className="grid grid-cols-2 gap-2">
-              {demos.map((d, i) => {
-                const colors = ['#D98E04', '#3B82F6', '#22C55E', '#8B5CF6']
-                return (
-                  <button
-                    key={d.email}
-                    type="button"
-                    onClick={() => fillDemo(d.email)}
-                    className="text-left px-3 py-2.5 rounded-xl border border-border bg-card hover:hover:bg-accent hover:text-accent-foreground hover:border-border transition-all cursor-pointer group"
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: colors[i] }} />
-                      <p className="text-xs font-medium text-foreground truncate">{d.role}</p>
-                    </div>
-                    <p className="text-[10px] text-muted-foreground truncate mt-0.5 pl-4">{d.email}</p>
-                  </button>
-                )
-              })}
+          {/* Demo Quick Fill (Disabled by default in production) */}
+          {(import.meta.env.VITE_ENABLE_DEMO_LOGIN === 'true' || import.meta.env.DEV) && (
+            <div className="mt-6">
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3 text-center">Quick fill demo account</p>
+              <div className="grid grid-cols-2 gap-2">
+                {demos.map((d) => {
+                  return (
+                    <button
+                      key={d.email}
+                      type="button"
+                      onClick={() => fillDemo(d.email, d.password)}
+                      className="text-left px-3 py-2.5 rounded-xl border border-border bg-card hover:hover:bg-accent hover:text-accent-foreground hover:border-border transition-all cursor-pointer group"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: d.color }} />
+                        <p className="text-xs font-medium text-foreground truncate">{d.role}</p>
+                      </div>
+                      <p className="text-[10px] text-muted-foreground truncate mt-0.5 pl-4">{d.email}</p>
+                    </button>
+                  )
+                })}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
 

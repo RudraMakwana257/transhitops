@@ -230,6 +230,8 @@ class UpdateTripSchema(Schema):
     class Meta:
         unknown = EXCLUDE
 
+    vehicle_id = fields.UUID(load_default=None)
+    driver_id = fields.UUID(load_default=None)
     status = fields.String(
         load_default=None,
         validate=validate.OneOf(

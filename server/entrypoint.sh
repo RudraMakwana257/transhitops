@@ -17,8 +17,8 @@ for i in range(max_retries):
         conn.close()
         print("Database is ready!")
         break
-    except psycopg2.OperationalError:
-        print(f"Database not ready, retrying in {retry_interval}s... ({i+1}/{max_retries})")
+    except Exception as e:
+        print(f"Database not ready ({e}), retrying in {retry_interval}s... ({i+1}/{max_retries})")
         time.sleep(retry_interval)
 else:
     print("Database never became ready. Exiting.")

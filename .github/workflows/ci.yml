@@ -1,0 +1,93 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    name: Lint, Test & Validate
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: transitops_test
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r server/requirements.txt
+          pip install pytest pytest-cov
+
+      - name: Validate Alembic Migrations on Fresh Database
+        env:
+          DATABASE_URL: postgresql://test_user:test_password@localhost:5432/transitops_test
+          SECRET_KEY: ci-test-secret-key-64-character-string-placeholder-value
+          JWT_SECRET_KEY: ci-test-jwt-secret-key-64-character-string-placeholder-value
+        run: |
+          cd server
+          flask db upgrade
+
+      - name: Run Pytest Test Suite
+        env:
+          DATABASE_URL: postgresql://test_user:test_password@localhost:5432/transitops_test
+          TEST_DATABASE_URL: postgresql://test_user:test_password@localhost:5432/transitops_test
+          POSTGRES_SERVER: localhost
+          POSTGRES_DB: transitops_test
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_password
+          SECRET_KEY: ci-test-secret-key-64-character-string-placeholder-value
+          JWT_SECRET_KEY: ci-test-jwt-secret-key-64-character-string-placeholder-value
+          GROQ_API_KEY: gsk_dummy_test_key
+        run: |
+          cd server
+          python -m pytest --cov=app --cov-report=xml
+
+      - name: Upload Coverage
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./server/coverage.xml
+
+  frontend_build:
+    name: Frontend Build & Validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Frontend Dependencies
+        run: |
+          cd client
+          npm ci || npm install
+
+      - name: Run Frontend Production Build
+        run: |
+          cd client
+          npm run build
+
+

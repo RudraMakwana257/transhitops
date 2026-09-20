@@ -84,7 +84,7 @@ export function FilterBar({
       <div className="flex flex-wrap items-end gap-2 sm:gap-3 flex-1 sm:flex-none">
         {fields.map(field => {
           const val = getFieldValue(field.key)
-          const handleChange = (v: string) => handleFieldChange(field.key, v)
+          const handleChange = (v: any) => handleFieldChange(field.key, v)
 
           return (
             <div key={field.key} className={clsx(field.className || 'min-w-0')}>
@@ -118,10 +118,26 @@ export function FilterBar({
                 <div className="flex items-center gap-1.5">
                   <Input
                     type="date"
-                    value={val}
-                    onChange={(e) => handleChange(e.target.value)}
+                    value={Array.isArray(val) ? val[0] || '' : val || ''}
+                    onChange={(e) => {
+                      const current = Array.isArray(val) ? [...val] : [val || '', '']
+                      current[0] = e.target.value
+                      handleChange(current)
+                    }}
                     className="w-32 sm:w-36"
                     placeholder="From"
+                  />
+                  <span className="text-xs text-muted-foreground">to</span>
+                  <Input
+                    type="date"
+                    value={Array.isArray(val) ? val[1] || '' : ''}
+                    onChange={(e) => {
+                      const current = Array.isArray(val) ? [...val] : [val || '', '']
+                      current[1] = e.target.value
+                      handleChange(current)
+                    }}
+                    className="w-32 sm:w-36"
+                    placeholder="To"
                   />
                 </div>
               )}

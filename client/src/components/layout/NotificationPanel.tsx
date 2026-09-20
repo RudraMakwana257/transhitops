@@ -33,9 +33,11 @@ export function NotificationPanel({ open, onClose, unreadCount, setUnreadCount }
     if (open && notifications.length === 0) setLoading(true)
     try {
       const res = await api.notifications.list()
-      if (res.success) {
-        setNotifications(res.data.slice(0, 10))
-        setUnreadCount(res.data.filter((n: Notification) => !n.is_read).length)
+      if (res && res.success) {
+        const raw = res.data?.items || res.data || []
+        const list = Array.isArray(raw) ? raw : []
+        setNotifications(list.slice(0, 10))
+        setUnreadCount(list.filter((n: Notification) => !n.is_read).length)
       }
     } catch {
       // Silently fail as requested (e.g. if 404)
@@ -82,7 +84,7 @@ export function NotificationPanel({ open, onClose, unreadCount, setUnreadCount }
             {unreadCount > 0 && (
               <button onClick={markAllRead} className="text-xs text-primary hover:underline mr-2 font-medium">Mark all read</button>
             )}
-            <button onClick={onClose} className="p-2 rounded-xl hover:hover:bg-accent hover:text-accent-foreground"><X className="w-5 h-5" /></button>
+            <button onClick={onClose} className="p-2 rounded-xl hover:bg-accent hover:text-accent-foreground"><X className="w-5 h-5" /></button>
           </div>
         </div>
         <div className="overflow-y-auto h-[calc(100%-4rem)] p-4 space-y-4">

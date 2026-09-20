@@ -27,6 +27,11 @@ def create_app():
     jwt.init_app(app)
     migrate.init_app(app, db)
 
+    @jwt.token_in_blocklist_loader
+    def check_if_token_revoked(jwt_header, jwt_payload):
+        from app.services.token_blocklist import is_token_blocked
+        return is_token_blocked(jwt_payload.get('jti'))
+
     @app.teardown_request
     def teardown_request(exception=None):
         if exception:
@@ -38,10 +43,33 @@ def create_app():
     from app.middleware.security_headers import init_security_headers
     from app.middleware.request_logger import init_request_logger
     from app.middleware.rate_limiter import limiter
+    from werkzeug.middleware.proxy_fix import ProxyFix
     
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
     init_security_headers(app)
     init_request_logger(app)
     limiter.init_app(app)
+
+    # Optional OpenTelemetry Instrumentation
+    otel_endpoint = os.environ.get('OPENTELEMETRY_EXPORTER_ENDPOINT')
+    if otel_endpoint:
+        try:
+            from opentelemetry import trace
+            from opentelemetry.sdk.trace import TracerProvider
+            from opentelemetry.sdk.trace.export import BatchSpanProcessor
+            from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+            from opentelemetry.sdk.resources import Resource
+            from opentelemetry.instrumentation.flask import FlaskInstrumentor
+
+            resource = Resource.create({"service.name": "transitops-backend"})
+            provider = TracerProvider(resource=resource)
+            processor = BatchSpanProcessor(OTLPSpanExporter(endpoint=otel_endpoint, insecure=True))
+            provider.add_span_processor(processor)
+            trace.set_tracer_provider(provider)
+            FlaskInstrumentor().instrument_app(app)
+        except Exception as otel_err:
+            import logging
+            logging.getLogger('transitops').warning(f"Failed to initialize OpenTelemetry: {otel_err}")
 
     from app.routes.admin import bp as admin_bp
     app.register_blueprint(admin_bp)
@@ -66,13 +94,16 @@ def create_app():
     app.register_blueprint(shipments.bp)
     app.register_blueprint(attachments.bp)
     app.register_blueprint(driver_portal.bp)
+    
+    from app.routes.admin.announcements import public_ann_bp
+    app.register_blueprint(public_ann_bp)
 
     import os
     env = os.environ.get('FLASK_ENV', 'development').lower()
     cors_origins_raw = os.environ.get('CORS_ORIGINS')
     if env == 'production':
-        if not cors_origins_raw:
-            raise RuntimeError("CRITICAL CONFIGURATION ERROR: CORS_ORIGINS environment variable is required in production.")
+        if not cors_origins_raw or any(p in cors_origins_raw.lower() for p in ['<replace', 'replace-with', 'changeme']):
+            raise RuntimeError("CRITICAL CONFIGURATION ERROR: CORS_ORIGINS environment variable is required in production and cannot be a placeholder.")
         cors_origins = [o.strip() for o in cors_origins_raw.split(',') if o.strip()]
     else:
         if cors_origins_raw:
@@ -137,6 +168,10 @@ def create_app():
     from app.services.quota_service import QuotaExceededException
     @app.errorhandler(QuotaExceededException)
     def handle_quota_exceeded(e):
+        try:
+            db.session.rollback()
+        except Exception:
+            pass
         return jsonify({
             "success": False,
             "error": {
@@ -214,5 +249,42 @@ def create_app():
 
     from app.commands.seed_demo import register_commands
     register_commands(app)
+
+    # API Documentation (Swagger / OpenAPI via Flasgger)
+    # TODO: document remaining routes following the pattern established in auth, vehicles, trips, and drivers blueprints
+    from flasgger import Swagger
+    swagger_config = {
+        "headers": [],
+        "specs": [
+            {
+                "endpoint": 'apispec',
+                "route": '/apispec.json',
+                "rule_filter": lambda rule: True,
+                "model_filter": lambda tag: True,
+            }
+        ],
+        "static_url_path": "/flasgger_static",
+        "swagger_ui": True,
+        "specs_route": "/apidocs/"
+    }
+    swagger_template = {
+        "swagger": "2.0",
+        "info": {
+            "title": "TransitOps Intelligent Fleet Operations Center API",
+            "description": "Interactive OpenAPI documentation for TransitOps backend services.",
+            "version": "1.0.0"
+        },
+        "basePath": "/",
+        "schemes": ["http", "https"],
+        "securityDefinitions": {
+            "Bearer": {
+                "type": "apiKey",
+                "name": "Authorization",
+                "in": "header",
+                "description": "JWT Authorization header using Bearer scheme. Format: Bearer <token>"
+            }
+        }
+    }
+    Swagger(app, config=swagger_config, template=swagger_template)
 
     return app

@@ -243,6 +243,8 @@ temp/
 .env.local
 .env.production
 server/.env
+server/.env.production.local
+server/.env*.local
 client/.env
 client/.env.production
 

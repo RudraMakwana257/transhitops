@@ -23,10 +23,10 @@
     --accent-foreground: 222.2 47.4% 11.2%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
+    --border: 214.3 31.8% 90%;
+    --input: 214.3 31.8% 90%;
     --ring: 38 92% 50%;
-    --radius: 0.75rem;
+    --radius: 0.5rem;
 
     /* Legacy Mappings to ensure older hardcoded classes map to Shadcn */
     --bg-page: hsl(var(--background));

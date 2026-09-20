@@ -23,7 +23,7 @@ def general_limit():
     pass
 
 @bp.route('', methods=['GET'])
-@require_roles('fleet_manager', 'financial_analyst')
+@require_roles('fleet_manager', 'dispatcher', 'financial_analyst')
 @require_company
 @require_feature('expenses')
 def list_expenses():
@@ -54,7 +54,7 @@ def list_expenses():
     })
 
 @bp.route('/summary', methods=['GET'])
-@require_roles('fleet_manager', 'financial_analyst')
+@require_roles('fleet_manager', 'dispatcher', 'financial_analyst')
 @require_company
 @require_feature('expenses')
 def expenses_summary():
@@ -62,7 +62,7 @@ def expenses_summary():
     return success_response(data={"total_expenses": float(total)})
 
 @bp.route('/<id>', methods=['GET'])
-@require_roles('fleet_manager', 'financial_analyst')
+@require_roles('fleet_manager', 'dispatcher', 'financial_analyst')
 @require_company
 @require_feature('expenses')
 def get_expense(id):

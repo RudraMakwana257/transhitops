@@ -17,6 +17,13 @@ from app.models.company_subscription import CompanySubscription
 from app.models.subscription_plan import SubscriptionPlan
 from app.models.login_attempt import LoginAttempt
 from app.models.password_reset_token import PasswordResetToken
+from app.models.operational_exception import OperationalException
+from app.models.customer import Customer
+from app.models.shipment import Shipment
+from app.models.shipment_item import ShipmentItem
+from app.models.file_metadata import FileMetadata
+from app.models.webhook_log import WebhookLog
+from app.models.manual_payment import ManualPayment
 
 __all__ = [
     "Company",
@@ -37,4 +44,11 @@ __all__ = [
     "SubscriptionPlan",
     "LoginAttempt",
     "PasswordResetToken",
+    "OperationalException",
+    "Customer",
+    "Shipment",
+    "ShipmentItem",
+    "FileMetadata",
+    "WebhookLog",
+    "ManualPayment",
 ]

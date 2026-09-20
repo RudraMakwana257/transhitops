@@ -34,7 +34,7 @@ SECURITY_TEMPLATE = (
 BUSINESS_RULES_TEMPLATE = (
     "BUSINESS RULES:\n"
     "1. Be concise. Use bullet points for lists.\n"
-    "2. Format currency as ₹X,XXX, distance as XXX km, and fuel as XX.X L.\n"
+    "2. Format currency as {currency_symbol}X,XXX, distance as XXX {distance_unit}, and fuel as XX.X {fuel_unit}.\n"
     "3. Keep responses under 200 words unless detailed analysis is explicitly requested."
 )
 
@@ -86,9 +86,14 @@ def build_security_layer() -> str:
     return SECURITY_TEMPLATE
 
 
-def build_business_rules_layer() -> str:
+def build_business_rules_layer(currency: str = 'USD', distance_unit: str = 'km', fuel_unit: str = 'liters') -> str:
     """Layer 3: Business Constraints."""
-    return BUSINESS_RULES_TEMPLATE
+    currency_symbol = '$' if currency == 'USD' else ('€' if currency == 'EUR' else ('£' if currency == 'GBP' else ('₹' if currency == 'INR' else currency)))
+    return BUSINESS_RULES_TEMPLATE.format(
+        currency_symbol=currency_symbol,
+        distance_unit=distance_unit or 'km',
+        fuel_unit=fuel_unit or 'liters'
+    )
 
 
 def build_tenant_context_layer(
@@ -271,7 +276,11 @@ def build_system_prompt(
 
     identity_block = build_identity_layer()
     security_block = build_security_layer()
-    business_rules_block = build_business_rules_layer()
+    business_rules_block = build_business_rules_layer(
+        currency=ctx.get("currency", "USD"),
+        distance_unit=ctx.get("distance_unit", "km"),
+        fuel_unit=ctx.get("fuel_unit", "liters")
+    )
     
     tenant_block = build_tenant_context_layer(
         today=ctx.get("today", "Today"),

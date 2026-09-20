@@ -62,7 +62,7 @@ export function AIChatPanel({ open, onClose }: { open: boolean; onClose: () => v
                   <p className="text-xs text-muted-foreground">AI-powered help</p>
                 </div>
               </div>
-              <button onClick={onClose} className="p-1.5 rounded-xl hover:hover:bg-accent hover:text-accent-foreground">
+              <button onClick={onClose} className="p-1.5 rounded-xl hover:bg-accent hover:text-accent-foreground">
                 <X className="w-5 h-5 text-foreground" />
               </button>
             </div>
@@ -79,7 +79,7 @@ export function AIChatPanel({ open, onClose }: { open: boolean; onClose: () => v
                     <button
                       key={i}
                       onClick={() => sendMessage(s)}
-                      className="block w-full text-left p-2.5 rounded-xl border border-border text-sm text-foreground hover:hover:bg-accent hover:text-accent-foreground transition-colors"
+                      className="block w-full text-left p-2.5 rounded-xl border border-border text-sm text-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
                     >
                       {s}
                     </button>

@@ -10,6 +10,10 @@ from app.models.fuel_log import FuelLog
 from app.models.expense import Expense
 from app.models.maintenance_log import MaintenanceLog
 from app.models.notification import Notification
+from app.models.company_subscription import CompanySubscription
+from app.models.company_feature import CompanyFeature
+from app.models.subscription_plan import SubscriptionPlan
+from app.services.quota_service import QuotaService
 import random
 from datetime import datetime, timedelta
 
@@ -21,6 +25,8 @@ def register_commands(app):
         existing_company = Company.query.filter_by(name="Demo Fleet Co").first()
         if existing_company:
             # Delete all related records first to avoid foreign key constraints
+            CompanyFeature.query.filter_by(company_id=existing_company.id).delete()
+            CompanySubscription.query.filter_by(company_id=existing_company.id).delete()
             Notification.query.filter_by(company_id=existing_company.id).delete()
             Expense.query.filter_by(company_id=existing_company.id).delete()
             FuelLog.query.filter_by(company_id=existing_company.id).delete()
@@ -45,18 +51,44 @@ def register_commands(app):
         db.session.add(company)
         db.session.flush()
 
-        # Create 1 fleet_manager login
-        user = User(
-            company_id=company.id,
-            name="Demo Fleet Manager",
-            email="demo@transitops.com",
-            role="fleet_manager",
-            is_active=True,
-            onboarding_completed=True
-        )
-        user.set_password("Demo@12345")
-        db.session.add(user)
+        # Attach Enterprise subscription plan
+        enterprise_plan = SubscriptionPlan.query.filter_by(slug='enterprise').first()
+        if not enterprise_plan:
+            enterprise_plan = SubscriptionPlan.query.filter_by(is_active=True).first()
+        if enterprise_plan:
+            sub = CompanySubscription(
+                company_id=company.id,
+                plan_id=enterprise_plan.id,
+                status='active',
+                current_period_start=datetime.utcnow(),
+                current_period_end=datetime.utcnow() + timedelta(days=365)
+            )
+            db.session.add(sub)
+            QuotaService.sync_company_features(company.id, enterprise_plan)
+
+        # Create demo logins
+        demo_users = [
+            ("Demo Fleet Manager", "demo@transitops.com", "fleet_manager", "Demo@12345"),
+            ("Fleet Manager", "manager@transitops.com", "fleet_manager", "Admin@123"),
+            ("Dispatcher", "dispatcher@transitops.com", "dispatcher", "Admin@123"),
+            ("Safety Officer", "safety@transitops.com", "safety_officer", "Admin@123"),
+            ("Financial Analyst", "finance@transitops.com", "financial_analyst", "Admin@123"),
+        ]
+        created_users = []
+        for name, email, role, pwd in demo_users:
+            u = User(
+                company_id=company.id,
+                name=name,
+                email=email,
+                role=role,
+                is_active=True,
+                onboarding_completed=True
+            )
+            u.set_password(pwd)
+            db.session.add(u)
+            created_users.append(u)
         db.session.flush()
+        user = created_users[0]
 
         # Create 8 vehicles
         vehicles = []
@@ -178,3 +210,10 @@ def register_commands(app):
 
         db.session.commit()
         click.echo("Demo Fleet Co created successfully")
+
+    @app.cli.command("run-scheduler")
+    def run_scheduler():
+        """Runs the background exception scheduler process in standalone mode."""
+        from app.services.scheduler import _run_scheduled_exception_scans
+        click.echo("Starting TransitOps Standalone Background Scheduler Process...")
+        _run_scheduled_exception_scans(app, interval_seconds=300)

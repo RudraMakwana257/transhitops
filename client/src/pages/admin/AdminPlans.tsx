@@ -3,7 +3,7 @@ import { useAdminStore } from '../../stores/adminStore'
 import { Card } from '../../components/ui/CardWrapper'
 import { Button } from '../../components/ui/ButtonWrapper'
 import { Input } from '../../components/ui/InputWrapper'
-import { Package, Plus, Edit2 } from 'lucide-react'
+import { Package, Plus, Edit2, CheckCircle2, XCircle } from 'lucide-react'
 
 export function AdminPlans() {
   const { plans, loading, fetchPlans, createPlan, updatePlan } = useAdminStore()
@@ -74,71 +74,83 @@ export function AdminPlans() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="space-y-6 animate-in fade-in duration-300">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Subscription Plans</h1>
-          <p className="text-slate-500 mt-1">Manage pricing tiers and platform features</p>
+          <h1 className="text-2xl sm:text-3xl font-black text-foreground tracking-tight">Subscription Tiers</h1>
+          <p className="text-muted-foreground mt-1 text-sm">Configure pricing structures, license quotas, and tier availability</p>
         </div>
-        <Button onClick={handleNew} disabled={isCreating} className="gap-2">
+        <Button onClick={handleNew} disabled={isCreating} className="gap-2 font-semibold">
           <Plus className="w-4 h-4" />
-          New Plan
+          <span>New Plan</span>
         </Button>
       </div>
 
       {(isCreating || editingId) && (
-        <Card className="p-6 border-indigo-200 bg-indigo-50/30">
-          <h2 className="text-lg font-semibold text-slate-900 mb-4">
-            {isCreating ? 'Create New Plan' : 'Edit Plan'}
+        <Card className="p-6 border-primary/30 bg-primary/5 shadow-sm animate-in slide-in-from-top-4 duration-200">
+          <h2 className="text-base font-bold text-foreground mb-4">
+            {isCreating ? 'Create New Pricing Tier' : 'Edit Pricing Tier'}
           </h2>
-          <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+          <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
             <Input label="Plan Name" name="name" value={formData.name} onChange={handleChange} required />
-            <Input label="Slug (unique)" name="slug" value={formData.slug} onChange={handleChange} required />
-            <Input label="Monthly Price" type="number" step="0.01" name="price_monthly" value={formData.price_monthly} onChange={handleChange} required />
-            <Input label="Yearly Price" type="number" step="0.01" name="price_yearly" value={formData.price_yearly} onChange={handleChange} required />
+            <Input label="Slug Identifier" name="slug" value={formData.slug} onChange={handleChange} required />
+            <Input label="Monthly Price ($)" type="number" step="0.01" name="price_monthly" value={formData.price_monthly} onChange={handleChange} required />
+            <Input label="Yearly Price ($)" type="number" step="0.01" name="price_yearly" value={formData.price_yearly} onChange={handleChange} required />
             
-            <div className="flex items-center gap-2 h-10">
-              <input type="checkbox" id="is_active" name="is_active" checked={formData.is_active} onChange={handleChange} className="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500" />
-              <label htmlFor="is_active" className="text-sm font-medium text-slate-700">Active (Available)</label>
+            <div className="flex items-center gap-2 h-10 px-2">
+              <input 
+                type="checkbox" 
+                id="is_active" 
+                name="is_active" 
+                checked={formData.is_active} 
+                onChange={handleChange} 
+                className="w-4 h-4 text-primary rounded border-input focus:ring-primary accent-primary" 
+              />
+              <label htmlFor="is_active" className="text-xs font-semibold text-foreground cursor-pointer">Available to Tenants</label>
             </div>
             
-            <div className="lg:col-span-3 flex justify-end gap-3">
-              <Button type="button" variant="outline" onClick={handleCancel}>Cancel</Button>
-              <Button type="submit">Save Plan</Button>
+            <div className="sm:col-span-2 lg:col-span-3 flex justify-end gap-3">
+              <Button type="button" variant="outline" size="sm" onClick={handleCancel}>Cancel</Button>
+              <Button type="submit" size="sm" className="font-semibold">Save Plan</Button>
             </div>
           </form>
         </Card>
       )}
 
       {loading && !plans.length && (
-        <div className="text-slate-500 animate-pulse">Loading plans...</div>
+        <div className="text-muted-foreground animate-pulse text-sm">Loading plans...</div>
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {plans.map(plan => (
-          <Card key={plan.id} className={`p-6 flex flex-col h-full ${!plan.is_active ? 'opacity-60 grayscale' : ''}`}>
+          <Card key={plan.id} className={`p-6 flex flex-col h-full border-border/80 bg-card hover:shadow-md transition-all duration-200 ${!plan.is_active ? 'opacity-60 grayscale' : ''}`}>
             <div className="flex justify-between items-start mb-4">
-              <div className="p-3 bg-indigo-50 text-indigo-600 rounded-xl">
+              <div className="p-3 bg-primary/10 text-primary rounded-2xl border border-primary/20">
                 <Package className="w-6 h-6" />
               </div>
-              <span className={`px-2 py-1 text-xs font-medium rounded-full ${plan.is_active ? 'bg-green-100 text-green-700' : 'bg-slate-200 text-slate-600'}`}>
-                {plan.is_active ? 'Active' : 'Inactive'}
+              <span className={`px-2.5 py-0.5 text-xs font-semibold rounded-full border flex items-center gap-1 ${
+                plan.is_active 
+                  ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20' 
+                  : 'bg-muted text-muted-foreground border-border'
+              }`}>
+                {plan.is_active ? <CheckCircle2 className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
+                <span>{plan.is_active ? 'Active Tier' : 'Archived'}</span>
               </span>
             </div>
             
-            <h3 className="text-xl font-bold text-slate-900">{plan.name}</h3>
-            <p className="text-sm text-slate-500 font-mono mt-1">{plan.slug}</p>
+            <h3 className="text-xl font-bold text-foreground">{plan.name}</h3>
+            <p className="text-xs text-muted-foreground font-mono mt-0.5">{plan.slug}</p>
             
-            <div className="mt-6 mb-8 flex-1">
-              <div className="flex items-baseline text-3xl font-extrabold text-slate-900">
+            <div className="mt-6 mb-6 flex-1">
+              <div className="flex items-baseline text-3xl font-black text-foreground">
                 ${plan.price_monthly}
-                <span className="text-base font-medium text-slate-500 ml-1">/mo</span>
+                <span className="text-xs font-normal text-muted-foreground ml-1">/ month</span>
               </div>
-              <p className="text-sm text-slate-500 mt-2">or ${plan.price_yearly}/year</p>
+              <p className="text-xs text-muted-foreground mt-1.5 font-medium">Billed annually at ${plan.price_yearly}/yr</p>
             </div>
             
-            <Button variant="outline" className="w-full justify-center gap-2" onClick={() => handleEdit(plan)}>
-              <Edit2 className="w-4 h-4" /> Edit Plan
+            <Button variant="outline" size="sm" className="w-full justify-center gap-2 text-xs font-semibold" onClick={() => handleEdit(plan)}>
+              <Edit2 className="w-3.5 h-3.5" /> Edit Configuration
             </Button>
           </Card>
         ))}

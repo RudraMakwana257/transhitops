@@ -1,6 +1,7 @@
 from flask import Blueprint, jsonify, g
 from app import db
 from app.models.vehicle import Vehicle
+from app.models.vehicle_health import VehicleHealth
 from app.models.driver import Driver
 from app.models.trip import Trip
 from app.models.maintenance_log import MaintenanceLog
@@ -95,10 +96,16 @@ def get_recent_activity():
         .order_by(Trip.updated_at.desc())\
         .limit(5).all()
         
+    v_ids = [t.vehicle_id for t in recent_trips if t.vehicle_id]
+    d_ids = [t.driver_id for t in recent_trips if t.driver_id]
+    
+    vehicles = {v.id: v for v in Vehicle.query.filter(Vehicle.id.in_(v_ids), Vehicle.company_id == g.company_id).all()} if v_ids else {}
+    drivers = {d.id: d for d in Driver.query.filter(Driver.id.in_(d_ids), Driver.company_id == g.company_id).all()} if d_ids else {}
+        
     activities = []
     for trip in recent_trips:
-        vehicle = Vehicle.query.get(trip.vehicle_id) if trip.vehicle_id else None
-        driver = Driver.query.get(trip.driver_id) if trip.driver_id else None
+        vehicle = vehicles.get(trip.vehicle_id) if trip.vehicle_id else None
+        driver = drivers.get(trip.driver_id) if trip.driver_id else None
         
         v_name = vehicle.name if vehicle else "Unknown Vehicle"
         d_name = driver.name if driver else "Unknown Driver"
@@ -135,7 +142,9 @@ def get_kpis():
     active_trips = Trip.query.filter(Trip.company_id == g.company_id, Trip.status.in_(['Dispatched', 'In Progress'])).count()
     pending_trips = Trip.query.filter_by(company_id=g.company_id, status='Draft').count()
     
-    avg_health = db.session.query(func.avg(Vehicle.health_score)).filter_by(**company_filter, is_active=True).scalar() if hasattr(Vehicle, 'health_score') else 95
+    avg_health = db.session.query(func.avg(VehicleHealth.health_score)).filter(VehicleHealth.company_id == g.company_id).scalar()
+    if avg_health is None:
+        avg_health = 95.0
     
     return success_response(data={
         "active_vehicles": total_vehicles,
@@ -291,12 +300,16 @@ def get_financial_kpis():
     total_op_cost = float(fuel_cost) + float(maint_cost) + float(expense_cost)
 
     top_vehicles = []
+    fuel_by_v = dict(db.session.query(FuelLog.vehicle_id, func.sum(FuelLog.total_cost)).filter(FuelLog.company_id == g.company_id, FuelLog.deleted_at == None).group_by(FuelLog.vehicle_id).all())
+    maint_by_v = dict(db.session.query(MaintenanceLog.vehicle_id, func.sum(MaintenanceLog.cost)).filter(MaintenanceLog.company_id == g.company_id).group_by(MaintenanceLog.vehicle_id).all())
+    exp_by_v = dict(db.session.query(Expense.vehicle_id, func.sum(Expense.amount)).filter(Expense.company_id == g.company_id).group_by(Expense.vehicle_id).all())
+
     vehicles = Vehicle.query.filter_by(company_id=g.company_id, is_active=True).all()
     for v in vehicles:
-        v_fuel = db.session.query(func.coalesce(func.sum(FuelLog.total_cost), 0)).filter(FuelLog.vehicle_id == v.id, FuelLog.deleted_at == None).scalar() or 0.0
-        v_maint = db.session.query(func.coalesce(func.sum(MaintenanceLog.cost), 0)).filter(MaintenanceLog.vehicle_id == v.id).scalar() or 0.0
-        v_exp = db.session.query(func.coalesce(func.sum(Expense.amount), 0)).filter(Expense.vehicle_id == v.id).scalar() or 0.0
-        v_total = float(v_fuel) + float(v_maint) + float(v_exp)
+        v_fuel = float(fuel_by_v.get(v.id) or 0.0)
+        v_maint = float(maint_by_v.get(v.id) or 0.0)
+        v_exp = float(exp_by_v.get(v.id) or 0.0)
+        v_total = v_fuel + v_maint + v_exp
         if v_total > 0:
             top_vehicles.append({
                 "vehicle_id": str(v.id),

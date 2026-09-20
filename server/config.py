@@ -79,3 +79,9 @@ class ProductionConfig(Config):
                 "CRITICAL CONFIGURATION ERROR: Production environment requires secure, explicit "
                 "POSTGRES_PASSWORD and DATABASE_URL without default credentials."
             )
+        cors_origins = os.environ.get('CORS_ORIGINS', '')
+        if cors_origins and any(p in cors_origins.lower() for p in ['<replace', 'replace-with', 'changeme']):
+            raise ValueError(
+                "CRITICAL CONFIGURATION ERROR: Production environment requires a real, valid "
+                "CORS_ORIGINS environment variable (placeholder detected)."
+            )
