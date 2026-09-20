@@ -312,3 +312,11 @@ def register():
     set_access_cookies(resp, access_token)
     set_refresh_cookies(resp, refresh_token)
     return resp, code
+
+
+@bp.route('/demo-accounts', methods=['GET'])
+def get_demo_accounts():
+    """Returns active public showcase demo accounts."""
+    from app.services.demo_service import DemoService
+    accounts = DemoService.get_public_showcase_accounts()
+    return success_response(data=accounts)

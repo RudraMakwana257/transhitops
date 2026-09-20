@@ -49,6 +49,7 @@ const AdminExceptions = lazy(() => import('./pages/admin/AdminExceptions').then(
 const AdminFeatureFlags = lazy(() => import('./pages/admin/AdminFeatureFlags').then(m => ({ default: m.AdminFeatureFlags })))
 const AdminAnnouncements = lazy(() => import('./pages/admin/AdminAnnouncements').then(m => ({ default: m.AdminAnnouncements })))
 const AdminSettings = lazy(() => import('./pages/admin/AdminSettings').then(m => ({ default: m.AdminSettings })))
+const AdminDemoManagement = lazy(() => import('./pages/admin/AdminDemoManagement').then(m => ({ default: m.AdminDemoManagement })))
 
 import { ErrorBoundary } from './components/common/ErrorBoundary'
 import { NotFound } from './pages/NotFound'
@@ -82,6 +83,7 @@ function AppRoutes() {
             </ProtectedRoute>
           }>
             <Route path="dashboard" element={<AdminDashboard />} />
+            <Route path="demo" element={<AdminDemoManagement />} />
             <Route path="companies" element={<AdminCompanies />} />
             <Route path="companies/new" element={<AdminCompanyCreate />} />
             <Route path="companies/:id" element={<AdminCompanyDetail />} />

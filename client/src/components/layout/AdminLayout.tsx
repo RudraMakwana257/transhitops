@@ -4,7 +4,7 @@ import { useAuth } from '../../store/authStore'
 import { useUIStore } from '../../store/uiStore'
 import { 
   LayoutDashboard, Building2, Package, LogOut, Sun, Moon, Menu, X, Shield, 
-  Users, AlertOctagon, ShieldAlert, Database, CreditCard, Sliders, Megaphone, Settings 
+  Users, AlertOctagon, ShieldAlert, Database, CreditCard, Sliders, Megaphone, Settings, Sparkles 
 } from 'lucide-react'
 import { Button } from '../ui/ButtonWrapper'
 
@@ -13,6 +13,7 @@ const navGroups = [
     title: 'Command Center',
     items: [
       { label: 'Overview', icon: LayoutDashboard, path: '/admin/dashboard' },
+      { label: 'Demo & Sandboxes', icon: Sparkles, path: '/admin/demo' },
       { label: 'Organizations', icon: Building2, path: '/admin/companies' },
       { label: 'Global Users', icon: Users, path: '/admin/users' },
     ]

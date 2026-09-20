@@ -43,11 +43,18 @@ class Company(db.Model):
     notifications = db.relationship('Notification', backref='company', lazy='dynamic')
     audit_logs = db.relationship('AuditLog', backref='company', lazy='dynamic')
 
+    @property
+    def is_demo(self):
+        if self.settings and isinstance(self.settings, dict) and 'is_demo' in self.settings:
+            return bool(self.settings.get('is_demo'))
+        return bool(self.slug and self.slug.startswith('demo-')) or ('demo' in (self.name or '').lower())
+
     def to_dict(self):
         return {
             'id': str(self.id),
             'name': self.name,
             'slug': self.slug,
+            'is_demo': self.is_demo,
             'domain': self.domain,
             'logo_url': self.logo_url,
             'address': self.address,

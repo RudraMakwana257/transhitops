@@ -376,6 +376,51 @@ export const adminApi = {
   getDashboardStats: async () => {
     const res = await api.get<ApiResponse<any>>('/admin/dashboard')
     return res.data
+  },
+
+  // Demo & Sandbox Environments
+  getDemoOverview: async () => {
+    const res = await api.get<ApiResponse<any>>('/admin/demo')
+    return res.data
+  },
+  createDemoSandbox: async (data: {
+    company_name: string
+    admin_name: string
+    admin_email: string
+    password?: string
+    duration_days?: number
+    seed_dummy_data?: boolean
+    notes?: string
+  }) => {
+    const res = await api.post<ApiResponse<any>>('/admin/demo', data)
+    return res.data
+  },
+  extendDemoSandbox: async (companyId: string, days?: number, customDate?: string) => {
+    const res = await api.post<ApiResponse<any>>(`/admin/demo/${companyId}/extend`, {
+      days,
+      custom_date: customDate
+    })
+    return res.data
+  },
+  resetDemoData: async (companyId: string) => {
+    const res = await api.post<ApiResponse<any>>(`/admin/demo/${companyId}/reset-data`)
+    return res.data
+  },
+  toggleDemoStatus: async (companyId: string, is_active: boolean) => {
+    const res = await api.post<ApiResponse<any>>(`/admin/demo/${companyId}/status`, { is_active })
+    return res.data
+  },
+  updateDemoUserPassword: async (userId: string, password: string) => {
+    const res = await api.put<ApiResponse<any>>(`/admin/demo/users/${userId}/password`, { password })
+    return res.data
+  },
+  deleteDemoSandbox: async (companyId: string) => {
+    const res = await api.delete<ApiResponse<any>>(`/admin/demo/${companyId}`)
+    return res.data
+  },
+  getPublicDemoAccounts: async () => {
+    const res = await api.get<ApiResponse<any[]>>('/auth/demo-accounts')
+    return res.data
   }
 }
 

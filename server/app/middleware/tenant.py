@@ -140,6 +140,14 @@ def require_company(fn):
         if request.method in ['POST', 'PUT', 'PATCH', 'DELETE']:
             exempt_prefixes = ('/api/subscription/checkout', '/api/subscription/change-plan', '/api/auth/')
             if not request.path.startswith(exempt_prefixes):
+                from datetime import datetime
+                if company.trial_ends_at and company.trial_ends_at < datetime.utcnow():
+                    return jsonify({
+                        'success': False,
+                        'message': 'Your trial / demo period has expired. Please contact administrator to extend access.',
+                        'error': {'code': 'TRIAL_EXPIRED', 'trial_ends_at': company.trial_ends_at.isoformat()}
+                    }), 403
+
                 from app.models.company_subscription import CompanySubscription
                 sub = CompanySubscription.query.filter_by(company_id=cid).first()
                 if sub and sub.status in ['past_due', 'canceled', 'expired']:
