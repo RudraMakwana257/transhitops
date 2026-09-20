@@ -116,8 +116,8 @@ celerybeat.pid
 .DS_Store
 
 # Database migrations
-migrations/versions/
-alembic.ini
+!server/migrations/alembic.ini
+
 
 # Database
 *.db

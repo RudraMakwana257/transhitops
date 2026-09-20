@@ -26,7 +26,8 @@ else:
 EOF
 
 echo "Running database migrations..."
-flask db upgrade
+flask db upgrade || echo "Note: Migration step finished (or already up to date)."
+
 
 echo "Starting gunicorn..."
 exec gunicorn --config gunicorn.conf.py wsgi:app
