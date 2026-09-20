@@ -24,11 +24,14 @@ if redis_url:
 else:
     storage_uri = "memory://"
 
+default_limit_str = os.environ.get("RATE_LIMIT_DEFAULT", "120 per minute")
+default_limits = [default_limit_str] if default_limit_str else None
+
 limiter = Limiter(
     key_func=get_client_ip,
     storage_uri=storage_uri,
     strategy="fixed-window",
-    default_limits=None  # We apply limits via decorators/hooks instead of globally
+    default_limits=default_limits
 )
 
 # Note: In a production environment, if Redis connection fails, Flask-Limiter 

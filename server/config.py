@@ -8,6 +8,7 @@ class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY')
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    MAX_CONTENT_LENGTH = int(os.environ.get('MAX_CONTENT_LENGTH', 10 * 1024 * 1024))  # 10 MB payload ceiling
     SQLALCHEMY_ENGINE_OPTIONS = {
         'pool_size': int(os.environ.get('DB_POOL_SIZE', '10')),
         'max_overflow': int(os.environ.get('DB_MAX_OVERFLOW', '20')),
@@ -56,10 +57,10 @@ class ProductionConfig(Config):
     SESSION_COOKIE_SECURE = True
     JWT_COOKIE_CSRF_PROTECT = True
     SQLALCHEMY_ENGINE_OPTIONS = {
-        'pool_size': 10,
-        'max_overflow': 20,
-        'pool_timeout': 30,
-        'pool_recycle': 300,
+        'pool_size': int(os.environ.get('DB_POOL_SIZE', '3')),
+        'max_overflow': int(os.environ.get('DB_MAX_OVERFLOW', '5')),
+        'pool_timeout': int(os.environ.get('DB_POOL_TIMEOUT', '20')),
+        'pool_recycle': int(os.environ.get('DB_POOL_RECYCLE', '280')),
         'pool_pre_ping': True,
     }
 
