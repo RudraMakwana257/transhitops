@@ -33,14 +33,17 @@ def get_revenue_analytics():
     company_filter = {"company_id": g.company_id}
     
     for i in range(5, -1, -1):
-        month_date = today.replace(day=1) - timedelta(days=i*30)
-        labels.append(month_date.strftime('%b %Y'))
-        
-        m_start = month_date.replace(day=1)
-        if m_start.month == 12:
-            m_end = m_start.replace(year=m_start.year+1, month=1, day=1) - timedelta(days=1)
+        cur_year = today.year
+        cur_month = today.month - i
+        while cur_month <= 0:
+            cur_month += 12
+            cur_year -= 1
+        m_start = datetime(cur_year, cur_month, 1).date()
+        if cur_month == 12:
+            m_end = datetime(cur_year + 1, 1, 1).date() - timedelta(days=1)
         else:
-            m_end = m_start.replace(month=m_start.month+1, day=1) - timedelta(days=1)
+            m_end = datetime(cur_year, cur_month + 1, 1).date() - timedelta(days=1)
+        labels.append(m_start.strftime('%b %Y'))
             
         rev = db.session.query(func.coalesce(func.sum(Trip.revenue), 0)).filter(
             Trip.company_id == g.company_id, Trip.status == 'Completed',

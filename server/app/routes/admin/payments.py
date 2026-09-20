@@ -1,5 +1,7 @@
 from flask import request, g
+from flask_jwt_extended import get_jwt_identity
 from app.middleware.rbac import require_roles
+from app.models.manual_payment import ManualPayment
 from app.services.manual_billing_service import ManualBillingService
 from app.utils.response import success_response, error_response
 from . import bp
@@ -27,7 +29,12 @@ def record_manual_payment():
     if not payment_method:
         return error_response("payment_method is required (CASH, UPI, BANK_TRANSFER, PHONE_CALL, FACE_TO_FACE, OTHER)", status_code=400)
 
-    recorded_by = getattr(g, 'user_id', None) or (g.user.id if hasattr(g, 'user') and g.user else get_jwt_identity())
+    recorded_by = getattr(g, 'user_id', None) or (g.user.id if hasattr(g, 'user') and g.user else None)
+    if not recorded_by:
+        try:
+            recorded_by = get_jwt_identity()
+        except Exception:
+            recorded_by = None
 
     try:
         payment = ManualBillingService.record_payment(
@@ -79,12 +86,8 @@ def get_manual_payment_detail(payment_id):
     Get detailed information for a specific manual payment record.
     Only Super Admins may execute this endpoint.
     """
-    history = ManualBillingService.get_payment_history(page=1, per_page=1000)
-    items = history.get('items', [])
-    for item in items:
-        if item['id'] == str(payment_id):
-            return success_response(data=item)
-    return error_response(f"Payment record {payment_id} not found", status_code=404)
+    payment = ManualPayment.query.get_or_404(payment_id)
+    return success_response(data=payment.to_dict())
 
 @bp.route('/payments/<uuid:payment_id>/reverse', methods=['POST'])
 @require_roles('super_admin')
@@ -96,7 +99,12 @@ def reverse_manual_payment(payment_id):
     data = request.get_json() or {}
     reason = data.get('reason')
 
-    reversed_by = getattr(g, 'user_id', None) or (g.user.id if hasattr(g, 'user') and g.user else get_jwt_identity())
+    reversed_by = getattr(g, 'user_id', None) or (g.user.id if hasattr(g, 'user') and g.user else None)
+    if not reversed_by:
+        try:
+            reversed_by = get_jwt_identity()
+        except Exception:
+            reversed_by = None
 
     try:
         reversed_payment = ManualBillingService.reverse_payment(

@@ -124,13 +124,39 @@ def update_log(id):
         Trip.query.filter_by(id=data['trip_id'], company_id=g.company_id).first_or_404()
             
     if 'cost' in data or 'total_cost' in data:
-        log.total_cost = data.get('total_cost') or data.get('cost')
+        raw_cost = data.get('total_cost') or data.get('cost')
+        try:
+            cost_val = float(raw_cost)
+            if cost_val <= 0:
+                return error_response(message="Cost must be greater than 0", status_code=400)
+            log.total_cost = cost_val
+        except (ValueError, TypeError):
+            return error_response(message="Cost must be a valid number", status_code=400)
+
+    if 'liters' in data and data['liters'] is not None:
+        try:
+            lit_val = float(data['liters'])
+            if lit_val <= 0:
+                return error_response(message="Liters must be greater than 0", status_code=400)
+            log.liters = lit_val
+        except (ValueError, TypeError):
+            return error_response(message="Liters must be a valid number", status_code=400)
+
+    if 'price_per_liter' in data and data['price_per_liter'] is not None:
+        try:
+            ppl_val = float(data['price_per_liter'])
+            if ppl_val <= 0:
+                return error_response(message="Price per liter must be greater than 0", status_code=400)
+            log.price_per_liter = ppl_val
+        except (ValueError, TypeError):
+            return error_response(message="Price per liter must be a valid number", status_code=400)
+
     if 'odometer_km' in data or 'odometer_reading' in data:
         log.odometer_reading = data.get('odometer_reading') or data.get('odometer_km')
     if 'vendor' in data or 'fuel_station' in data:
         log.fuel_station = data.get('fuel_station') or data.get('vendor')
         
-    for field in ['vehicle_id', 'driver_id', 'trip_id', 'date', 'liters', 'price_per_liter']:
+    for field in ['vehicle_id', 'driver_id', 'trip_id', 'date']:
         if field in data and data[field] is not None:
             setattr(log, field, data[field])
             

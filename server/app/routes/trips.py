@@ -488,11 +488,14 @@ def get_trip_events(id):
 def add_trip_event(id):
     trip = Trip.query.filter_by(id=id, company_id=g.company_id).first_or_404()
     data = request.get_json() or {}
+    event_type = (data.get('event_type') or '').strip()
+    if not event_type:
+        return error_response(message="event_type is required", status_code=400)
     
     event = TripEvent(
         company_id=g.company_id,
         trip_id=trip.id,
-        event_type=data['event_type'],
+        event_type=event_type,
         location=data.get('location'),
         latitude=data.get('latitude'),
         longitude=data.get('longitude'),
@@ -503,7 +506,7 @@ def add_trip_event(id):
     db.session.add(event)
     db.session.commit()
     
-    if data['event_type'] in ['Incident', 'Delay']:
+    if event_type in ['Incident', 'Delay']:
         create_notification(
             company_id=g.company_id,
             user_id=None,

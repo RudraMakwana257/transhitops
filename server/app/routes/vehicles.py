@@ -85,7 +85,8 @@ def list_vehicles():
     if region:
         query = query.filter_by(region=region)
     
-    if hasattr(Vehicle, sort_by):
+    ALLOWED_SORT_FIELDS = {'name', 'reg_number', 'status', 'type', 'capacity_kg', 'odometer_km', 'created_at', 'region'}
+    if sort_by in ALLOWED_SORT_FIELDS and hasattr(Vehicle, sort_by):
         if sort_order == 'desc':
             query = query.order_by(desc(getattr(Vehicle, sort_by)))
         else:

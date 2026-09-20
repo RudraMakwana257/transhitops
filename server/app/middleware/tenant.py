@@ -116,7 +116,6 @@ def require_company(fn):
         except ValueError:
             cid = raw_company_id
         company = Company.query.get(cid)
-        print("DEBUG TENANT COMPANY_ID", cid, getattr(company, 'is_active', None))
 
         if not company:
             return jsonify({

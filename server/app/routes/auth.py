@@ -157,14 +157,14 @@ def forgot_password():
     if not email:
         return error_response(message="Email is required", status_code=400)
         
-    user = User.query.filter_by(email=email).first()
+    user = User.query.filter_by(email=str(email).strip().lower()).first()
     
     if user and user.is_active:
-        reset_token = PasswordResetToken.generate(user.id)
+        reset_token, raw_token = PasswordResetToken.generate(user.id)
         db.session.add(reset_token)
         db.session.commit()
         
-        send_password_reset_email(user.email, user.name, reset_token.token)
+        send_password_reset_email(user.email, user.name, raw_token)
         
     return success_response(message="If the email exists, a password reset link has been sent.")
 
@@ -178,14 +178,36 @@ def reset_password():
     if not token_str or not new_password:
         return error_response(message="Token and password are required", status_code=400)
         
-    reset_token = PasswordResetToken.query.filter_by(token=token_str).first()
+    if len(str(new_password)) < 8:
+        return error_response(message="Password must be at least 8 characters long", status_code=422)
+
+    import hashlib
+    from datetime import datetime
+    token_hash = hashlib.sha256(str(token_str).strip().encode('utf-8')).hexdigest()
+    reset_token = PasswordResetToken.query.filter_by(token=token_hash).first()
+    
+    # Fallback to direct token match if previously issued before hash rollout
+    if not reset_token:
+        reset_token = PasswordResetToken.query.filter_by(token=str(token_str).strip()).first()
     
     if not reset_token or not reset_token.is_valid:
         return error_response(message="Invalid or expired token", status_code=400)
         
     user = reset_token.user
     user.set_password(new_password)
+    user.failed_login_count = 0
+    user.locked_until = None
     reset_token.mark_used()
+    
+    # Invalidate any other active reset tokens for this user
+    try:
+        PasswordResetToken.query.filter(
+            PasswordResetToken.user_id == user.id,
+            PasswordResetToken.used_at == None
+        ).update({'used_at': datetime.utcnow()})
+    except Exception:
+        pass
+
     db.session.commit()
     
     return success_response(message="Password reset successful")

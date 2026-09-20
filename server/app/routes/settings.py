@@ -105,6 +105,8 @@ def deactivate_user(id):
     user = User.query.get_or_404(id)
     if g.company_id is not None and user.company_id != g.company_id:
         return error_response(message="Resource not found", status_code=404)
+    if hasattr(g, 'user') and g.user and g.user.id == user.id:
+        return error_response(message="Cannot deactivate your own user account", status_code=400)
     user.is_active = False
     db.session.commit()
     return success_response(message="User deactivated")

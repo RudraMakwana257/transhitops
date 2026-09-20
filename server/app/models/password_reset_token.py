@@ -18,14 +18,18 @@ class PasswordResetToken(db.Model):
 
     @classmethod
     def generate(cls, user_id, expiry_hours=1):
-        """Create a new password reset token for the given user."""
-        token = secrets.token_urlsafe(48)
+        """Create a new password reset token for the given user.
+        Stores SHA-256 hash in DB, returns (model_instance, raw_token).
+        """
+        import hashlib
+        raw_token = secrets.token_urlsafe(48)
+        token_hash = hashlib.sha256(raw_token.encode('utf-8')).hexdigest()
         reset_token = cls(
             user_id=user_id,
-            token=token,
+            token=token_hash,
             expires_at=datetime.utcnow() + timedelta(hours=expiry_hours)
         )
-        return reset_token
+        return reset_token, raw_token
 
     @property
     def is_valid(self):

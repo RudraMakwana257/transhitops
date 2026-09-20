@@ -89,10 +89,12 @@ def get_attachment(id):
     meta = FileMetadata.query.filter_by(id=id, company_id=g.company_id).first_or_404()
     
     if request.args.get('download') == 'true':
-        full_path = os.path.join(StorageService.get_upload_dir(), meta.file_key)
-        if not os.path.exists(full_path):
+        full_path = StorageService.get_file_path(meta.file_key)
+        if not full_path or not os.path.exists(full_path):
             return error_response(message="File not found on storage server", status_code=404)
-        return send_file(full_path, mimetype=meta.mime_type, as_attachment=True, download_name=meta.filename)
+        from werkzeug.utils import secure_filename
+        safe_name = secure_filename(meta.filename) or 'download'
+        return send_file(full_path, mimetype=meta.mime_type, as_attachment=True, download_name=safe_name)
 
     return success_response(data=meta.to_dict())
 

@@ -66,8 +66,12 @@ def change_subscription_plan():
     if not plan_identifier:
         return error_response(message="Plan identifier (plan_slug or plan_id) is required", status_code=400)
 
+    target_company_id = data.get('company_id') or getattr(g, 'company_id', None)
+    if not target_company_id:
+        return error_response(message="company_id is required to change subscription plan", status_code=400)
+
     try:
-        updated_summary = QuotaService.change_plan(g.company_id, plan_identifier)
+        updated_summary = QuotaService.change_plan(target_company_id, plan_identifier)
         return success_response(data=updated_summary, message="Subscription plan updated successfully")
     except ValueError as ve:
         return error_response(message=str(ve), status_code=400)

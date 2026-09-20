@@ -11,11 +11,17 @@ from app.utils.response import success_response, error_response
 
 bp = Blueprint('onboarding', __name__, url_prefix='/api/onboarding')
 
+import uuid
+
 @bp.route('/status', methods=['GET'])
 @jwt_required()
 def get_onboarding_status():
     current_user_id = get_jwt_identity()
-    user = User.query.get(current_user_id)
+    try:
+        uid = uuid.UUID(str(current_user_id))
+    except (ValueError, TypeError):
+        uid = current_user_id
+    user = User.query.get(uid)
     
     if not user:
         return error_response(message="User not found", status_code=404)
@@ -63,7 +69,11 @@ def get_onboarding_status():
 @jwt_required()
 def complete_onboarding():
     current_user_id = get_jwt_identity()
-    user = User.query.get(current_user_id)
+    try:
+        uid = uuid.UUID(str(current_user_id))
+    except (ValueError, TypeError):
+        uid = current_user_id
+    user = User.query.get(uid)
     
     if not user:
         return error_response(message="User not found", status_code=404)
@@ -78,6 +88,8 @@ import io
 from flask import request, g
 from app.middleware import require_roles, require_company
 from app.services.quota_service import QuotaService
+
+MAX_IMPORT_ROWS = 250
 
 @bp.route('/import/vehicles', methods=['POST'])
 @require_roles('fleet_manager')
@@ -101,7 +113,10 @@ def import_vehicles_csv():
     errors = []
 
     try:
-        reader = csv.DictReader(io.StringIO(content.strip()))
+        reader = list(csv.DictReader(io.StringIO(content.strip())))
+        if len(reader) > MAX_IMPORT_ROWS:
+            return error_response(message=f"CSV exceeds maximum batch limit of {MAX_IMPORT_ROWS} rows. Please split the file into smaller batches.", status_code=400)
+
         for idx, row in enumerate(reader, start=1):
             reg = (row.get('reg_number') or row.get('reg_no') or '').strip()
             name = (row.get('name') or row.get('vehicle_name') or reg).strip()
@@ -166,7 +181,10 @@ def import_drivers_csv():
     errors = []
 
     try:
-        reader = csv.DictReader(io.StringIO(content.strip()))
+        reader = list(csv.DictReader(io.StringIO(content.strip())))
+        if len(reader) > MAX_IMPORT_ROWS:
+            return error_response(message=f"CSV exceeds maximum batch limit of {MAX_IMPORT_ROWS} rows. Please split the file into smaller batches.", status_code=400)
+
         for idx, row in enumerate(reader, start=1):
             name = (row.get('name') or '').strip()
             lic = (row.get('license_number') or row.get('license') or '').strip()

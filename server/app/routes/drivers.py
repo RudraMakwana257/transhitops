@@ -85,7 +85,8 @@ def list_drivers():
     if category:
         query = query.filter_by(license_category=category)
     
-    if hasattr(Driver, sort_by):
+    ALLOWED_SORT_FIELDS = {'name', 'license_number', 'license_category', 'license_expiry', 'phone', 'safety_score', 'status', 'created_at'}
+    if sort_by in ALLOWED_SORT_FIELDS and hasattr(Driver, sort_by):
         if sort_order == 'desc':
             query = query.order_by(desc(getattr(Driver, sort_by)))
         else:

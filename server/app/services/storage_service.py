@@ -118,6 +118,19 @@ class StorageService:
         }
 
     @staticmethod
+    def get_file_path(file_key: str) -> str | None:
+        """Returns safe absolute path to local file, strictly preventing path traversal attacks."""
+        if not file_key or '..' in file_key:
+            return None
+        base_dir = os.path.abspath(StorageService.get_upload_dir())
+        full_path = os.path.abspath(os.path.join(base_dir, file_key))
+        if os.path.commonpath([base_dir, full_path]) != base_dir:
+            return None
+        if not os.path.exists(full_path):
+            return None
+        return full_path
+
+    @staticmethod
     def delete_file(file_key: str) -> bool:
         if not file_key or '..' in file_key:
             return False
@@ -137,8 +150,8 @@ class StorageService:
             except Exception:
                 pass
                 
-        full_path = os.path.join(StorageService.get_upload_dir(), file_key)
-        if os.path.exists(full_path):
+        full_path = StorageService.get_file_path(file_key)
+        if full_path and os.path.exists(full_path):
             os.remove(full_path)
             return True
         return False

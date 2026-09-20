@@ -114,6 +114,11 @@ def stop_impersonation():
     db.session.add(audit)
     db.session.commit()
     
+    # Revoke this impersonation token immediately
+    if claims.get('jti'):
+        from app.services.token_blocklist import block_token
+        block_token(claims['jti'], ttl_seconds=28800)
+
     return jsonify({
         "success": True,
         "message": "Impersonation session ended successfully"

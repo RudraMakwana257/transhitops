@@ -117,8 +117,30 @@ def update_expense(id):
         Trip.query.filter_by(id=data['trip_id'], company_id=g.company_id).first_or_404()
             
     if 'type' in data or 'category' in data:
-        expense.type = data.get('type') or data.get('category')
-    for field in ['amount', 'date', 'description', 'vehicle_id', 'trip_id']:
+        t = (data.get('type') or data.get('category') or '').strip()
+        if t:
+            expense.type = t
+
+    if 'amount' in data and data['amount'] is not None:
+        try:
+            amt = float(data['amount'])
+            if amt <= 0:
+                return error_response(message="Amount must be greater than 0", status_code=400)
+            expense.amount = amt
+        except (ValueError, TypeError):
+            return error_response(message="Amount must be a valid number", status_code=400)
+
+    if 'date' in data and data['date'] is not None:
+        from datetime import datetime
+        if isinstance(data['date'], str):
+            try:
+                expense.date = datetime.strptime(data['date'], '%Y-%m-%d').date()
+            except ValueError:
+                return error_response(message="date must be a valid date in YYYY-MM-DD format", status_code=400)
+        else:
+            expense.date = data['date']
+
+    for field in ['description', 'vehicle_id', 'trip_id']:
         if field in data and data[field] is not None:
             setattr(expense, field, data[field])
             

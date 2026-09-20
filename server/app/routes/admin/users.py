@@ -1,7 +1,7 @@
 import secrets
 import string
 import uuid
-from flask import request, jsonify
+from flask import request, jsonify, g
 from sqlalchemy import or_
 from app import db
 from app.models.company import Company
@@ -222,8 +222,17 @@ def reset_user_password(user_id):
 @require_roles('super_admin')
 def delete_user(user_id):
     user = User.query.get_or_404(user_id)
-    # Check if deleting own account
-    # We can allow deletion or deactivate
+    
+    # Prevent super admin from deleting themselves
+    if hasattr(g, 'user') and g.user and g.user.id == user.id:
+        return jsonify({"success": False, "message": "Cannot delete your own super admin account"}), 400
+
+    # Prevent deleting the last active super admin on the platform
+    if user.role == 'super_admin':
+        active_super_admins = User.query.filter_by(role='super_admin', is_active=True).count()
+        if active_super_admins <= 1:
+            return jsonify({"success": False, "message": "Cannot delete the last remaining super admin account"}), 400
+
     db.session.delete(user)
     db.session.commit()
     return jsonify({"success": True, "message": "User deleted successfully"})
