@@ -479,7 +479,7 @@ def upgrade():
 
     # 10f. Seed Super Admin User
     super_admin_id = str(uuid.uuid4())
-    pw_hash = '$2b$12$4RROGrV8r.fXmJgPbyqbuOjajxtkgvw1sBX.rvObYPPDaFLQQh1BG'
+    pw_hash = '$2b$12$DSlOsCMRwCpaG9x2twj12uwtnkLkBZbkIEHwuM7tpRsGQwG2Ep1FC'
     _exec(
         f"INSERT INTO users "
         f"(id, name, email, password_hash, role, is_active, failed_login_count, created_at, updated_at) "
