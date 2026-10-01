@@ -221,27 +221,47 @@ function AppRoutes() {
 
 function App() {
   useEffect(() => {
-    // Eager background backend pre-warming on app load
+    let lastActiveTime = Date.now()
+
+    // Eager background backend pre-warming
     const pingBackend = () => {
       fetch(`${import.meta.env.VITE_API_BASE_URL || '/api'}/health`, {
         method: 'GET',
         headers: { 'Cache-Control': 'no-cache' }
       }).catch(() => {})
     }
+
+    // 1. Initial warm-up on page load
     pingBackend()
 
-    // Also pre-warm on first user interaction if they idle on landing page
-    const handleFirstInteraction = () => {
-      pingBackend()
-      window.removeEventListener('pointerdown', handleFirstInteraction)
-      window.removeEventListener('keydown', handleFirstInteraction)
+    // 2. Track activity timestamp
+    const recordActivity = () => {
+      lastActiveTime = Date.now()
     }
-    window.addEventListener('pointerdown', handleFirstInteraction, { passive: true })
-    window.addEventListener('keydown', handleFirstInteraction, { passive: true })
+    window.addEventListener('pointerdown', recordActivity, { passive: true })
+    window.addEventListener('keydown', recordActivity, { passive: true })
+
+    // 3. Tab Visibility / Window Focus Resume:
+    // If an already logged-in user returns to the tab after 10+ minutes of idle/background,
+    // immediately pre-warm the backend BEFORE they even click anything!
+    const handleResume = () => {
+      if (document.visibilityState === 'visible') {
+        const idleDurationMs = Date.now() - lastActiveTime
+        if (idleDurationMs > 10 * 60 * 1000) {
+          pingBackend()
+        }
+        lastActiveTime = Date.now()
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleResume)
+    window.addEventListener('focus', handleResume)
 
     return () => {
-      window.removeEventListener('pointerdown', handleFirstInteraction)
-      window.removeEventListener('keydown', handleFirstInteraction)
+      window.removeEventListener('pointerdown', recordActivity)
+      window.removeEventListener('keydown', recordActivity)
+      document.removeEventListener('visibilitychange', handleResume)
+      window.removeEventListener('focus', handleResume)
     }
   }, [])
 
