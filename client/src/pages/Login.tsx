@@ -8,6 +8,7 @@ import { Button } from '../components/ui/ButtonWrapper'
 import { Input } from '../components/ui/InputWrapper'
 import { useAuth } from '../store/authStore'
 import { useUIStore } from '../store/uiStore'
+import { useWarmupStore } from '../store/warmupStore'
 
 const loginSchema = z.object({
   email: z.string().min(1, 'Email or username is required'),
@@ -29,6 +30,7 @@ export function Login() {
   const navigate = useNavigate()
   const { login, isAuthenticated } = useAuth()
   const { theme, toggleTheme } = useUIStore()
+  const { isWarmingUp } = useWarmupStore()
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -167,9 +169,21 @@ export function Login() {
                 <span className="text-sm text-muted-foreground">Remember me</span>
               </label>
 
-              <Button type="submit" className="w-full" loading={loading} loadingText="Signing in...">
+              <Button
+                type="submit"
+                className="w-full"
+                loading={loading}
+                loadingText={isWarmingUp ? 'Connecting Telemetry Center...' : 'Signing in...'}
+              >
                 Sign In
               </Button>
+
+              {loading && isWarmingUp && (
+                <div className="mt-2.5 p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs text-center flex items-center justify-center gap-2 animate-pulse">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping inline-block" />
+                  <span>Calibrating live fleet telemetry & security uplink...</span>
+                </div>
+              )}
 
               <div className="text-center mt-3 text-xs text-muted-foreground">
                 Don't have an account?{' '}
