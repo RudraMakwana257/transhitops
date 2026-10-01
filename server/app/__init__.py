@@ -1,4 +1,4 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request, redirect
 from flask_sqlalchemy import SQLAlchemy
 from flask_jwt_extended import JWTManager
 from flask_cors import CORS
@@ -117,6 +117,26 @@ def create_app():
         supports_credentials=True
     )
 
+    @app.route('/')
+    def root():
+        accept = request.headers.get('Accept', '')
+        frontend_url = os.environ.get('FRONTEND_URL', 'https://client-two-silk-80.vercel.app')
+        # If requested by a web browser, redirect directly to the frontend application
+        if 'text/html' in accept:
+            return redirect(frontend_url, code=302)
+        return jsonify({
+            "success": True,
+            "name": "TransitOps Intelligent Fleet Operations Center API",
+            "version": "1.0.0",
+            "status": "online",
+            "health_check": "/api/health",
+            "frontend_app": frontend_url
+        })
+
+    @app.route('/favicon.ico')
+    def favicon():
+        return '', 204
+
     @app.errorhandler(400)
     def bad_request(e):
         return jsonify({"success": False, "error": "BAD_REQUEST", "message": "Bad request"}), 400
@@ -131,6 +151,11 @@ def create_app():
 
     @app.errorhandler(404)
     def not_found(e):
+        accept = request.headers.get('Accept', '')
+        frontend_url = os.environ.get('FRONTEND_URL', 'https://client-two-silk-80.vercel.app')
+        # If user visits a non-API URL in a browser, seamlessly redirect to the frontend route
+        if 'text/html' in accept and not request.path.startswith('/api'):
+            return redirect(f"{frontend_url.rstrip('/')}{request.path}", code=302)
         return jsonify({"success": False, "error": "NOT_FOUND", "message": "Resource not found"}), 404
 
     @app.errorhandler(405)
