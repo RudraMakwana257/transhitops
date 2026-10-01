@@ -1,27 +1,76 @@
 import axios from 'axios'
 import { useAuthStore } from '../store/authStore'
+import { useWarmupStore } from '../store/warmupStore'
+import { toast } from '../store/toastStore'
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
-  timeout: 30000,
+  timeout: 90000, // 90s to comfortably tolerate Render cold-starts
   withCredentials: true,
 })
+
+// Extend internal config typing for cold-start tracking
+declare module 'axios' {
+  export interface AxiosRequestConfig {
+    _retry?: boolean
+    _coldStartRetry?: boolean
+    _warmupTimer?: ReturnType<typeof setTimeout>
+    _isSlow?: boolean
+  }
+}
 
 api.interceptors.request.use((config) => {
   const token = useAuthStore.getState().token
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
   }
+
+  // Trigger telemetry warm-up indicator if request takes longer than 1.8 seconds (cold start)
+  config._warmupTimer = setTimeout(() => {
+    config._isSlow = true
+    useWarmupStore.getState().registerSlowRequest()
+  }, 1800)
+
   return config
 })
 
-import { toast } from '../store/toastStore'
-
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    const config = response.config
+    if (config._warmupTimer) {
+      clearTimeout(config._warmupTimer)
+    }
+    if (config._isSlow) {
+      useWarmupStore.getState().unregisterSlowRequest()
+    }
+    return response
+  },
   async (error) => {
-    const originalRequest = error.config
+    const originalRequest = error.config || {}
     
+    if (originalRequest._warmupTimer) {
+      clearTimeout(originalRequest._warmupTimer)
+    }
+    if (originalRequest._isSlow) {
+      useWarmupStore.getState().unregisterSlowRequest()
+    }
+
+    // Auto-retry once for 502 / 503 / 504 / network drops during cold-start wake-up
+    const isColdStartGlitch =
+      !originalRequest._coldStartRetry &&
+      (error.response?.status === 502 ||
+       error.response?.status === 503 ||
+       error.response?.status === 504 ||
+       (!error.response && error.request))
+
+    if (isColdStartGlitch) {
+      originalRequest._coldStartRetry = true
+      useWarmupStore.getState().startWarmup()
+      // Wait 2.5 seconds for Render container to finish port binding
+      await new Promise((resolve) => setTimeout(resolve, 2500))
+      return api(originalRequest)
+    }
+
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true
       
@@ -66,7 +115,7 @@ api.interceptors.response.use(
     }
 
     if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
-      toast('Request timed out. Please check your network connection.', 'error')
+      toast('Request timed out. Operations Center took too long to respond.', 'error')
       return Promise.reject(error)
     }
 

@@ -1,8 +1,9 @@
-import { lazy, Suspense } from 'react'
+import { lazy, Suspense, useEffect } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { AppLayout as Layout } from './components/layout/AppLayout'
 import { AdminLayout } from './components/layout/AdminLayout'
 import { ToastContainer } from './components/ui/Toast'
+import { ServerWarmupHUD } from './components/common/ServerWarmupHUD'
 import { ProtectedRoute } from './components/layout/ProtectedRoute'
 import './styles/globals.css'
 
@@ -219,10 +220,36 @@ function AppRoutes() {
 }
 
 function App() {
+  useEffect(() => {
+    // Eager background backend pre-warming on app load
+    const pingBackend = () => {
+      fetch(`${import.meta.env.VITE_API_BASE_URL || '/api'}/health`, {
+        method: 'GET',
+        headers: { 'Cache-Control': 'no-cache' }
+      }).catch(() => {})
+    }
+    pingBackend()
+
+    // Also pre-warm on first user interaction if they idle on landing page
+    const handleFirstInteraction = () => {
+      pingBackend()
+      window.removeEventListener('pointerdown', handleFirstInteraction)
+      window.removeEventListener('keydown', handleFirstInteraction)
+    }
+    window.addEventListener('pointerdown', handleFirstInteraction, { passive: true })
+    window.addEventListener('keydown', handleFirstInteraction, { passive: true })
+
+    return () => {
+      window.removeEventListener('pointerdown', handleFirstInteraction)
+      window.removeEventListener('keydown', handleFirstInteraction)
+    }
+  }, [])
+
   return (
     <ErrorBoundary fallbackMessage="A critical application error occurred. Please reload.">
       <AppRoutes />
       <ToastContainer />
+      <ServerWarmupHUD />
     </ErrorBoundary>
   )
 }

@@ -1,0 +1,19 @@
+name: Render Keep-Alive Ping
+
+on:
+  schedule:
+    # Run every 12 minutes to prevent Render free-tier from sleeping after 15m
+    - cron: '*/12 * * * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    name: Ping TransitOps Backend
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Keep-Alive Health Ping
+        run: |
+          echo "Pinging TransitOps Production Health Check..."
+          curl -f -s -S --max-time 60 https://transitops.fusiontechmark.com/api/health || \
+          curl -f -s -S --max-time 60 https://transitops-backend-mr6t.onrender.com/api/health
+          echo "Ping successful! Server is warm."
