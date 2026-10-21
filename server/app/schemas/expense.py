@@ -7,7 +7,7 @@ ExpenseSchema           Dump-only — serialise an Expense ORM object to JSON
 CreateExpenseSchema     POST /api/expenses & PUT partial updates
 """
 
-from marshmallow import Schema, fields, validate, validates, ValidationError, EXCLUDE
+from marshmallow import Schema, fields, validate, validates, ValidationError, EXCLUDE, pre_load
 
 
 class ExpenseSchema(Schema):
@@ -69,9 +69,17 @@ class CreateExpenseSchema(Schema):
             'invalid': 'date must be a valid date in YYYY-MM-DD format.'
         }
     )
-    vehicle_id  = fields.UUID(load_default=None)
-    trip_id     = fields.UUID(load_default=None)
-    description = fields.String(load_default=None)
+    vehicle_id  = fields.UUID(load_default=None, allow_none=True)
+    trip_id     = fields.UUID(load_default=None, allow_none=True)
+    description = fields.String(load_default=None, allow_none=True)
+
+    @pre_load
+    def clean_empty_strings(self, data, **kwargs):
+        if isinstance(data, dict):
+            for k in ['vehicle_id', 'trip_id', 'description']:
+                if k in data and data[k] == '':
+                    data[k] = None
+        return data
 
     @validates('type')
     def strip_type(self, value, **kwargs):

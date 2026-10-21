@@ -110,7 +110,7 @@ def create_log():
         status_code=201
     )
 
-@bp.route('/<id>', methods=['PUT'])
+@bp.route('/<id>', methods=['PUT', 'PATCH'])
 @require_roles('fleet_manager')
 @require_company
 @require_feature('maintenance')

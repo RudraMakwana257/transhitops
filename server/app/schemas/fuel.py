@@ -7,7 +7,7 @@ FuelLogSchema           Dump-only — serialise a FuelLog ORM object to JSON
 CreateFuelLogSchema     POST /api/fuel-logs & PUT partial updates
 """
 
-from marshmallow import Schema, fields, validate, validates, ValidationError, EXCLUDE
+from marshmallow import Schema, fields, validate, validates, ValidationError, EXCLUDE, pre_load
 
 
 class FuelLogSchema(Schema):
@@ -64,8 +64,16 @@ class CreateFuelLogSchema(Schema):
             'invalid': 'vehicle_id must be a valid UUID.'
         }
     )
-    driver_id = fields.UUID(load_default=None)
-    trip_id   = fields.UUID(load_default=None)
+    driver_id = fields.UUID(load_default=None, allow_none=True)
+    trip_id   = fields.UUID(load_default=None, allow_none=True)
+
+    @pre_load
+    def clean_empty_strings(self, data, **kwargs):
+        if isinstance(data, dict):
+            for k in ['driver_id', 'trip_id', 'fuel_station']:
+                if k in data and data[k] == '':
+                    data[k] = None
+        return data
     date      = fields.Date(
         required=True,
         error_messages={

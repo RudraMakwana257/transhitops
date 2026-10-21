@@ -214,42 +214,67 @@ def create_app():
         import os
         from datetime import datetime, timezone
         from sqlalchemy import text
+        from sqlalchemy.exc import OperationalError, PoolError
+        import time
         
         status_code = 200
         db_status = "ok"
+        db_latency_ms = None
+        redis_status = "not_configured"
+        redis_latency_ms = None
+        
+        # Database check with timeout protection
         try:
+            start = time.perf_counter()
             db.session.execute(text('SELECT 1'))
+            db_latency_ms = round((time.perf_counter() - start) * 1000, 2)
+        except (OperationalError, PoolError):
+            db_status = "error"
+            status_code = 503
         except Exception:
             db_status = "error"
             status_code = 503
             
-        redis_status = "not_configured"
+        # Redis check (non-blocking for health)
         redis_url = app.config.get('REDIS_URL') or os.environ.get('REDIS_URL')
         if redis_url:
             try:
                 import redis
-                r = redis.from_url(redis_url)
+                r = redis.from_url(redis_url, socket_connect_timeout=1, socket_timeout=1)
+                start = time.perf_counter()
                 r.ping()
+                redis_latency_ms = round((time.perf_counter() - start) * 1000, 2)
                 redis_status = "ok"
             except Exception:
                 redis_status = "error"
                 
         return jsonify({
-            "status": "ok" if status_code == 200 else "error",
+            "status": "ok" if status_code == 200 else "degraded",
             "version": app.config.get('APP_VERSION', '1.0.0'),
-            "database": db_status,
-            "redis": redis_status,
+            "database": {"status": db_status, "latency_ms": db_latency_ms},
+            "redis": {"status": redis_status, "latency_ms": redis_latency_ms},
             "timestamp": datetime.now(timezone.utc).isoformat()
         }), status_code
 
     @app.route('/api/ready')
     def ready():
         from sqlalchemy import text
+        from sqlalchemy.exc import OperationalError, PoolError
         try:
             db.session.execute(text('SELECT 1'))
             return jsonify({"ready": True}), 200
+        except (OperationalError, PoolError):
+            return jsonify({"ready": False}), 503
         except Exception:
             return jsonify({"ready": False}), 503
+
+    # Request size limit enforcement (before request processing)
+    @app.before_request
+    def enforce_request_size_limit():
+        from werkzeug.exceptions import RequestEntityTooLarge
+        max_size = app.config.get('MAX_CONTENT_LENGTH', 10 * 1024 * 1024)
+        if request.content_length and request.content_length > max_size:
+            raise RequestEntityTooLarge()
 
     @app.route('/metrics')
     def prometheus_metrics():

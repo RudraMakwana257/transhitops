@@ -1,10 +1,12 @@
 import os
 import uuid
+import shutil
 import werkzeug.utils
 from flask import current_app
 
 class StorageService:
     MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
+    MIN_FREE_DISK_SPACE = 50 * 1024 * 1024  # 50 MB minimum free space
 
     @staticmethod
     def get_upload_dir() -> str:
@@ -15,6 +17,15 @@ class StorageService:
     @staticmethod
     def get_storage_backend() -> str:
         return os.environ.get('STORAGE_BACKEND', 'local').lower()
+
+    @staticmethod
+    def check_disk_space(path: str) -> bool:
+        """Verify sufficient disk space before writing."""
+        try:
+            usage = shutil.disk_usage(path)
+            return usage.free >= StorageService.MIN_FREE_DISK_SPACE
+        except Exception:
+            return True  # Fail open if check fails
 
     @staticmethod
     def validate_file_content(file_obj, filename: str) -> bool:
@@ -97,14 +108,38 @@ class StorageService:
             except ImportError:
                 pass # Fallback to local storage if boto3 is not present in local test venv
 
-        # Local storage implementation
-        target_folder = os.path.join(StorageService.get_upload_dir(), safe_folder)
+        # Local storage implementation - check disk space FIRST
+        upload_dir = StorageService.get_upload_dir()
+        if not StorageService.check_disk_space(upload_dir):
+            raise ValueError("Insufficient disk space for file upload.")
+        
+        target_folder = os.path.join(upload_dir, safe_folder)
         os.makedirs(target_folder, exist_ok=True)
         
+        # Stream file to disk with size limit enforcement during write
         full_path = os.path.join(target_folder, stored_filename)
-        file_obj.save(full_path)
-        file_size = os.path.getsize(full_path)
-
+        file_size = 0
+        chunk_size = 8192
+        
+        try:
+            with open(full_path, 'wb') as f:
+                while True:
+                    chunk = file_obj.read(chunk_size)
+                    if not chunk:
+                        break
+                    file_size += len(chunk)
+                    if file_size > StorageService.MAX_FILE_SIZE:
+                        f.close()
+                        os.remove(full_path)
+                        raise ValueError(f"File size exceeds maximum permitted limit ({StorageService.MAX_FILE_SIZE} bytes).")
+                    f.write(chunk)
+        except Exception as e:
+            # Clean up partial file on any error
+            if os.path.exists(full_path):
+                os.remove(full_path)
+            raise
+        
+        # Double-check final size
         if file_size > StorageService.MAX_FILE_SIZE:
             os.remove(full_path)
             raise ValueError(f"File size ({file_size} bytes) exceeds maximum permitted limit (10MB).")

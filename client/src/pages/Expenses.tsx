@@ -91,11 +91,11 @@ export function Expenses() {
     setSubmitting(true)
     try {
       await api.post('/expenses', {
-        vehicle_id: formData.vehicle_id,
-        trip_id: formData.trip_id,
+        vehicle_id: formData.vehicle_id || undefined,
+        trip_id: formData.trip_id || undefined,
         type: formData.type,
         amount: Number(formData.amount),
-        description: formData.description,
+        description: formData.description || undefined,
         date: formData.date,
       })
       setShowCreate(false)

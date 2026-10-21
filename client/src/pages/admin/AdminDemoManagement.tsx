@@ -7,7 +7,14 @@ import {
   Trash2, ShieldCheck, AlertCircle, Copy, Check, Calendar, CheckCircle2, 
   RotateCcw, PauseCircle, PlayCircle
 } from 'lucide-react'
-import { toast } from 'sonner'
+import { toast as baseToast } from '../../store/toastStore'
+
+const toast = {
+  success: (msg: string) => baseToast(msg, 'success'),
+  error: (msg: string) => baseToast(msg, 'error'),
+  info: (msg: string) => baseToast(msg, 'info'),
+  warning: (msg: string) => baseToast(msg, 'warning'),
+}
 
 interface DemoUser {
   id: string

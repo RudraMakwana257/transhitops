@@ -7,7 +7,7 @@ import { Input } from '../components/ui/InputWrapper'
 import { Select } from '../components/ui/SelectWrapper'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '../components/ui/CardWrapper'
 import { PageWrapper } from '../components/layout/PageWrapper'
-import { ArrowLeft, Save, Edit, PenTool } from 'lucide-react'
+import { ArrowLeft, Save, Edit, PenTool, CheckCircle } from 'lucide-react'
 import { toast } from '../store/toastStore'
 import { StatusBadge } from '../components/ui/BadgeWrapper'
 import { format } from 'date-fns'
@@ -27,6 +27,7 @@ export function MaintenanceDetail() {
   const [error, setError] = useState<string | null>(null)
   const [isEditing, setIsEditing] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [completing, setCompleting] = useState(false)
   
   const [form, setForm] = useState({
     status: '',
@@ -67,7 +68,7 @@ export function MaintenanceDetail() {
     if (!id) return
     setSubmitting(true)
     try {
-      const res = await api.patch(`/maintenance/${id}`, {
+      const res = await api.put(`/maintenance/${id}`, {
         status: form.status,
         cost: Number(form.cost),
         technician: form.technician,
@@ -86,6 +87,22 @@ export function MaintenanceDetail() {
     }
   }
 
+  const handleComplete = async () => {
+    if (!id) return
+    setCompleting(true)
+    try {
+      const res = await api.put(`/maintenance/${id}/complete`, {})
+      if (res.data.success) {
+        setLog(res.data.data)
+        toast('Maintenance marked as completed', 'success')
+      }
+    } catch (err) {
+      toast((err as any).response?.data?.message || 'Failed to complete maintenance', 'error')
+    } finally {
+      setCompleting(false)
+    }
+  }
+
   const set = (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
     setForm(prev => ({ ...prev, [field]: e.target.value }))
 
@@ -99,6 +116,16 @@ export function MaintenanceDetail() {
       description="View and update maintenance record"
       headerActions={
         <div className="flex gap-2">
+          {!isEditing && log && log.status !== 'Completed' && (
+            <Button
+              className="bg-emerald-600 hover:bg-emerald-700 text-white"
+              onClick={handleComplete}
+              disabled={completing}
+            >
+              <CheckCircle className="w-4 h-4 mr-2" />
+              {completing ? 'Completing...' : 'Mark Completed'}
+            </Button>
+          )}
           {!isEditing && (
             <Button variant="primary" onClick={() => setIsEditing(true)}>
               <Edit className="w-4 h-4 mr-2" />Edit Record

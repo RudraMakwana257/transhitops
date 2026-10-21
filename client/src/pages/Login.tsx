@@ -19,7 +19,7 @@ const loginSchema = z.object({
 type LoginForm = z.infer<typeof loginSchema>
 
 const demos = [
-  { role: 'Super Admin', email: 'admin@transitops.com', password: 'SuperAdmin@123', color: '#EF4444' },
+  { role: 'Super Admin', email: 'super@transitops.com', password: 'Admin@123', color: '#EF4444' },
   { role: 'Fleet Manager', email: 'manager@transitops.com', password: 'Admin@123', color: '#D98E04' },
   { role: 'Dispatcher', email: 'dispatcher@transitops.com', password: 'Admin@123', color: '#3B82F6' },
   { role: 'Safety Officer', email: 'safety@transitops.com', password: 'Admin@123', color: '#22C55E' },

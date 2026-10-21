@@ -174,13 +174,9 @@ def reset_password():
     data = request.get_json() or {}
     token_str = data.get('token')
     new_password = data.get('password')
-    
     if not token_str or not new_password:
         return error_response(message="Token and password are required", status_code=400)
         
-    if len(str(new_password)) < 8:
-        return error_response(message="Password must be at least 8 characters long", status_code=422)
-
     import hashlib
     from datetime import datetime
     token_hash = hashlib.sha256(str(token_str).strip().encode('utf-8')).hexdigest()
@@ -192,6 +188,9 @@ def reset_password():
     
     if not reset_token or not reset_token.is_valid:
         return error_response(message="Invalid or expired token", status_code=400)
+
+    if len(str(new_password)) < 8:
+        return error_response(message="Password must be at least 8 characters long", status_code=422)
         
     user = reset_token.user
     user.set_password(new_password)

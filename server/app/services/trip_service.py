@@ -103,6 +103,8 @@ class TripService:
             
         if vehicle:
             vehicle.status = 'On Trip'
+            if vehicle.odometer_km is not None and trip.start_odometer is None:
+                trip.start_odometer = float(vehicle.odometer_km)
         if driver:
             driver.status = 'On Trip'
             

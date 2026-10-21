@@ -43,7 +43,7 @@ export function TripEdit() {
         destination: selectedTrip.destination,
         cargo_weight_kg: selectedTrip.cargo_weight_kg.toString(),
         planned_distance_km: selectedTrip.planned_distance_km?.toString() || '',
-        revenue: selectedTrip.revenue.toString(),
+        revenue: selectedTrip.revenue != null ? selectedTrip.revenue.toString() : '0',
         notes: selectedTrip.notes || '',
       })
     }

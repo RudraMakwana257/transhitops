@@ -22,3 +22,16 @@ services:
         sync: false
       - key: RATE_LIMIT_DEFAULT
         value: 100/minute
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: transitops-redis
+          property: connectionString
+      - key: STORAGE_BACKEND
+        value: local
+
+  - type: redis
+    name: transitops-redis
+    plan: free
+    region: oregon
+    maxmemoryPolicy: allkeys-lru

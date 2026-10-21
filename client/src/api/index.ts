@@ -319,7 +319,7 @@ export const adminApi = {
     const res = await api.get<ApiResponse<PaginatedData<any>>>('/admin/login-attempts', { params })
     return res.data
   },
-  getExceptions: async (params?: { page?: number; page_size?: number; company_id?: string }) => {
+  getExceptions: async (params?: { page?: number; page_size?: number; company_id?: string; severity?: string }) => {
     const res = await api.get<ApiResponse<PaginatedData<any>>>('/admin/exceptions', { params })
     return res.data
   },

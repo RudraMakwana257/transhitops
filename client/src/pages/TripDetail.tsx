@@ -6,7 +6,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/CardW
 import { Button } from '../components/ui/ButtonWrapper'
 import { StatusBadge } from '../components/ui/BadgeWrapper'
 import { PageWrapper } from '../components/layout/PageWrapper'
-import { MapPin, Calendar, CheckCircle, XCircle, Play, ChevronLeft } from 'lucide-react'
+import { MapPin, Calendar, CheckCircle, XCircle, Play, ChevronLeft, Edit } from 'lucide-react'
 import { format } from 'date-fns'
 import { useAuth } from '../hooks/useAuth'
 import { formatCurrency } from '../utils/formatters'
@@ -95,6 +95,11 @@ export function TripDetail() {
       description={`${trip.source} → ${trip.destination}`}
       headerActions={
         <>
+          {canManage && isDraft && (
+            <Button variant="outline" onClick={() => navigate(`/trips/${trip.id}/edit`)}>
+              <Edit className="w-4 h-4 mr-2" />Edit Trip
+            </Button>
+          )}
           {canCancel && <Button variant="danger" onClick={() => setShowCancelModal(true)} disabled={cancelling}><XCircle className="w-4 h-4 mr-2" />Cancel Trip</Button>}
           {canComplete && <Button onClick={() => setShowCompleteModal(true)}><CheckCircle className="w-4 h-4 mr-2" />Complete Trip</Button>}
           {canDispatch && <Button onClick={handleDispatch} disabled={dispatching}><Play className="w-4 h-4 mr-2" />Dispatch Trip</Button>}

@@ -40,9 +40,9 @@ export function VehicleDetail() {
         api.get(`/vehicles/${id}/fuel?page_size=10`),
       ])
       if (vRes.data.success) setVehicle(vRes.data.data)
-      if (tRes.data.success) setTrips(tRes.data.data)
-      if (mRes.data.success) setMaintenance(mRes.data.data)
-      if (fRes.data.success) setFuel(fRes.data.data)
+      if (tRes.data.success) setTrips(Array.isArray(tRes.data.data) ? tRes.data.data : tRes.data.data?.items || [])
+      if (mRes.data.success) setMaintenance(Array.isArray(mRes.data.data) ? mRes.data.data : mRes.data.data?.items || [])
+      if (fRes.data.success) setFuel(Array.isArray(fRes.data.data) ? fRes.data.data : fRes.data.data?.items || [])
     } catch (err) {
       toast('Failed to load vehicle', 'error')
     } finally {

@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom'
 import { DataTable } from '../ui/DataTableWrapper'
 import { StatusBadge } from '../ui/BadgeWrapper'
 import { format } from 'date-fns'
@@ -15,6 +16,7 @@ interface RecentTrip {
 }
 
 export function RecentTripsTable({ trips = [] }: { trips: RecentTrip[] }) {
+  const navigate = useNavigate()
   const columns = [
     { key: 'trip_number', header: 'Trip No.', accessor: 'trip_number' },
     { key: 'route', header: 'Route', render: (row: RecentTrip) => (
@@ -36,7 +38,7 @@ export function RecentTripsTable({ trips = [] }: { trips: RecentTrip[] }) {
     <DataTable
       columns={columns}
       data={trips}
-      onRowClick={(row) => window.location.href = `/trips/${row.id}`}
+      onRowClick={(row) => navigate(`/trips/${row.id}`)}
       emptyMessage="No recent trips"
     />
   )

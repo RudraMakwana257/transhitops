@@ -62,15 +62,20 @@ export function Settings() {
   const handleSubmit = async (data: UserForm) => {
     setSubmitting(true)
     try {
+      const payload: any = { ...data }
+      if (editingUser && !payload.password) {
+        delete payload.password
+      }
       if (editingUser) {
-        await api.put(`/settings/users/${editingUser.id}`, data)
+        await api.put(`/settings/users/${editingUser.id}`, payload)
       } else {
-        await api.post('/settings/users', data)
+        await api.post('/settings/users', payload)
       }
       setShowCreate(false)
       setEditingUser(null)
       form.reset({ name: '', email: '', password: '', role: 'dispatcher', is_active: true })
       fetchUsers()
+      toast(editingUser ? 'User updated successfully' : 'User created successfully', 'success')
     } catch (err: any) {
       toast(err.response?.data?.message || 'Failed to save user', 'error')
     } finally {

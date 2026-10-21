@@ -42,10 +42,13 @@ def init_request_logger(app):
             company_id = getattr(g, 'company_id', None)
             
             if hasattr(g, 'user') and g.user:
-                if not user_id:
-                    user_id = str(g.user.id)
-                if not company_id and g.user.company_id:
-                    company_id = str(g.user.company_id)
+                try:
+                    if not user_id and hasattr(g.user, 'id'):
+                        user_id = str(g.user.id)
+                    if not company_id and hasattr(g.user, 'company_id') and g.user.company_id:
+                        company_id = str(g.user.company_id)
+                except Exception:
+                    pass
 
             # X-Forwarded-For if available, else remote_addr
             ip = request.headers.get('X-Forwarded-For', request.remote_addr)

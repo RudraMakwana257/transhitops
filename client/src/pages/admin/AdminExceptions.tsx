@@ -20,7 +20,8 @@ export function AdminExceptions() {
       const res: any = await adminApi.getExceptions({
         page,
         page_size: 25,
-        company_id: selectedCompanyId || undefined
+        company_id: selectedCompanyId || undefined,
+        severity: selectedSeverity || undefined,
       })
       const data = res?.data || res || {}
       const items = data.items || []

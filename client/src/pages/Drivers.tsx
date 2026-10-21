@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 // api removed
 import type { Driver, UserRole } from '../types'
 import { DataTable } from '../components/ui/DataTableWrapper'
@@ -15,6 +15,7 @@ import { useAuth } from '../hooks/useAuth'
 import { useDriverStore } from '../stores/driverStore'
 
 export function Drivers() {
+  const navigate = useNavigate()
   const { hasRole } = useAuth()
   const { drivers, loading, pagination: storePagination, fetchDrivers } = useDriverStore()
   
@@ -177,7 +178,7 @@ export function Drivers() {
         columns={columns}
         data={drivers}
         loading={loading}
-        onRowClick={(d) => window.location.href = `/drivers/${d.id}`}
+        onRowClick={(d) => navigate(`/drivers/${d.id}`)}
         pagination={{
           page: pagination.page,
           pageSize: pagination.pageSize,

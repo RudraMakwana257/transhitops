@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 // api removed
 import type { Vehicle } from '../types'
 import { DataTable } from '../components/ui/DataTableWrapper'
@@ -16,6 +16,7 @@ import type { UserRole } from '../types'
 import { useVehicleStore } from '../stores/vehicleStore'
 
 export function Vehicles() {
+  const navigate = useNavigate()
   const { hasRole } = useAuth()
   const { vehicles, loading, pagination: storePagination, fetchVehicles } = useVehicleStore()
   
@@ -189,7 +190,7 @@ export function Vehicles() {
         columns={columns}
         data={vehicles}
         loading={loading}
-        onRowClick={(v) => window.location.href = `/vehicles/${v.id}`}
+        onRowClick={(v) => navigate(`/vehicles/${v.id}`)}
         pagination={{
           page: pagination.page,
           pageSize: pagination.pageSize,

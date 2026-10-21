@@ -116,11 +116,11 @@ def test_password_reset_flow(client):
     assert res.status_code == 400
     
     # 15. Expired token
-    expired = PasswordResetToken.generate(token_obj.user_id, expiry_hours=-2)
+    expired, expired_raw = PasswordResetToken.generate(token_obj.user_id, expiry_hours=-2)
     db.session.add(expired)
     db.session.commit()
     
-    res = client.post('/api/auth/reset-password', json={'token': expired.token, 'password': 'Test'})
+    res = client.post('/api/auth/reset-password', json={'token': expired_raw, 'password': 'Test'})
     assert res.status_code == 400
 
 def test_marshmallow_partial_update(client, company_a_token):

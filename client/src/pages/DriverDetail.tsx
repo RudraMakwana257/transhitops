@@ -42,7 +42,7 @@ export function DriverDetail() {
         setDriver(dRes.data.data)
         setScoreValue(dRes.data.data.safety_score.toString())
       }
-      if (tRes.data.success) setTrips(tRes.data.data)
+      if (tRes.data.success) setTrips(Array.isArray(tRes.data.data) ? tRes.data.data : tRes.data.data?.items || [])
     } catch (err) {
       toast('Failed to load driver', 'error')
     } finally {

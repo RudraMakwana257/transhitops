@@ -73,13 +73,17 @@ export function Fuel() {
   const fetchLookups = async () => {
     try {
       const [vRes, dRes] = await Promise.all([
-        api.get('/vehicles/available?page_size=100'),
-        api.get('/drivers/available?page_size=100'),
+        api.get('/vehicles?page_size=100'),
+        api.get('/drivers?page_size=100'),
       ])
-      if (vRes.data.success) setVehicles(vRes.data.data)
-      if (dRes.data.success) setDrivers(dRes.data.data)
+      if (vRes.data.success) {
+        setVehicles(Array.isArray(vRes.data.data) ? vRes.data.data : vRes.data.data?.items || [])
+      }
+      if (dRes.data.success) {
+        setDrivers(Array.isArray(dRes.data.data) ? dRes.data.data : dRes.data.data?.items || [])
+      }
     } catch (err) {
-      toast('Failed to load vehicles', 'error')
+      toast('Failed to load vehicles and drivers', 'error')
     }
   }
   
@@ -89,13 +93,13 @@ export function Fuel() {
     try {
       await api.post('/fuel', {
         vehicle_id: formData.vehicle_id,
-        driver_id: formData.driver_id,
-        trip_id: formData.trip_id,
+        driver_id: formData.driver_id || undefined,
+        trip_id: formData.trip_id || undefined,
         date: formData.date,
         liters: Number(formData.liters),
         price_per_liter: Number(formData.price_per_liter),
         odometer_reading: formData.odometer_reading ? Number(formData.odometer_reading) : undefined,
-        fuel_station: formData.fuel_station,
+        fuel_station: formData.fuel_station || undefined,
       })
       setShowCreate(false)
       setFormData({ vehicle_id: '', driver_id: '', trip_id: '', date: format(new Date(), 'yyyy-MM-dd'), liters: '', price_per_liter: '', odometer_reading: '', fuel_station: '' })

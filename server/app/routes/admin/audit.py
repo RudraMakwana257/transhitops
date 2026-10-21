@@ -103,6 +103,7 @@ def list_exceptions():
     page = request.args.get('page', 1, type=int)
     page_size = request.args.get('page_size', 50, type=int)
     company_id = request.args.get('company_id')
+    severity = request.args.get('severity')
 
     query = OperationalException.query
 
@@ -112,6 +113,9 @@ def list_exceptions():
             query = query.filter(OperationalException.company_id == cid)
         except ValueError:
             pass
+
+    if severity:
+        query = query.filter(OperationalException.severity.ilike(severity.strip()))
 
     pagination = query.order_by(OperationalException.detected_at.desc()).paginate(page=page, per_page=page_size, error_out=False)
 
