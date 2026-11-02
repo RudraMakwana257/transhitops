@@ -4,9 +4,18 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+def normalize_db_url(url: str | None) -> str | None:
+    if not url:
+        return None
+    if url.startswith('postgres://'):
+        return url.replace('postgres://', 'postgresql+psycopg2://', 1)
+    if url.startswith('postgresql://'):
+        return url.replace('postgresql://', 'postgresql+psycopg2://', 1)
+    return url
+
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY')
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL')
+    SQLALCHEMY_DATABASE_URI = normalize_db_url(os.environ.get('DATABASE_URL'))
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     MAX_CONTENT_LENGTH = int(os.environ.get('MAX_CONTENT_LENGTH', 10 * 1024 * 1024))  # 10 MB payload ceiling
     SQLALCHEMY_ENGINE_OPTIONS = {
@@ -44,9 +53,11 @@ class TestingConfig(Config):
     SECRET_KEY = os.environ.get('SECRET_KEY', 'test-secret-key')
     JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY', 'test-jwt-secret-key')
     APP_URL = os.environ.get('APP_URL', 'http://localhost:5000')
-    SQLALCHEMY_DATABASE_URI = os.environ.get(
-        'TEST_DATABASE_URL', 
-        os.environ.get('DATABASE_URL', '') + '_test'
+    SQLALCHEMY_DATABASE_URI = normalize_db_url(
+        os.environ.get(
+            'TEST_DATABASE_URL', 
+            os.environ.get('DATABASE_URL', '') + '_test'
+        )
     )
     JWT_COOKIE_SECURE = False
     JWT_COOKIE_CSRF_PROTECT = False

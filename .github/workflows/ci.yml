@@ -21,7 +21,7 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --health-cmd pg_isready
+          --health-cmd "pg_isready -U test_user -d transitops_test"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
@@ -42,7 +42,8 @@ jobs:
 
       - name: Validate Alembic Migrations on Fresh Database
         env:
-          DATABASE_URL: postgresql://test_user:test_password@localhost:5432/transitops_test
+          DATABASE_URL: postgresql+psycopg2://test_user:test_password@localhost:5432/transitops_test
+          FLASK_APP: wsgi.py
           SECRET_KEY: ci-test-secret-key-64-character-string-placeholder-value
           JWT_SECRET_KEY: ci-test-jwt-secret-key-64-character-string-placeholder-value
         run: |
@@ -51,8 +52,8 @@ jobs:
 
       - name: Run Pytest Test Suite
         env:
-          DATABASE_URL: postgresql://test_user:test_password@localhost:5432/transitops_test
-          TEST_DATABASE_URL: postgresql://test_user:test_password@localhost:5432/transitops_test
+          DATABASE_URL: postgresql+psycopg2://test_user:test_password@localhost:5432/transitops_test
+          TEST_DATABASE_URL: postgresql+psycopg2://test_user:test_password@localhost:5432/transitops_test
           POSTGRES_SERVER: localhost
           POSTGRES_DB: transitops_test
           POSTGRES_USER: test_user
@@ -60,6 +61,7 @@ jobs:
           SECRET_KEY: ci-test-secret-key-64-character-string-placeholder-value
           JWT_SECRET_KEY: ci-test-jwt-secret-key-64-character-string-placeholder-value
           GROQ_API_KEY: gsk_dummy_test_key
+          FLASK_APP: wsgi.py
         run: |
           cd server
           python -m pytest --cov=app --cov-report=xml

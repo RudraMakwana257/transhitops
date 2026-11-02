@@ -214,7 +214,7 @@ def create_app():
         import os
         from datetime import datetime, timezone
         from sqlalchemy import text
-        from sqlalchemy.exc import OperationalError, PoolError
+        from sqlalchemy.exc import OperationalError, TimeoutError
         import time
         
         status_code = 200
@@ -228,7 +228,7 @@ def create_app():
             start = time.perf_counter()
             db.session.execute(text('SELECT 1'))
             db_latency_ms = round((time.perf_counter() - start) * 1000, 2)
-        except (OperationalError, PoolError):
+        except (OperationalError, TimeoutError):
             db_status = "error"
             status_code = 503
         except Exception:
@@ -259,11 +259,11 @@ def create_app():
     @app.route('/api/ready')
     def ready():
         from sqlalchemy import text
-        from sqlalchemy.exc import OperationalError, PoolError
+        from sqlalchemy.exc import OperationalError, TimeoutError
         try:
             db.session.execute(text('SELECT 1'))
             return jsonify({"ready": True}), 200
-        except (OperationalError, PoolError):
+        except (OperationalError, TimeoutError):
             return jsonify({"ready": False}), 503
         except Exception:
             return jsonify({"ready": False}), 503

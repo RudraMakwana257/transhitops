@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect } from 'react'
+import { lazy, Suspense } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { AppLayout as Layout } from './components/layout/AppLayout'
 import { AdminLayout } from './components/layout/AdminLayout'
@@ -220,51 +220,6 @@ function AppRoutes() {
 }
 
 function App() {
-  useEffect(() => {
-    let lastActiveTime = Date.now()
-
-    // Eager background backend pre-warming
-    const pingBackend = () => {
-      fetch(`${import.meta.env.VITE_API_BASE_URL || '/api'}/health`, {
-        method: 'GET',
-        headers: { 'Cache-Control': 'no-cache' }
-      }).catch(() => {})
-    }
-
-    // 1. Initial warm-up on page load
-    pingBackend()
-
-    // 2. Track activity timestamp
-    const recordActivity = () => {
-      lastActiveTime = Date.now()
-    }
-    window.addEventListener('pointerdown', recordActivity, { passive: true })
-    window.addEventListener('keydown', recordActivity, { passive: true })
-
-    // 3. Tab Visibility / Window Focus Resume:
-    // If an already logged-in user returns to the tab after 10+ minutes of idle/background,
-    // immediately pre-warm the backend BEFORE they even click anything!
-    const handleResume = () => {
-      if (document.visibilityState === 'visible') {
-        const idleDurationMs = Date.now() - lastActiveTime
-        if (idleDurationMs > 10 * 60 * 1000) {
-          pingBackend()
-        }
-        lastActiveTime = Date.now()
-      }
-    }
-
-    document.addEventListener('visibilitychange', handleResume)
-    window.addEventListener('focus', handleResume)
-
-    return () => {
-      window.removeEventListener('pointerdown', recordActivity)
-      window.removeEventListener('keydown', recordActivity)
-      document.removeEventListener('visibilitychange', handleResume)
-      window.removeEventListener('focus', handleResume)
-    }
-  }, [])
-
   return (
     <ErrorBoundary fallbackMessage="A critical application error occurred. Please reload.">
       <AppRoutes />
