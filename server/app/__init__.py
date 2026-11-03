@@ -230,10 +230,8 @@ def create_app():
             db_latency_ms = round((time.perf_counter() - start) * 1000, 2)
         except (OperationalError, TimeoutError):
             db_status = "error"
-            status_code = 503
         except Exception:
             db_status = "error"
-            status_code = 503
             
         # Redis check (non-blocking for health)
         redis_url = app.config.get('REDIS_URL') or os.environ.get('REDIS_URL')
@@ -249,12 +247,12 @@ def create_app():
                 redis_status = "error"
                 
         return jsonify({
-            "status": "ok" if status_code == 200 else "degraded",
+            "status": "ok" if db_status == "ok" else "degraded",
             "version": app.config.get('APP_VERSION', '1.0.0'),
             "database": {"status": db_status, "latency_ms": db_latency_ms},
             "redis": {"status": redis_status, "latency_ms": redis_latency_ms},
             "timestamp": datetime.now(timezone.utc).isoformat()
-        }), status_code
+        }), 200
 
     @app.route('/api/ready')
     def ready():

@@ -24,13 +24,13 @@ services:
         value: 100/minute
       - key: REDIS_URL
         fromService:
-          type: redis
+          type: keyvalue
           name: transitops-redis
           property: connectionString
       - key: STORAGE_BACKEND
         value: local
 
-  - type: redis
+  - type: keyvalue
     name: transitops-redis
     plan: free
     region: oregon
