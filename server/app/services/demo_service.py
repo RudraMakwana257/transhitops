@@ -208,6 +208,7 @@ class DemoService:
         """Generates realistic vehicles, drivers, trips, fuel logs, and maintenance."""
         now = datetime.utcnow()
         cid = company.id
+        cid_hex = (company.id.hex if hasattr(company.id, 'hex') else str(company.id).replace('-', ''))[:4].upper()
 
         # Vehicles
         vehicle_configs = [
@@ -220,10 +221,11 @@ class DemoService:
         ]
 
         vehicles = []
-        for reg, name, v_type, cap, cost, status in vehicle_configs:
+        for i, (reg, name, v_type, cap, cost, status) in enumerate(vehicle_configs):
+            unique_reg = f"{reg[:8]}-{cid_hex}{i}"
             v = Vehicle(
                 company_id=cid,
-                reg_number=reg,
+                reg_number=unique_reg,
                 name=name,
                 type=v_type,
                 capacity_kg=cap,
@@ -244,11 +246,12 @@ class DemoService:
         ]
 
         drivers = []
-        for name, lic, status, score in driver_configs:
+        for i, (name, lic, status, score) in enumerate(driver_configs):
+            unique_lic = f"{lic[:10]}{cid_hex}{i}"
             d = Driver(
                 company_id=cid,
                 name=name,
-                license_number=lic,
+                license_number=unique_lic,
                 license_category='HGMV',
                 license_expiry=(now + timedelta(days=random.randint(200, 800))).date(),
                 phone=f"+9198{random.randint(10000000, 99999999)}",
@@ -272,7 +275,7 @@ class DemoService:
         for i, (src, dst, dist, status) in enumerate(routes):
             trip_date = now - timedelta(days=(10 - i * 2))
             t = Trip(
-                trip_number=f"DEMO-TRP-{100 + i}",
+                trip_number=f"TRP-{cid_hex}-{100 + i}",
                 company_id=cid,
                 vehicle_id=vehicles[i % len(vehicles)].id,
                 driver_id=drivers[i % len(drivers)].id,

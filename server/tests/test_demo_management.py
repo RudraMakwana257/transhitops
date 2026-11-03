@@ -66,14 +66,20 @@ def test_admin_create_demo_sandbox_7_days(client, super_admin_token, app):
 
 def test_admin_extend_demo_sandbox(client, super_admin_token, app):
     """Verify super_admin can extend demo duration by +15 days."""
-    with app.app_context():
-        comp = Company.query.filter_by(slug='demo-hindustan-express-demo').first()
-        if not comp:
-            comp = Company(name='Test Extend Co', slug='demo-extend-co', is_active=True, settings={'is_demo': True})
-            from app import db
-            db.session.add(comp)
-            db.session.commit()
-        comp_id = str(comp.id)
+    payload = {
+        'company_name': 'Hindustan Extend Demo',
+        'admin_name': 'Extend Admin',
+        'admin_email': 'extend@hindustanextend.com',
+        'password': 'CustomDemo@123',
+        'duration_days': 7,
+        'seed_dummy_data': False
+    }
+    create_res = client.post(
+        '/api/admin/demo',
+        headers={'Authorization': f'Bearer {super_admin_token}'},
+        json=payload
+    )
+    comp_id = create_res.get_json()['data']['company']['id']
 
     res = client.post(
         f'/api/admin/demo/{comp_id}/extend',
@@ -88,8 +94,22 @@ def test_admin_extend_demo_sandbox(client, super_admin_token, app):
 
 def test_admin_update_demo_user_password(client, super_admin_token, app):
     """Verify super_admin can update a demo user's password and login succeeds with new password."""
+    payload = {
+        'company_name': 'Hindustan Update Demo',
+        'admin_name': 'Vikram Mehra',
+        'admin_email': 'vikram.update@hindustanexpress.com',
+        'password': 'CustomDemo@123',
+        'duration_days': 7,
+        'seed_dummy_data': False
+    }
+    client.post(
+        '/api/admin/demo',
+        headers={'Authorization': f'Bearer {super_admin_token}'},
+        json=payload
+    )
+
     with app.app_context():
-        user = User.query.filter_by(email='vikram@hindustanexpress.com').first()
+        user = User.query.filter_by(email='vikram.update@hindustanexpress.com').first()
         assert user is not None
         user_id = str(user.id)
 
@@ -105,33 +125,45 @@ def test_admin_update_demo_user_password(client, super_admin_token, app):
     # Check that logging in with old password fails
     old_login = client.post(
         '/api/auth/login',
-        json={'email': 'vikram@hindustanexpress.com', 'password': 'CustomDemo@123'}
+        json={'email': 'vikram.update@hindustanexpress.com', 'password': 'CustomDemo@123'}
     )
     assert old_login.status_code == 401
 
     # Check that logging in with new password succeeds
     new_login = client.post(
         '/api/auth/login',
-        json={'email': 'vikram@hindustanexpress.com', 'password': new_pwd}
+        json={'email': 'vikram.update@hindustanexpress.com', 'password': new_pwd}
     )
     assert new_login.status_code == 200
 
 
 def test_admin_reset_dummy_data(client, super_admin_token, app):
     """Verify super_admin can reset dummy fleet telemetry for a demo company."""
-    with app.app_context():
-        comp = Company.query.filter_by(slug='demo-hindustan-express-demo').first()
-        comp_id = str(comp.id)
+    payload = {
+        'company_name': 'Hindustan Reset Demo',
+        'admin_name': 'Reset Admin',
+        'admin_email': 'reset@hindustanreset.com',
+        'password': 'CustomDemo@123',
+        'duration_days': 7,
+        'seed_dummy_data': True
+    }
+    create_res = client.post(
+        '/api/admin/demo',
+        headers={'Authorization': f'Bearer {super_admin_token}'},
+        json=payload
+    )
+    assert create_res.status_code == 201, create_res.get_json()
+    company_id = create_res.get_json()['data']['company']['id']
 
     res = client.post(
-        f'/api/admin/demo/{comp_id}/reset-data',
+        f'/api/admin/demo/{company_id}/reset-data',
         headers={'Authorization': f'Bearer {super_admin_token}'}
     )
     assert res.status_code == 200
     assert res.get_json()['success'] is True
 
     with app.app_context():
-        v_count = Vehicle.query.filter_by(company_id=comp.id).count()
+        v_count = Vehicle.query.filter_by(company_id=company_id).count()
         assert v_count >= 5
 
 
